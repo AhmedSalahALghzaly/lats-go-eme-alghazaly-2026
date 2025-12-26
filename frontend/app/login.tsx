@@ -1,0 +1,238 @@
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../src/hooks/useTheme';
+import { useTranslation } from '../src/hooks/useTranslation';
+import { useAppStore } from '../src/store/appStore';
+import { authApi } from '../src/services/api';
+
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+
+export default function LoginScreen() {
+  const { colors } = useTheme();
+  const { t, isRTL } = useTranslation();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { setUser, setSessionToken, user } = useAppStore();
+
+  const [loading, setLoading] = useState(false);
+  const [processingAuth, setProcessingAuth] = useState(false);
+
+  // Check if already logged in
+  useEffect(() => {
+    if (user) {
+      router.replace('/(tabs)');
+    }
+  }, [user]);
+
+  // Handle initial URL (cold start)
+  useEffect(() => {
+    const checkInitialUrl = async () => {
+      const url = await Linking.getInitialURL();
+      if (url) {
+        handleAuthUrl(url);
+      }
+    };
+    checkInitialUrl();
+  }, []);
+
+  // Handle web auth callback
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const hash = window.location.hash;
+      if (hash && hash.includes('session_id=')) {
+        const sessionId = hash.split('session_id=')[1]?.split('&')[0];
+        if (sessionId) {
+          processSessionId(sessionId);
+          // Clean URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    }
+  }, []);
+
+  const handleAuthUrl = (url: string) => {
+    // Parse session_id from URL
+    let sessionId: string | null = null;
+    
+    if (url.includes('#session_id=')) {
+      sessionId = url.split('#session_id=')[1]?.split('&')[0];
+    } else if (url.includes('?session_id=')) {
+      sessionId = url.split('?session_id=')[1]?.split('&')[0];
+    }
+    
+    if (sessionId) {
+      processSessionId(sessionId);
+    }
+  };
+
+  const processSessionId = async (sessionId: string) => {
+    setProcessingAuth(true);
+    try {
+      const response = await authApi.exchangeSession(sessionId);
+      const { user: userData, session_token } = response.data;
+      
+      setUser(userData);
+      setSessionToken(session_token);
+      
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('Auth error:', error);
+    } finally {
+      setProcessingAuth(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    
+    try {
+      // Create redirect URL based on platform
+      const redirectUrl = Platform.OS === 'web'
+        ? `${BACKEND_URL}/login`
+        : Linking.createURL('/login');
+      
+      const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+      
+      if (Platform.OS === 'web') {
+        window.location.href = authUrl;
+      } else {
+        const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+        
+        if (result.type === 'success' && result.url) {
+          handleAuthUrl(result.url);
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (processingAuth) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+          {t('loading')}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[
+      styles.container, 
+      { backgroundColor: colors.background, paddingTop: insets.top }
+    ]}>
+      {/* Close Button */}
+      <TouchableOpacity
+        style={[styles.closeButton, isRTL ? { left: 16 } : { right: 16 }]}
+        onPress={() => router.back()}
+      >
+        <Ionicons name="close" size={28} color={colors.text} />
+      </TouchableOpacity>
+
+      {/* Logo */}
+      <View style={styles.logoContainer}>
+        <View style={[styles.logoCircle, { backgroundColor: colors.primary }]}>
+          <Ionicons name="car-sport" size={60} color="#FFF" />
+        </View>
+        <Text style={[styles.appName, { color: colors.primary }]}>
+          {t('appName')}
+        </Text>
+        <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+          {t('appTagline')}
+        </Text>
+      </View>
+
+      {/* Login Button */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.googleButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={handleGoogleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <>
+              <Ionicons name="logo-google" size={24} color="#DB4437" />
+              <Text style={[styles.googleButtonText, { color: colors.text }]}>
+                {t('loginWithGoogle')}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 60,
+    padding: 8,
+    zIndex: 10,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 60,
+  },
+  logoCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  appName: {
+    fontSize: 36,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  tagline: {
+    fontSize: 16,
+  },
+  buttonContainer: {
+    width: '100%',
+    maxWidth: 320,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+  },
+});

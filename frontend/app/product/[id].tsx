@@ -1,0 +1,972 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Alert,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Header } from '../../src/components/Header';
+import { Footer } from '../../src/components/Footer';
+import { useTheme } from '../../src/hooks/useTheme';
+import { useTranslation } from '../../src/hooks/useTranslation';
+import { useAppStore } from '../../src/store/appStore';
+import { productsApi, cartApi, commentsApi, favoritesApi } from '../../src/services/api';
+
+interface Comment {
+  id: string;
+  product_id: string;
+  user_id: string;
+  user_name: string;
+  user_picture?: string;
+  text: string;
+  rating?: number;
+  created_at: string;
+  is_owner: boolean;
+}
+
+export default function ProductDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors } = useTheme();
+  const { t, isRTL, language } = useTranslation();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { user, addToLocalCart } = useAppStore();
+
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false);
+  
+  // Image slider state
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [productImages, setProductImages] = useState<string[]>([]);
+  
+  // Favorites state
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  
+  // Comments state
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [avgRating, setAvgRating] = useState<number | null>(null);
+  const [ratingCount, setRatingCount] = useState(0);
+  
+  // New comment form
+  const [commentText, setCommentText] = useState('');
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [showCommentForm, setShowCommentForm] = useState(false);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchComments();
+      if (user) {
+        checkFavoriteStatus();
+      }
+    }
+  }, [id, user]);
+
+  // Set up product images when product is loaded
+  useEffect(() => {
+    if (product) {
+      const images: string[] = [];
+      // Add images array first
+      if (product.images && product.images.length > 0) {
+        images.push(...product.images);
+      } 
+      // Add image_url if exists and not already in images
+      else if (product.image_url && !images.includes(product.image_url)) {
+        images.push(product.image_url);
+      }
+      setProductImages(images);
+      setSelectedImageIndex(0);
+    }
+  }, [product]);
+
+  const fetchProduct = async () => {
+    try {
+      const response = await productsApi.getById(id as string);
+      setProduct(response.data);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    setCommentsLoading(true);
+    try {
+      const response = await commentsApi.getProductComments(id as string);
+      setComments(response.data.comments || []);
+      setAvgRating(response.data.avg_rating);
+      setRatingCount(response.data.rating_count || 0);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const response = await favoritesApi.check(id as string);
+      setIsFavorite(response.data.is_favorite);
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    setFavoriteLoading(true);
+    try {
+      const response = await favoritesApi.toggle(id as string);
+      setIsFavorite(response.data.is_favorite);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      Alert.alert(t('error'));
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    setAddingToCart(true);
+    try {
+      await cartApi.addItem(product.id, 1);
+      addToLocalCart({ product_id: product.id, quantity: 1, product });
+      Alert.alert('', t('addToCart') + ' ✔', [{ text: 'OK' }]);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      Alert.alert(t('error'));
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    if (!commentText.trim()) {
+      Alert.alert(language === 'ar' ? 'يرجى كتابة تعليق' : 'Please enter a comment');
+      return;
+    }
+
+    setSubmittingComment(true);
+    try {
+      await commentsApi.addComment(id as string, commentText.trim(), selectedRating > 0 ? selectedRating : undefined);
+      setCommentText('');
+      setSelectedRating(0);
+      setShowCommentForm(false);
+      Keyboard.dismiss();
+      fetchComments();
+      Alert.alert(language === 'ar' ? 'تم إضافة التعليق' : 'Comment added successfully');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      Alert.alert(t('error'));
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    Alert.alert(
+      language === 'ar' ? 'حذف التعليق' : 'Delete Comment',
+      language === 'ar' ? 'هل أنت متأكد من حذف هذا التعليق؟' : 'Are you sure you want to delete this comment?',
+      [
+        { text: language === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel' },
+        {
+          text: language === 'ar' ? 'حذف' : 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await commentsApi.deleteComment(commentId);
+              fetchComments();
+            } catch (error) {
+              console.error('Error deleting comment:', error);
+              Alert.alert(t('error'));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const getName = (item: any, field: string = 'name') => {
+    const arField = `${field}_ar`;
+    return language === 'ar' && item?.[arField] ? item[arField] : item?.[field] || '';
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const renderStars = (rating: number, size: number = 16, interactive: boolean = false, onPress?: (rating: number) => void) => {
+    return (
+      <View style={styles.starsContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <TouchableOpacity
+            key={star}
+            disabled={!interactive}
+            onPress={() => onPress && onPress(star)}
+            style={styles.starButton}
+          >
+            <Ionicons
+              name={star <= rating ? 'star' : 'star-outline'}
+              size={size}
+              color={star <= rating ? '#FFD700' : colors.textSecondary}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </View>
+    );
+  }
+
+  if (!product) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+            {t('error')}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      {/* Header */}
+      <Header title={getName(product)} showBack={true} />
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Product Image Slider with Thumbnails */}
+        <View style={[styles.imageContainer, { backgroundColor: colors.surface }]}>
+          {/* Main Image */}
+          {productImages.length > 0 ? (
+            <Image
+              source={{ uri: productImages[selectedImageIndex] }}
+              style={styles.productImage}
+              resizeMode="contain"
+            />
+          ) : (
+            <Ionicons name="cube-outline" size={100} color={colors.textSecondary} />
+          )}
+          
+          {/* Favorite Button */}
+          <TouchableOpacity
+            style={[styles.favoriteButton, { backgroundColor: colors.card }]}
+            onPress={handleToggleFavorite}
+            disabled={favoriteLoading}
+          >
+            {favoriteLoading ? (
+              <ActivityIndicator size="small" color={colors.error} />
+            ) : (
+              <Ionicons
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={24}
+                color={isFavorite ? colors.error : colors.textSecondary}
+              />
+            )}
+          </TouchableOpacity>
+
+          {/* Image Counter */}
+          {productImages.length > 1 && (
+            <View style={[styles.imageCounter, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+              <Text style={styles.imageCounterText}>
+                {selectedImageIndex + 1}/{productImages.length}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Thumbnail Images */}
+        {productImages.length > 1 && (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            style={styles.thumbnailsContainer}
+            contentContainerStyle={styles.thumbnailsContent}
+          >
+            {productImages.map((img, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.thumbnail,
+                  { 
+                    borderColor: selectedImageIndex === index ? colors.primary : 'transparent',
+                    backgroundColor: colors.surface,
+                  }
+                ]}
+                onPress={() => setSelectedImageIndex(index)}
+                activeOpacity={0.7}
+              >
+                <Image source={{ uri: img }} style={styles.thumbnailImage} />
+                {selectedImageIndex === index && (
+                  <View style={[styles.thumbnailOverlay, { borderColor: colors.primary }]} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Product Info */}
+        <View style={styles.infoContainer}>
+          {/* Rating Summary */}
+          {avgRating !== null && (
+            <View style={styles.ratingContainer}>
+              {renderStars(Math.round(avgRating))}
+              <Text style={[styles.ratingText, { color: colors.text }]}>
+                {avgRating.toFixed(1)}
+              </Text>
+              <Text style={[styles.ratingCount, { color: colors.textSecondary }]}>
+                ({ratingCount} {language === 'ar' ? 'تقييم' : 'reviews'})
+              </Text>
+            </View>
+          )}
+
+          {/* Brand Badge - Clickable */}
+          {product.product_brand && (
+            <TouchableOpacity 
+              style={[styles.brandBadge, { backgroundColor: colors.primary + '15' }]}
+              onPress={() => router.push(`/search?product_brand_id=${product.product_brand.id}`)}
+            >
+              <Ionicons name="pricetag" size={14} color={colors.primary} />
+              <Text style={[styles.brandText, { color: colors.primary }]}>
+                {product.product_brand.name}
+              </Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+
+          {/* Name */}
+          <Text style={[styles.productName, { color: colors.text }]}>
+            {getName(product)}
+          </Text>
+
+          {/* SKU */}
+          <Text style={[styles.sku, { color: colors.textSecondary }]}>
+            {t('sku')}: {product.sku}
+          </Text>
+
+          {/* Price */}
+          <Text style={[styles.price, { color: colors.primary }]}>
+            {product.price?.toFixed(2)} ج.م
+          </Text>
+
+          {/* Description */}
+          {(product.description || product.description_ar) && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t('description')}
+              </Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]}>
+                {getName(product, 'description')}
+              </Text>
+            </View>
+          )}
+
+          {/* Category - Clickable */}
+          {product.category && (
+            <View style={styles.section}>
+              <TouchableOpacity 
+                style={[styles.categoryBadge, { borderColor: colors.border }]}
+                onPress={() => router.push(`/category/${product.category.id}`)}
+              >
+                <Ionicons name="grid-outline" size={16} color={colors.primary} />
+                <Text style={[styles.categoryText, { color: colors.text }]}>
+                  {getName(product.category)}
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Compatible Cars - Clickable */}
+          {product.car_models && product.car_models.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t('compatibleWith')}
+              </Text>
+              <View style={styles.carModels}>
+                {product.car_models.map((model: any) => (
+                  <TouchableOpacity 
+                    key={model.id} 
+                    style={[styles.carModelBadge, { backgroundColor: colors.surface }]}
+                    onPress={() => router.push(`/car/${model.id}`)}
+                  >
+                    <Ionicons name="car-sport" size={14} color={colors.primary} />
+                    <Text style={[styles.carModelText, { color: colors.text }]}>
+                      {getName(model)}
+                      {model.year_start && model.year_end && (
+                        ` (${model.year_start}-${model.year_end})`
+                      )}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={12} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Comments Section */}
+          <View style={[styles.commentsSection, { borderTopColor: colors.border }]}>
+            <View style={styles.commentsHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {language === 'ar' ? 'التعليقات والتقييمات' : 'Comments & Reviews'}
+              </Text>
+              <Text style={[styles.commentsCount, { color: colors.textSecondary }]}>
+                ({comments.length})
+              </Text>
+            </View>
+
+            {/* Add Comment Button */}
+            {!showCommentForm && (
+              <TouchableOpacity
+                style={[styles.addCommentButton, { backgroundColor: colors.primary + '15' }]}
+                onPress={() => {
+                  if (!user) {
+                    router.push('/login');
+                    return;
+                  }
+                  setShowCommentForm(true);
+                }}
+              >
+                <Ionicons name="create-outline" size={20} color={colors.primary} />
+                <Text style={[styles.addCommentText, { color: colors.primary }]}>
+                  {language === 'ar' ? 'أضف تعليقك' : 'Write a review'}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Comment Form */}
+            {showCommentForm && (
+              <View style={[styles.commentForm, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[styles.formLabel, { color: colors.text }]}>
+                  {language === 'ar' ? 'تقييمك' : 'Your Rating'}
+                </Text>
+                {renderStars(selectedRating, 28, true, setSelectedRating)}
+                
+                <Text style={[styles.formLabel, { color: colors.text, marginTop: 12 }]}>
+                  {language === 'ar' ? 'تعليقك' : 'Your Comment'}
+                </Text>
+                <TextInput
+                  style={[styles.commentInput, { 
+                    backgroundColor: colors.background, 
+                    color: colors.text,
+                    borderColor: colors.border,
+                    textAlign: isRTL ? 'right' : 'left',
+                  }]}
+                  placeholder={language === 'ar' ? 'اكتب تعليقك هنا...' : 'Write your comment here...'}
+                  placeholderTextColor={colors.textSecondary}
+                  value={commentText}
+                  onChangeText={setCommentText}
+                  multiline
+                  numberOfLines={4}
+                />
+                
+                <View style={styles.formButtons}>
+                  <TouchableOpacity
+                    style={[styles.cancelButton, { borderColor: colors.border }]}
+                    onPress={() => {
+                      setShowCommentForm(false);
+                      setCommentText('');
+                      setSelectedRating(0);
+                    }}
+                  >
+                    <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>
+                      {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                    onPress={handleSubmitComment}
+                    disabled={submittingComment}
+                  >
+                    {submittingComment ? (
+                      <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                      <Text style={styles.submitButtonText}>
+                        {language === 'ar' ? 'إرسال' : 'Submit'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* Comments List */}
+            {commentsLoading ? (
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 20 }} />
+            ) : comments.length === 0 ? (
+              <View style={styles.noComments}>
+                <Ionicons name="chatbubble-outline" size={40} color={colors.textSecondary} />
+                <Text style={[styles.noCommentsText, { color: colors.textSecondary }]}>
+                  {language === 'ar' ? 'لا توجد تعليقات بعد' : 'No comments yet'}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.commentsList}>
+                {comments.map((comment) => (
+                  <View 
+                    key={comment.id} 
+                    style={[styles.commentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  >
+                    <View style={styles.commentHeader}>
+                      <View style={styles.commentUserInfo}>
+                        <View style={[styles.commentAvatar, { backgroundColor: colors.primary + '20' }]}>
+                          {comment.user_picture ? (
+                            <Image source={{ uri: comment.user_picture }} style={styles.avatarImage} />
+                          ) : (
+                            <Ionicons name="person" size={18} color={colors.primary} />
+                          )}
+                        </View>
+                        <View>
+                          <Text style={[styles.commentUserName, { color: colors.text }]}>
+                            {comment.user_name}
+                          </Text>
+                          <Text style={[styles.commentDate, { color: colors.textSecondary }]}>
+                            {formatDate(comment.created_at)}
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      {comment.is_owner && (
+                        <TouchableOpacity
+                          style={styles.deleteCommentButton}
+                          onPress={() => handleDeleteComment(comment.id)}
+                        >
+                          <Ionicons name="trash-outline" size={18} color={colors.error} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    
+                    {comment.rating && (
+                      <View style={styles.commentRating}>
+                        {renderStars(comment.rating, 14)}
+                      </View>
+                    )}
+                    
+                    <Text style={[styles.commentText, { color: colors.text }]}>
+                      {comment.text}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Bottom padding for button */}
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* Add to Cart Button */}
+      <View style={[
+        styles.addToCartContainer, 
+        { backgroundColor: colors.card, borderTopColor: colors.border }
+      ]}>
+        <TouchableOpacity
+          style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+          onPress={handleAddToCart}
+          disabled={addingToCart}
+        >
+          {addingToCart ? (
+            <ActivityIndicator size="small" color="#FFF" />
+          ) : (
+            <>
+              <Ionicons name="cart" size={22} color="#FFF" />
+              <Text style={styles.addToCartText}>{t('addToCart')}</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
+  },
+  imageContainer: {
+    height: 280,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imageCounter: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  imageCounterText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  thumbnailsContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  thumbnailsContent: {
+    gap: 10,
+  },
+  thumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    borderWidth: 2,
+    overflow: 'hidden',
+    marginRight: 10,
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+  },
+  thumbnailOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderWidth: 2,
+    borderRadius: 6,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  infoContainer: {
+    padding: 20,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+  },
+  starButton: {
+    padding: 2,
+  },
+  ratingText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  ratingCount: {
+    fontSize: 13,
+  },
+  brandBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginBottom: 12,
+    gap: 6,
+  },
+  brandText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  productName: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  sku: {
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  price: {
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 20,
+  },
+  section: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  categoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 6,
+  },
+  categoryText: {
+    fontSize: 14,
+  },
+  carModels: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  carModelBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 6,
+  },
+  carModelText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  // Comments Section
+  commentsSection: {
+    marginTop: 24,
+    paddingTop: 24,
+    borderTopWidth: 1,
+  },
+  commentsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  commentsCount: {
+    fontSize: 14,
+  },
+  addCommentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  addCommentText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  commentForm: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  commentInput: {
+    minHeight: 100,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    textAlignVertical: 'top',
+  },
+  formButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 16,
+    gap: 12,
+  },
+  cancelButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  submitButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  noComments: {
+    alignItems: 'center',
+    padding: 32,
+    gap: 12,
+  },
+  noCommentsText: {
+    fontSize: 14,
+  },
+  commentsList: {
+    marginTop: 16,
+    gap: 12,
+  },
+  commentCard: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  commentUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  commentAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  commentUserName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  commentDate: {
+    fontSize: 11,
+  },
+  deleteCommentButton: {
+    padding: 6,
+  },
+  commentRating: {
+    marginTop: 8,
+  },
+  commentText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 10,
+  },
+  addToCartContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    borderTopWidth: 1,
+  },
+  addToCartButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 10,
+  },
+  addToCartText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});

@@ -1,0 +1,471 @@
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Header } from '../../src/components/Header';
+import { Footer } from '../../src/components/Footer';
+import { useTheme } from '../../src/hooks/useTheme';
+import { useTranslation } from '../../src/hooks/useTranslation';
+import { useAppStore } from '../../src/store/appStore';
+import { carModelsApi, cartApi } from '../../src/services/api';
+
+export default function CarModelDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors } = useTheme();
+  const { t, isRTL, language } = useTranslation();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { user, addToLocalCart } = useAppStore();
+
+  const [carModel, setCarModel] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCarModel();
+  }, [id]);
+
+  const fetchCarModel = async () => {
+    try {
+      const response = await carModelsApi.getById(id as string);
+      setCarModel(response.data);
+    } catch (error) {
+      console.error('Error fetching car model:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getName = (item: any, field: string = 'name') => {
+    if (!item) return '';
+    const arField = `${field}_ar`;
+    return language === 'ar' && item?.[arField] ? item[arField] : item?.[field] || '';
+  };
+
+  const handleAddToCart = async (product: any) => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    try {
+      await cartApi.addItem(product.id, 1);
+      addToLocalCart({ product_id: product.id, quantity: 1, product });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Header title="" showBack={true} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+        <Footer />
+      </View>
+    );
+  }
+
+  if (!carModel) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Header title={t('error')} showBack={true} />
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+            {t('error')}
+          </Text>
+        </View>
+        <Footer />
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header */}
+      <Header title={getName(carModel)} showBack={true} />
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Car Image */}
+        <View style={[styles.imageContainer, { backgroundColor: colors.surface }]}>
+          {carModel.image_url ? (
+            <Image
+              source={{ uri: carModel.image_url }}
+              style={styles.carImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Ionicons name="car-sport" size={100} color={colors.textSecondary} />
+          )}
+        </View>
+
+        {/* Car Info */}
+        <View style={styles.infoContainer}>
+          {/* Brand Badge - Clickable */}
+          {carModel.brand && (
+            <TouchableOpacity 
+              style={[styles.brandBadge, { backgroundColor: colors.primary + '15' }]}
+              onPress={() => router.push(`/brand/${carModel.brand.id}`)}
+            >
+              <Ionicons name="car-sport" size={16} color={colors.primary} />
+              <Text style={[styles.brandText, { color: colors.primary }]}>
+                {getName(carModel.brand)}
+              </Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+
+          {/* Name & Year */}
+          <Text style={[styles.carName, { color: colors.text }]}>
+            {getName(carModel)}
+          </Text>
+          <Text style={[styles.yearRange, { color: colors.textSecondary }]}>
+            {carModel.year_start} - {carModel.year_end}
+          </Text>
+
+          {/* Description */}
+          {(carModel.description || carModel.description_ar) && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t('description')}
+              </Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]}>
+                {getName(carModel, 'description')}
+              </Text>
+            </View>
+          )}
+
+          {/* Variants */}
+          {carModel.variants && carModel.variants.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {language === 'ar' ? 'الفئات والمحركات' : 'Variants & Engines'}
+              </Text>
+              {carModel.variants.map((variant: any, index: number) => (
+                <View 
+                  key={index} 
+                  style={[styles.variantCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                >
+                  <Text style={[styles.variantName, { color: colors.text }]}>
+                    {getName(variant)}
+                  </Text>
+                  <View style={styles.variantDetails}>
+                    <View style={styles.detailRow}>
+                      <Ionicons name="speedometer-outline" size={16} color={colors.primary} />
+                      <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                        {getName(variant, 'engine')}
+                      </Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Ionicons name="cog-outline" size={16} color={colors.primary} />
+                      <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                        {getName(variant, 'transmission')}
+                      </Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Ionicons name="water-outline" size={16} color={colors.primary} />
+                      <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                        {getName(variant, 'fuel_type')}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Compatible Products */}
+          {carModel.compatible_products && carModel.compatible_products.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  {language === 'ar' ? 'المنتجات المتوافقة' : 'Compatible Products'}
+                </Text>
+                <View style={[styles.countBadge, { backgroundColor: colors.success + '20' }]}>
+                  <Text style={[styles.countText, { color: colors.success }]}>
+                    {carModel.compatible_products_count}
+                  </Text>
+                </View>
+              </View>
+              
+              {carModel.compatible_products.map((product: any) => (
+                <TouchableOpacity
+                  key={product.id}
+                  style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/product/${product.id}`)}
+                >
+                  <View style={[styles.productImageContainer, { backgroundColor: colors.surface }]}>
+                    {product.image_url ? (
+                      <Image
+                        source={{ uri: product.image_url }}
+                        style={styles.productImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Ionicons name="cube-outline" size={30} color={colors.textSecondary} />
+                    )}
+                  </View>
+                  <View style={styles.productInfo}>
+                    <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>
+                      {getName(product)}
+                    </Text>
+                    {product.category && (
+                      <Text style={[styles.productCategory, { color: colors.textSecondary }]}>
+                        {getName(product.category)}
+                      </Text>
+                    )}
+                    <View style={styles.productFooter}>
+                      <Text style={[styles.productPrice, { color: colors.primary }]}>
+                        {product.price?.toFixed(2)} ج.م
+                      </Text>
+                      <View style={[styles.compatibleBadge, { backgroundColor: colors.success + '15' }]}>
+                        <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                        <Text style={[styles.compatibleText, { color: colors.success }]}>
+                          {language === 'ar' ? 'متوافق' : 'Compatible'}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.addToCartBtn, { backgroundColor: colors.primary }]}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(product);
+                    }}
+                  >
+                    <Ionicons name="cart-outline" size={18} color="#FFF" />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* No Compatible Products */}
+          {(!carModel.compatible_products || carModel.compatible_products.length === 0) && (
+            <View style={styles.emptyProducts}>
+              <Ionicons name="cube-outline" size={48} color={colors.textSecondary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                {language === 'ar' ? 'لا توجد منتجات متوافقة حالياً' : 'No compatible products yet'}
+              </Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+      
+      {/* Footer */}
+      <Footer />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  imageContainer: {
+    height: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  carImage: {
+    width: '100%',
+    height: '100%',
+  },
+  infoContainer: {
+    padding: 20,
+  },
+  brandBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 12,
+    gap: 6,
+  },
+  brandText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  carName: {
+    fontSize: 26,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  yearRange: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  section: {
+    marginTop: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 10,
+  },
+  countBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  countText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 24,
+  },
+  variantCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 10,
+  },
+  variantName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  variantDetails: {
+    gap: 8,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailText: {
+    fontSize: 13,
+    flex: 1,
+  },
+  productCard: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  productImageContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+  productInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  productCategory: {
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  productFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  compatibleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    gap: 4,
+  },
+  compatibleText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  addToCartBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+  },
+  emptyProducts: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 14,
+    marginTop: 12,
+  },
+});
