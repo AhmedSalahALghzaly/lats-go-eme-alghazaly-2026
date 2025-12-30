@@ -11,17 +11,10 @@ config.cacheStores = [
   new FileStore({ root: path.join(root, 'cache') }),
 ];
 
-// Force using CJS version for zustand to avoid import.meta issues
-config.resolver.resolveRequest = (context, moduleName, platform) => {
-  // Force zustand to use CommonJS build
-  if (moduleName === 'zustand' || moduleName.startsWith('zustand/')) {
-    const cjsPath = moduleName.replace(/^zustand/, 'zustand');
-    return context.resolveRequest(context, cjsPath, platform);
-  }
-  return context.resolveRequest(context, moduleName, platform);
-};
-
 // Reduce the number of workers to decrease resource usage
 config.maxWorkers = 2;
+
+// Force CommonJS resolution for packages with import.meta issues
+config.resolver.unstable_enablePackageExports = false;
 
 module.exports = config;
