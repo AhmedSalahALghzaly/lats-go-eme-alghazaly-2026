@@ -452,4 +452,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  ownerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 });
