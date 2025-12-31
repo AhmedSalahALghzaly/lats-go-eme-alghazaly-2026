@@ -52,7 +52,7 @@ export default function LoginScreen() {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, hasHydrated, isMounted]);
+  }, [isAuthenticated, hasHydrated, isMounted, router]);
 
   // Handle initial URL (cold start)
   useEffect(() => {
