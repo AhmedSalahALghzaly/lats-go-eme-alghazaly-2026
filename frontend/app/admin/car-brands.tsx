@@ -241,7 +241,7 @@ export default function CarBrandsAdmin() {
         visible={toastVisible}
         message={toastMessage}
         type={toastType}
-        onHide={() => setToastVisible(false)}
+        onDismiss={() => setToastVisible(false)}
       />
     </SafeAreaView>
   );
