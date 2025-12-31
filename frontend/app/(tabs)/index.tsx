@@ -173,9 +173,57 @@ export default function HomeScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header showBack={false} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          {/* Car Brands Skeleton */}
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
+              <Skeleton width={120} height={20} />
+              <Skeleton width={60} height={16} />
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+              {[1, 2, 3, 4].map((i) => (
+                <View key={i} style={[styles.brandCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Skeleton width={50} height={50} borderRadius={25} style={{ marginBottom: 8 }} />
+                  <Skeleton width={60} height={14} />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Offers Skeleton */}
+          <View style={styles.sliderSection}>
+            <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
+              <Skeleton width={140} height={20} />
+            </View>
+            <Skeleton height={160} borderRadius={12} style={{ marginHorizontal: 16 }} />
+          </View>
+
+          {/* Categories Skeleton */}
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
+              <Skeleton width={100} height={20} />
+              <Skeleton width={60} height={16} />
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+              {[1, 2, 3, 4].map((i) => (
+                <CategoryCardSkeleton key={i} />
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Products Skeleton */}
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
+              <Skeleton width={80} height={20} />
+              <Skeleton width={60} height={16} />
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+              {[1, 2, 3].map((i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </ScrollView>
+          </View>
+        </ScrollView>
       </View>
     );
   }
