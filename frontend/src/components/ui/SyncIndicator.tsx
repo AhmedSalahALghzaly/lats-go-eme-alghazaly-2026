@@ -13,7 +13,7 @@ import {
   Easing,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSyncStatus, useIsOnline, useLastSyncTime, useAppStore } from '../../store/appStore';
+import { useSyncStatus, useIsOnline, useAppStore } from '../../store/appStore';
 import { useSyncService } from '../../services/syncService';
 
 interface SyncIndicatorProps {
