@@ -24,8 +24,12 @@ export default function CarBrandsAdmin() {
   // Form state
   const [name, setName] = useState('');
   const [nameAr, setNameAr] = useState('');
-  const [logoImage, setLogoImage] = useState<string | null>(null);
-  const [logoUrl, setLogoUrl] = useState('');
+  const [logoImage, setLogoImage] = useState<string>('');
+
+  // Toast state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
 
   useEffect(() => {
     fetchBrands();
