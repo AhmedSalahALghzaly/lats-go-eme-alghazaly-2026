@@ -511,27 +511,7 @@ export default function ProductsAdmin() {
               </TouchableOpacity>
             </View>
 
-            {/* Or add by URL */}
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>
-                {language === 'ar' ? 'أو أضف رابط صورة' : 'Or add image URL'}
-              </Text>
-              <View style={styles.urlInputRow}>
-                <TextInput
-                  style={[styles.urlInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
-                  value={imageUrl}
-                  onChangeText={setImageUrl}
-                  placeholder="https://..."
-                  placeholderTextColor={colors.textSecondary}
-                />
-                <TouchableOpacity
-                  style={[styles.addUrlBtn, { backgroundColor: colors.primary }]}
-                  onPress={addImageUrl}
-                >
-                  <Ionicons name="add" size={20} color="#FFF" />
-                </TouchableOpacity>
-              </View>
-            </View>
+ 
           </View>
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
