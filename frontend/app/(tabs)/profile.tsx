@@ -26,6 +26,14 @@ export default function ProfileScreen() {
   const { t, isRTL, language } = useTranslation();
   const router = useRouter();
   const { user, theme, toggleTheme, setLanguage, logout } = useAppStore();
+  const partners = useAppStore((state) => state.partners);
+
+  // Check if user can access owner interface
+  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  const isPartner = partners.some(
+    (p: any) => p.email?.toLowerCase() === user?.email?.toLowerCase()
+  );
+  const canAccessOwner = isOwner || isPartner;
 
   const handleLogout = async () => {
     Alert.alert(
