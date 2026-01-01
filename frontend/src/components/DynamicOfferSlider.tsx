@@ -353,8 +353,8 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
                         </LinearGradient>
                       )}
 
-                      {/* Interactive Action Icon */}
-                      {!hideIcon && (
+                      {/* Interactive Action Icon - Only show for bundle_offer, hide for promotion/slider */}
+                      {!hideIcon && item.type === 'bundle_offer' && (
                         <TouchableOpacity
                           onPress={() => handleItemPress(item)}
                           activeOpacity={0.7}
