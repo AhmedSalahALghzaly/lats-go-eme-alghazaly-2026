@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Header } from '../../src/components/Header';
 import { useTheme, lightTheme, darkTheme } from '../../src/hooks/useTheme';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { useAppStore } from '../../src/store/appStore';
+import { useAppStore, useCanAccessAdminPanel } from '../../src/store/appStore';
 import { authApi } from '../../src/services/api';
 
 // Owner email that can always access the interface
