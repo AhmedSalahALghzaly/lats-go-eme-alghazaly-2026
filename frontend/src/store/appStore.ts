@@ -229,6 +229,8 @@ interface AppState {
   updateCartItem: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string, voidBundle?: boolean) => void;
   clearCart: () => void;
+  clearLocalCart: () => void;
+  setCartItems: (items: any[]) => void;
   getCartTotal: () => number;
   voidBundleDiscount: (bundleGroupId: string) => void;
   
