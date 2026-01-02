@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { useAppStore } from '../../src/store/appStore';
+import { useAppStore, useCanAccessAdminPanel } from '../../src/store/appStore';
 
 // Owner email that can always access the interface
 const OWNER_EMAIL = 'pc.2025.ai@gmail.com';
@@ -18,6 +18,9 @@ export default function TabLayout() {
   const cartItems = useAppStore((state) => state.cartItems);
   const user = useAppStore((state) => state.user);
   const partners = useAppStore((state) => state.partners);
+  const admins = useAppStore((state) => state.admins);
+  const userRole = useAppStore((state) => state.userRole);
+  const canAccessAdminPanel = useCanAccessAdminPanel();
   
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -26,6 +29,9 @@ export default function TabLayout() {
   const isPartner = partners.some(
     (p: any) => p.email?.toLowerCase() === user?.email?.toLowerCase()
   );
+  const isAdmin = admins.some(
+    (a: any) => a.email?.toLowerCase() === user?.email?.toLowerCase()
+  ) || userRole === 'admin';
   const canAccessOwner = isOwner || isPartner;
 
   // Custom center button for Owner Access
