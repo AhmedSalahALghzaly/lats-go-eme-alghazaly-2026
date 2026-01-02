@@ -267,6 +267,5 @@ export const carBrandsApi = carBrandApi;
 export const carModelsApi = carModelApi;
 export const productBrandsApi = productBrandApi;
 export const productsApi = productApi;
-export const favoritesApi = favoriteApi;
 
 export default api;
