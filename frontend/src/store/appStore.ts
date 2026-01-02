@@ -467,8 +467,9 @@ export const useAppStore = create<AppState>()(
         distributors: state.distributors,
         dashboardLayout: state.dashboardLayout,
       }),
-      onRehydrateStorage: () => (state) => {
-        // Called when hydration is finished
+      onRehydrateStorage: () => (state, error) => {
+        // Called when hydration is finished (or failed)
+        console.log('Rehydration complete, error:', error);
         if (state) {
           state.setHasHydrated(true);
         }
@@ -476,6 +477,16 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
+
+// Auto-hydrate fallback: Set hydration immediately after store creation
+// This handles the case where AsyncStorage fails silently on web
+setTimeout(() => {
+  const state = useAppStore.getState();
+  if (!state._hasHydrated) {
+    console.log('Auto-hydrating store (fallback)');
+    state.setHasHydrated(true);
+  }
+}, 500);
 
 // Selectors
 export const useUser = () => useAppStore((state) => state.user);
