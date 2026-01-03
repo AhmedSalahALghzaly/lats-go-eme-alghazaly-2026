@@ -121,45 +121,16 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Icons Section - Far left in RTL, Far right in LTR */}
         <View style={[styles.iconsSection, isRTL && styles.iconsSectionRTL]}>
-          {/* Notification Bell */}
-          <NotificationBell onPress={() => setShowNotifications(true)} />
-
-          {/* Admin Panel Icon - Only visible for authorized admins */}
-          {user && ADMIN_EMAILS.includes(user.email?.toLowerCase()) && (
-            <TouchableOpacity 
-              onPress={() => router.push('/admin')} 
-              style={styles.iconButton}
-            >
-              <Ionicons name="shield-checkmark" size={22} color="#8B5CF6" />
-            </TouchableOpacity>
-          )}
-
-          {showSearch && (
-            <TouchableOpacity 
-              onPress={() => setShowAdvancedSearch(true)} 
-              style={styles.iconButton}
-            >
-              <Ionicons name="search" size={22} color={headerIconColor} />
-            </TouchableOpacity>
-          )}
-
-          {/* Dark Mode Toggle */}
-          <TouchableOpacity onPress={() => toggleTheme(theme === 'dark' ? 'light' : 'dark')} style={styles.iconButton}>
+          {/* Profile/User Icon */}
+          <TouchableOpacity 
+            onPress={() => router.push('/(tabs)/profile')} 
+            style={styles.iconButton}
+          >
             <Ionicons 
-              name={isDark ? 'sunny' : 'moon'} 
+              name={user ? 'person' : 'person-outline'} 
               size={22} 
               color={headerIconColor} 
             />
-          </TouchableOpacity>
-
-          {/* Language Toggle */}
-          <TouchableOpacity 
-            onPress={() => setLanguage(language === 'en' ? 'ar' : 'en')} 
-            style={styles.iconButton}
-          >
-            <Text style={[styles.langText, { color: headerIconColor }]}>
-              {language === 'en' ? 'عر' : 'EN'}
-            </Text>
           </TouchableOpacity>
 
           {showCart && (
@@ -176,16 +147,49 @@ export const Header: React.FC<HeaderProps> = ({
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity 
-            onPress={() => router.push('/(tabs)/profile')} 
-            style={styles.iconButton}
-          >
+          {/* Dark Mode Toggle */}
+          <TouchableOpacity onPress={() => toggleTheme(theme === 'dark' ? 'light' : 'dark')} style={styles.iconButton}>
             <Ionicons 
-              name={user ? 'person' : 'person-outline'} 
+              name={isDark ? 'sunny' : 'moon'} 
               size={22} 
               color={headerIconColor} 
             />
           </TouchableOpacity>
+
+          {/* Sync Indicator - Now between mode switch and language */}
+          <SyncIndicator compact={true} showLabel={false} />
+
+          {/* Language Toggle */}
+          <TouchableOpacity 
+            onPress={() => setLanguage(language === 'en' ? 'ar' : 'en')} 
+            style={styles.iconButton}
+          >
+            <Text style={[styles.langText, { color: headerIconColor }]}>
+              {language === 'en' ? 'عر' : 'EN'}
+            </Text>
+          </TouchableOpacity>
+
+          {showSearch && (
+            <TouchableOpacity 
+              onPress={() => setShowAdvancedSearch(true)} 
+              style={styles.iconButton}
+            >
+              <Ionicons name="search" size={22} color={headerIconColor} />
+            </TouchableOpacity>
+          )}
+
+          {/* Notification Bell */}
+          <NotificationBell onPress={() => setShowNotifications(true)} />
+
+          {/* Admin Panel Icon - Only visible for authorized admins */}
+          {user && ADMIN_EMAILS.includes(user.email?.toLowerCase()) && (
+            <TouchableOpacity 
+              onPress={() => router.push('/admin')} 
+              style={styles.iconButton}
+            >
+              <Ionicons name="shield-checkmark" size={22} color="#8B5CF6" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
