@@ -93,9 +93,6 @@ export const Header: React.FC<HeaderProps> = ({
               style={styles.logoImage}
               resizeMode="contain"
             />
-            <Text style={[styles.brandText, { color: currentMood?.primary || colors.primary }]}>
-              {language === 'ar' ? 'لقطع غيار السيارات' : 'AUTO PARTS'}
-            </Text>
           </TouchableOpacity>
         )}
 
@@ -117,14 +114,13 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
         )}
 
-        {/* Spacer to push icons to the other side */}
-        <View style={styles.spacer} />
+        {/* Center Section - Sync Indicator */}
+        <View style={styles.centerSection}>
+          <SyncIndicator compact={false} showLabel={true} />
+        </View>
 
         {/* Icons Section - Far left in RTL, Far right in LTR */}
         <View style={[styles.iconsSection, isRTL && styles.iconsSectionRTL]}>
-          {/* Sync Indicator - Compact version */}
-          <SyncIndicator compact />
-
           {/* Notification Bell */}
           <NotificationBell onPress={() => setShowNotifications(true)} />
 
