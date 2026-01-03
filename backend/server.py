@@ -1809,19 +1809,43 @@ async def update_order_status(order_id: str, status: str, request: Request):
     
     await db.orders.update_one({"_id": order_id}, {"$set": {"status": status, "updated_at": datetime.now(timezone.utc)}})
     
-    # Send notification for delivered orders
+    # Send notification to customer about order status change
+    customer_id = order.get("user_id")
+    order_number = order.get("order_number", order_id)[:20]
+    
+    status_messages = {
+        "pending": {"en": "Your order has been received", "ar": "تم استلام طلبك"},
+        "preparing": {"en": "Your order is being prepared", "ar": "جاري تحضير طلبك"},
+        "shipped": {"en": "Your order has been shipped", "ar": "تم شحن طلبك"},
+        "out_for_delivery": {"en": "Your order is out for delivery", "ar": "طلبك في الطريق إليك"},
+        "delivered": {"en": "Your order has been delivered", "ar": "تم توصيل طلبك بنجاح"},
+        "cancelled": {"en": "Your order has been cancelled", "ar": "تم إلغاء طلبك"},
+    }
+    
+    msg = status_messages.get(status, {"en": f"Order status: {status}", "ar": f"حالة الطلب: {status}"})
+    
+    if customer_id:
+        await create_notification(
+            customer_id,
+            f"طلب #{order_number}",
+            msg["ar"],
+            "info" if status not in ["delivered", "cancelled"] else ("success" if status == "delivered" else "warning"),
+            {"order_id": order_id, "status": status, "type": "order_status"}
+        )
+    
+    # Send notification for delivered orders to owner
     if status == "delivered":
         owner = await db.users.find_one({"email": PRIMARY_OWNER_EMAIL})
         if owner:
             await create_notification(
                 str(owner["_id"]),
                 "Order Delivered",
-                f"Order #{order.get('order_number', order_id)[:20]} has been delivered",
+                f"Order #{order_number} has been delivered",
                 "success"
             )
     
-    await manager.broadcast({"type": "order_update", "order_id": order_id, "status": status})
-    return {"message": "Updated"}
+    await manager.broadcast({"type": "order_update", "order_id": order_id, "status": status, "user_id": customer_id})
+    return {"message": "Updated", "status": status}
 
 # ==================== Customers Routes ====================
 
