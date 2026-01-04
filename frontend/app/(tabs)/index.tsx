@@ -170,14 +170,14 @@ export default function HomeScreen() {
     return language === 'ar' && item.name_ar ? item.name_ar : item.name;
   };
 
-  const handleAddToCart = async (product: any) => {
+  const handleAddToCart = async (product: any, quantity: number = 1) => {
     if (!user) {
       router.push('/login');
       return;
     }
     try {
-      await cartApi.addItem(product.id, 1);
-      addToLocalCart({ product_id: product.id, quantity: 1, product });
+      await cartApi.addItem(product.id, quantity);
+      addToLocalCart({ product_id: product.id, quantity: quantity, product });
     } catch (error) {
       console.error('Error adding to cart:', error);
     }
