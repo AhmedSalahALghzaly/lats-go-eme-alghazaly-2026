@@ -98,13 +98,13 @@ export default function CustomersScreen() {
     const customerList = [...customers];
     
     if (sortMode === 'most_purchased') {
-      return customerList.sort((a: any, b: any) => {
+      return customerList.sort((a, b) => {
         const aCount = a.order_count || a.total_orders || 0;
         const bCount = b.order_count || b.total_orders || 0;
         return bCount - aCount;
       });
     } else {
-      return customerList.sort((a: any, b: any) => {
+      return customerList.sort((a, b) => {
         const aValue = a.total_spent || a.total_value || 0;
         const bValue = b.total_spent || b.total_value || 0;
         return bValue - aValue;
@@ -115,12 +115,12 @@ export default function CustomersScreen() {
   // Calculate totals
   const totals = useMemo(() => ({
     totalCustomers: customers.length,
-    totalOrders: customers.reduce((sum: number, c: any) => sum + (c.order_count || c.total_orders || 0), 0),
-    totalValue: customers.reduce((sum: number, c: any) => sum + (c.total_spent || c.total_value || 0), 0),
+    totalOrders: customers.reduce((sum, c) => sum + (c.order_count || c.total_orders || 0), 0),
+    totalValue: customers.reduce((sum, c) => sum + (c.total_spent || c.total_value || 0), 0),
   }), [customers]);
 
   // Navigate to customer profile with user_id
-  const handleCustomerPress = (customer: any) => {
+  const handleCustomerPress = (customer) => {
     const userId = customer.user_id || customer.id;
     router.push(`/admin/customers?customerId=${userId}`);
   };
