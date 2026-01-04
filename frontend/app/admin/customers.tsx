@@ -274,8 +274,8 @@ export default function CustomersAdmin() {
                   {/* Real-Time Order Status Indicator */}
                   <View style={styles.statusIndicatorWrapper}>
                     <OrderStatusIndicator 
-                      status={customerOrderStatus[customer.user_id]?.status || 'no_active_order'}
-                      activeOrderCount={customerOrderStatus[customer.user_id]?.activeCount || 0}
+                      status={customerOrderStatus[customer.id]?.status || 'no_active_order'}
+                      activeOrderCount={customerOrderStatus[customer.id]?.activeCount || 0}
                       size={24}
                     />
                   </View>
