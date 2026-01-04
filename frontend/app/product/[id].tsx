@@ -60,6 +60,7 @@ export default function ProductDetailScreen() {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   
   // Image slider state
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
