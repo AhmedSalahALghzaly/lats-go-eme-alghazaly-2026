@@ -403,7 +403,7 @@ export default function OrderDetailAdmin() {
             <Ionicons name="cube" size={16} /> {language === 'ar' ? 'المنتجات' : 'Order Items'}
           </Text>
           
-          {(order.items || []).map((item: any, index: number) => (
+          {(order.items || []).map((item, index) => (
             <View key={index} style={[styles.itemRow, { borderColor: colors.border }]}>
               <View style={[styles.itemThumb, { backgroundColor: colors.surface }]}>
                 {item.image_url ? (
