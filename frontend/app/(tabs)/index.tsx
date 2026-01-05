@@ -81,6 +81,7 @@ export default function HomeScreen() {
       const carModelsData = carModelsRes.data || [];
       const productBrandsData = prodBrandsRes.data || [];
       const productsData = productsRes.data?.products || [];
+      console.log('Products fetched:', productsData.length, productsData);
       
       // Set local state
       setCategories(categoriesData);
