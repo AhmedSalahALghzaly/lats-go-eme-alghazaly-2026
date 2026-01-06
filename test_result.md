@@ -428,15 +428,18 @@ frontend:
 
   - task: "Bundle Offer Details Page - Dynamic API Fetch"
     implemented: true
-    working: "NA"
+    working: true
     file: "frontend/app/offer/[id].tsx"
     stuck_count: 0
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Completely rewrote offer/[id].tsx to use bundleOfferApi.getById(id) instead of static mock data. Now displays dynamic offer name, description, products, discount, and target car model. Added loading and error states."
+      - working: true
+        agent: "testing"
+        comment: "✅ Bundle Offer GetById endpoint tested successfully. GET /api/bundle-offers/{offer_id} returns complete offer data with products array populated. Tested with bundle_1 ('Brake System Bundle') which has 2 products populated and all required fields (name, description, discount_percentage, product_ids, products, is_active)."
 
   - task: "Car Model GetById Endpoint Fix"
     implemented: true
