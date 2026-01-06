@@ -234,8 +234,10 @@ export const syncApi = {
 
 // Promotion APIs
 export const promotionApi = {
-  getAll: (promotionType?: string, activeOnly?: boolean) => 
+  getAll: (promotionType?: string, activeOnly: boolean = true) => 
     api.get('/promotions', { params: { promotion_type: promotionType, active_only: activeOnly } }),
+  getAllForAdmin: (promotionType?: string) => 
+    api.get('/promotions', { params: { promotion_type: promotionType, active_only: false } }),
   getById: (id: string) => api.get(`/promotions/${id}`),
   create: (data: any) => api.post('/promotions', data),
   update: (id: string, data: any) => api.put(`/promotions/${id}`, data),
@@ -245,7 +247,8 @@ export const promotionApi = {
 
 // Bundle Offer APIs
 export const bundleOfferApi = {
-  getAll: (activeOnly?: boolean) => api.get('/bundle-offers', { params: { active_only: activeOnly } }),
+  getAll: (activeOnly: boolean = true) => api.get('/bundle-offers', { params: { active_only: activeOnly } }),
+  getAllForAdmin: () => api.get('/bundle-offers', { params: { active_only: false } }),
   getById: (id: string) => api.get(`/bundle-offers/${id}`),
   create: (data: any) => api.post('/bundle-offers', data),
   update: (id: string, data: any) => api.put(`/bundle-offers/${id}`, data),
