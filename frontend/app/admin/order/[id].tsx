@@ -447,6 +447,18 @@ export default function OrderDetailAdmin() {
             </Text>
           </View>
           
+          {/* Bundle/Promotional Discount from items - if any */}
+          {order.total_discount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: '#10b981' }]}>
+                {language === 'ar' ? 'خصم العروض:' : 'Promotional Discount:'}
+              </Text>
+              <Text style={[styles.summaryValue, { color: '#10b981' }]}>
+                -{order.total_discount.toFixed(2)} ج.م
+              </Text>
+            </View>
+          )}
+          
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
               {language === 'ar' ? 'الشحن:' : 'Shipping:'}
