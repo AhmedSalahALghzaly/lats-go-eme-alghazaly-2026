@@ -264,7 +264,7 @@ export default function OwnerDashboard() {
 
   const handleDeletePartner = async (partner: any) => {
     try {
-      await adminApi.removeAdmin(partner.id);
+      await adminApi.delete(partner.id);
       haptic.delete();
       fetchPartners();
     } catch (error) {
