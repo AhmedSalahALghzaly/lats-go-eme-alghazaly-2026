@@ -575,9 +575,12 @@ export default function ProductsAdmin() {
               </>
             ) : (
               <>
-                <Ionicons name="save" size={20} color="#FFF" />
+                <Ionicons name={isEditMode ? "create" : "save"} size={20} color="#FFF" />
                 <Text style={styles.saveButtonText}>
-                  {language === 'ar' ? 'حفظ المنتج' : 'Save Product'}
+                  {isEditMode 
+                    ? (language === 'ar' ? 'تحديث المنتج' : 'Update Product')
+                    : (language === 'ar' ? 'حفظ المنتج' : 'Save Product')
+                  }
                 </Text>
               </>
             )}
