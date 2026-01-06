@@ -138,12 +138,15 @@ export default function OwnerDashboard() {
       );
       setPartners(partnersList);
       setPendingPartners([]); // No pending section needed
+      
+      // Update global store so footer can recognize partners
+      setGlobalPartners(partnersList);
     } catch (error) {
       console.error('Error fetching partners:', error);
     } finally {
       setLoadingPartners(false);
     }
-  }, []);
+  }, [setGlobalPartners]);
 
   // Fetch partners on mount and set up auto-refresh
   useEffect(() => {
