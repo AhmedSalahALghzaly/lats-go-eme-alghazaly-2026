@@ -274,9 +274,10 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
       >
         {sliderItems.map((item, index) => {
           const palette = getColorPalette(index);
-          const discount = item.type === 'bundle_offer' ? item.discount_percentage : 
+          const isBundle = item.type === 'bundle_offer' || item.type === 'bundle';
+          const discount = isBundle ? (item.discount_percentage || 0) : 
                           (item.original_total && item.discounted_total ? 
-                            Math.round((1 - item.discounted_total / item.original_total) * 100) : 0);
+                            Math.round((1 - item.discounted_total / item.original_total) * 100) : (item.discount_percentage || 0));
           
           return (
             <TouchableOpacity 
@@ -302,14 +303,14 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
                   <View style={[styles.accentStrip, { backgroundColor: palette.accent }]} />
                   
                   {/* Type Badge */}
-                  <View style={[styles.typeBadge, { backgroundColor: item.type === 'bundle_offer' ? '#F59E0B' : palette.accent }]}>
+                  <View style={[styles.typeBadge, { backgroundColor: isBundle ? '#F59E0B' : palette.accent }]}>
                     <Ionicons 
-                      name={item.type === 'bundle_offer' ? 'gift' : 'megaphone'} 
+                      name={isBundle ? 'gift' : 'megaphone'} 
                       size={12} 
                       color="#FFF" 
                     />
                     <Text style={styles.typeBadgeText}>
-                      {item.type === 'bundle_offer' 
+                      {isBundle 
                         ? (language === 'ar' ? 'عرض مجمع' : 'Bundle')
                         : (language === 'ar' ? 'عرض' : 'Promo')}
                     </Text>
@@ -339,7 +340,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
                       )}
                       
                       {/* Product Count for bundles */}
-                      {item.type === 'bundle_offer' && item.product_count && (
+                      {isBundle && item.product_count && (
                         <Text style={styles.subtitleText}>
                           {item.product_count} {language === 'ar' ? 'منتجات' : 'products'}
                         </Text>
