@@ -201,7 +201,8 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
       Animated.timing(scaleAnim, { toValue: 1.1, duration: 120, useNativeDriver: true }),
       Animated.timing(scaleAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
     ]).start(() => {
-      if (item.type === 'bundle_offer') {
+      // Handle bundle offers (both 'bundle_offer' and 'bundle' types)
+      if (item.type === 'bundle_offer' || item.type === 'bundle') {
         // Navigate to bundle offer details
         router.push(`/offer/${item.id}`);
       } else if (item.type === 'promotion') {
