@@ -2397,12 +2397,28 @@ async def update_bundle_offer(offer_id: str, data: BundleOfferCreate, request: R
 
 @api_router.delete("/bundle-offers/{offer_id}")
 async def delete_bundle_offer(offer_id: str, request: Request):
-    await db.bundle_offers.update_one(
-        {"_id": offer_id},
-        {"$set": {"deleted_at": datetime.now(timezone.utc)}}
+    user = await get_current_user(request)
+    role = await get_user_role(user) if user else "guest"
+    if role not in ["owner", "partner", "admin"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Check if bundle offer exists
+    offer = await db.bundle_offers.find_one({"_id": offer_id})
+    if not offer:
+        raise HTTPException(status_code=404, detail="Bundle offer not found")
+    
+    # Cascading deletion: Remove any cart items that reference this bundle
+    # Remove bundle group references from cart items
+    await db.carts.update_many(
+        {"items.bundle_group_id": offer_id},
+        {"$pull": {"items": {"bundle_group_id": offer_id}}}
     )
-    await manager.broadcast({"type": "sync", "tables": ["bundle_offers"]})
-    return {"message": "Deleted"}
+    
+    # Delete the bundle offer permanently
+    await db.bundle_offers.delete_one({"_id": offer_id})
+    
+    await manager.broadcast({"type": "sync", "tables": ["bundle_offers", "carts"]})
+    return {"message": "Bundle offer deleted permanently"}
 
 # ==================== Marketing Home Slider ====================
 
