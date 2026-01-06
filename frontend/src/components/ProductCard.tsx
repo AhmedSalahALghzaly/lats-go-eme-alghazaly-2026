@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     overflow: 'hidden',
-    width: 160,
+    // width is now controlled by cardWidth prop, default 160
     margin: 6,
   },
   imageContainer: {
