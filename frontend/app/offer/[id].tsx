@@ -19,7 +19,8 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useAppStore } from '../../src/store/appStore';
 import { cartApi, productsApi } from '../../src/services/api';
-import { offers, OfferSlider } from '../../src/components/OfferSlider';
+import { offers } from '../../src/data/staticOffers';
+import { DynamicOfferSlider } from '../../src/components/DynamicOfferSlider';
 import { Header } from '../../src/components/Header';
 
 const { width } = Dimensions.get('window');
