@@ -161,13 +161,15 @@ export const useCartStore = create<CartState>()(
         const { cartItems } = get();
         const updatedItems = cartItems.map((item) => {
           if (item.bundleGroupId === bundleGroupId) {
+            // Reset discounted price to original price
+            const originalPrice = item.originalPrice || item.product?.price || item.discountedPrice;
             return {
               ...item,
               bundleGroupId: undefined,
               bundleOfferId: undefined,
               bundleOfferName: undefined,
               bundleDiscount: undefined,
-              discountedPrice: undefined,
+              discountedPrice: originalPrice, // Reset to original price
             };
           }
           return item;
