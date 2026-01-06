@@ -1,14 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
   ScrollView,
+  Dimensions,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +18,20 @@ import { useTheme } from '../src/hooks/useTheme';
 import { useTranslation } from '../src/hooks/useTranslation';
 import { useAppStore } from '../src/store/appStore';
 import { productsApi, carBrandsApi, carModelsApi, productBrandsApi, categoriesApi, cartApi } from '../src/services/api';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const HORIZONTAL_PADDING = 24; // Total horizontal padding (12 left + 12 right)
+const GAP_BETWEEN_CARDS = 12; // Gap between cards
+const NUM_COLUMNS = 2;
+
+// Calculate card width: max 15% increase from original 160 = max 184
+// Formula: (screenWidth - padding - gap) / 2
+const calculateCardWidth = () => {
+  const availableWidth = SCREEN_WIDTH - HORIZONTAL_PADDING - GAP_BETWEEN_CARDS;
+  const calculatedWidth = Math.floor(availableWidth / NUM_COLUMNS);
+  const maxAllowedWidth = 184; // 160 * 1.15 = 184 (15% max increase)
+  return Math.min(calculatedWidth, maxAllowedWidth);
+};
 
 export default function SearchScreen() {
   const params = useLocalSearchParams();
