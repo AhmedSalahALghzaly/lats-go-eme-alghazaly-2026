@@ -41,7 +41,7 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const { t, isRTL, language } = useTranslation();
   const router = useRouter();
-  const { user, addToLocalCart, setCategories: setGlobalCategories, setCarBrands: setGlobalCarBrands, setProducts: setGlobalProducts, setCarModels: setGlobalCarModels, setProductBrands: setGlobalProductBrands } = useAppStore();
+  const { user, addToLocalCart, setCategories: setGlobalCategories, setCarBrands: setGlobalCarBrands, setProducts: setGlobalProducts, setCarModels: setGlobalCarModels, setProductBrands: setGlobalProductBrands, setPartners: setGlobalPartners } = useAppStore();
 
   const [categories, setCategories] = useState<any[]>([]);
   const [carBrands, setCarBrands] = useState<any[]>([]);
