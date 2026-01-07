@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppStore, useHasHydrated, useUser } from '../src/store/appStore';
+import { adminApi } from '../src/services/api';
 
 // Auth Guard Component - Monitors auth state and handles navigation
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -15,8 +16,36 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const setHasHydrated = useAppStore((state) => state.setHasHydrated);
   const user = useAppStore((state) => state.user);
   const currentMood = useAppStore((state) => state.currentMood);
+  const setAdmins = useAppStore((state) => state.setAdmins);
   const [isNavigationReady, setIsNavigationReady] = useState(false);
   const [showContent, setShowContent] = useState(false);
+
+  /**
+   * Bug Fix #3: Fetch admins list globally on app startup
+   * This ensures that when a newly added admin logs in, 
+   * their email will be found in the admins list for proper access control
+   */
+  useEffect(() => {
+    const fetchAdminsGlobally = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        const response = await adminApi.getAll();
+        if (response.data) {
+          setAdmins(response.data);
+          console.log('AuthGuard: Fetched admins list for access control');
+        }
+      } catch (error) {
+        // Admins fetch may fail for non-admin users due to permissions
+        // This is expected behavior - the list will remain empty
+        console.log('AuthGuard: Could not fetch admins list (may be permissions)');
+      }
+    };
+
+    if (hasHydrated && isAuthenticated) {
+      fetchAdminsGlobally();
+    }
+  }, [hasHydrated, isAuthenticated, setAdmins]);
 
   // Force show content after timeout - ensures app is never stuck on loading
   useEffect(() => {
