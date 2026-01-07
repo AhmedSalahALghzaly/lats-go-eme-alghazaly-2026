@@ -103,20 +103,23 @@
 #====================================================================================================
 
 user_problem_statement: |
-  Build Advanced Owner Interface for Al-Ghazaly Auto Parts e-commerce mobile app.
-  Phase 2: Full Operational Implementation with CRUD, business logic, advanced interactions.
-  Key features: Role-based access, Owner Dashboard, Sync Indicator, Skeleton loading,
-  Revenue Settlement, Void Delete, Global Search, Notifications, Optimistic Updates.
+  Fix 3 critical bugs in Al-Ghazaly Auto Parts e-commerce mobile app:
+  1. Bundle Offer Cart Logic Inconsistency - Need addBundleToCart function
+  2. Admin Delete Functionality Failure - Delete icons for promotions/bundles
+  3. Admin Panel Access for Newly Added Admins - Footer icon visibility
 
 backend:
-  - task: "Backend API v3.0 with Owner Interface endpoints"
+  - task: "Backend API v4.0 with new admin check-access endpoint"
     implemented: true
     working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
+      - working: true
+        agent: "main"
+        comment: "Added /admins/check-access endpoint for Bug #3 fix"
       - working: true
         agent: "main"
         comment: "Backend running with MongoDB. Full CRUD for partners, admins, suppliers, distributors, subscriptions. WebSocket support for notifications."
