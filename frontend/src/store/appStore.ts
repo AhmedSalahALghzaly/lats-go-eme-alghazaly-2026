@@ -295,21 +295,30 @@ export const useAppStore = create<AppState>()(
 
       // Auth Actions
       setUser: (user, token = null) => {
+        const newToken = token || get().sessionToken;
+        // إرسال الـ token للـ API interceptor
+        setApiAuthToken(newToken);
         set({
           user,
-          sessionToken: token || get().sessionToken,
+          sessionToken: newToken,
           isAuthenticated: !!user,
           userRole: user?.role || 'user',
         });
       },
 
-      setSessionToken: (token) => set({ sessionToken: token }),
+      setSessionToken: (token) => {
+        // إرسال الـ token للـ API interceptor
+        setApiAuthToken(token);
+        set({ sessionToken: token });
+      },
 
       setUserRole: (role) => set({ userRole: role }),
 
       setHasHydrated: (hydrated) => set({ _hasHydrated: hydrated }),
 
       logout: () => {
+        // إزالة الـ token من الـ API interceptor
+        setApiAuthToken(null);
         set({
           user: null,
           sessionToken: null,
