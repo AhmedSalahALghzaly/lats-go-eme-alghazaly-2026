@@ -1225,6 +1225,7 @@ async def get_categories_tree():
 
 @api_router.post("/categories")
 async def create_category(category: CategoryCreate):
+    logger.info(f"Creating category: {category.name}, image_data present: {bool(category.image_data)}")
     doc = {"_id": f"cat_{uuid.uuid4().hex[:8]}", **category.dict(), "sort_order": 0, "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc), "deleted_at": None}
     await db.categories.insert_one(doc)
     await manager.broadcast({"type": "sync", "tables": ["categories"]})
