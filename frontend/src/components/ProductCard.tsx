@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     margin: 6,
   },
   imageContainer: {
-    height: 120,
+    height: 100,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -418,18 +418,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   content: {
-    padding: 10,
+    padding: 8,
   },
   name: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     marginBottom: 4,
-    minHeight: 34,
+    minHeight: 32,
+    lineHeight: 16,
   },
   // Product details section
   detailsContainer: {
     marginBottom: 6,
-    gap: 2,
+    gap: 3,
+    minHeight: 52,
   },
   detailRow: {
     flexDirection: 'row',
@@ -440,38 +442,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
   },
   detailText: {
-    fontSize: 9,
+    fontSize: 10,
     flex: 1,
+    lineHeight: 14,
+  },
+  brandText: {
+    fontWeight: '600',
   },
   quantityRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
     gap: 6,
   },
   quantityRowRTL: {
     flexDirection: 'row-reverse',
   },
   quantityButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
   },
   quantityBadge: {
-    minWidth: 28,
-    height: 22,
-    borderRadius: 11,
+    minWidth: 26,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
   },
   quantityText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   footer: {
@@ -483,14 +489,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
   },
   price: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     flex: 1,
     textAlign: 'center',
   },
   iconButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
   },
 });
