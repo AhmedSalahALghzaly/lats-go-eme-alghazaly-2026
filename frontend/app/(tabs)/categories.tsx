@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Animated,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
