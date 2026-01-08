@@ -115,6 +115,7 @@ class CategoryCreate(BaseModel):
     name_ar: str
     parent_id: Optional[str] = None
     icon: Optional[str] = None
+    image_data: Optional[str] = None  # Base64 image data for category
 
 class ProductCreate(BaseModel):
     name: str
