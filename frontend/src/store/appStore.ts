@@ -6,7 +6,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { setApiAuthToken } from '../services/api';
+import { setApiAuthToken, authApi } from '../services/api';
 
 // Web-safe storage wrapper that handles SSR gracefully
 const createWebSafeStorage = (): StateStorage => {
