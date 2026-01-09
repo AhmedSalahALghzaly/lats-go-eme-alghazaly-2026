@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
@@ -38,57 +38,62 @@ const iconMap: { [key: string]: string } = {
   'car-side': 'car-side',
 };
 
-export const CategoryCard: React.FC<CategoryCardProps> = ({ category, size = 'medium' }) => {
+const sizeStyles = {
+  small: { width: 80, height: 80, iconSize: 24, fontSize: 11, containerSize: 40 },
+  medium: { width: 100, height: 100, iconSize: 32, fontSize: 12, containerSize: 50 },
+  large: { width: 120, height: 120, iconSize: 40, fontSize: 14, containerSize: 60 },
+};
+
+const CategoryCardComponent: React.FC<CategoryCardProps> = ({ category, size = 'medium' }) => {
   const { colors } = useTheme();
   const { language } = useTranslation();
   const router = useRouter();
 
-  const getName = () => {
-    return language === 'ar' && category.name_ar ? category.name_ar : category.name;
-  };
+  const displayName = useMemo(() => 
+    language === 'ar' && category.name_ar ? category.name_ar : category.name,
+    [language, category.name, category.name_ar]
+  );
 
-  const getIconName = () => {
+  const iconName = useMemo(() => {
     const icon = category.icon || 'cube';
     return iconMap[icon] || 'cube';
-  };
-
-  const sizeStyles = {
-    small: { width: 80, height: 80, iconSize: 24, fontSize: 11, containerSize: 40 },
-    medium: { width: 100, height: 100, iconSize: 32, fontSize: 12, containerSize: 50 },
-    large: { width: 120, height: 120, iconSize: 40, fontSize: 14, containerSize: 60 },
-  };
+  }, [category.icon]);
 
   const { width, height, iconSize, fontSize, containerSize } = sizeStyles[size];
-
-  // Check if category has an uploaded image
   const hasImage = category.image_data && category.image_data.length > 0;
+
+  const handlePress = useCallback(() => {
+    router.push(`/category/${category.id}`);
+  }, [router, category.id]);
+
+  const containerStyle = useMemo(() => [
+    styles.container,
+    {
+      width,
+      height,
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+    },
+  ], [width, height, colors.card, colors.border]);
+
+  const iconContainerStyle = useMemo(() => [
+    styles.iconContainer,
+    {
+      backgroundColor: hasImage ? 'transparent' : colors.primary + '15',
+      width: containerSize,
+      height: containerSize,
+      borderRadius: containerSize / 2,
+      overflow: 'hidden' as const,
+    }
+  ], [hasImage, colors.primary, containerSize]);
 
   return (
     <TouchableOpacity
-      style={[
-        styles.container,
-        {
-          width,
-          height,
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-        },
-      ]}
-      onPress={() => router.push(`/category/${category.id}`)}
+      style={containerStyle}
+      onPress={handlePress}
       activeOpacity={0.7}
     >
-      <View 
-        style={[
-          styles.iconContainer, 
-          { 
-            backgroundColor: hasImage ? 'transparent' : colors.primary + '15',
-            width: containerSize,
-            height: containerSize,
-            borderRadius: containerSize / 2,
-            overflow: 'hidden',
-          }
-        ]}
-      >
+      <View style={iconContainerStyle}>
         {hasImage ? (
           <Image
             source={{ uri: category.image_data }}
@@ -103,7 +108,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, size = 'me
           />
         ) : (
           <MaterialCommunityIcons
-            name={getIconName() as any}
+            name={iconName as any}
             size={iconSize}
             color={colors.primary}
           />
@@ -113,11 +118,22 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, size = 'me
         style={[styles.name, { color: colors.text, fontSize }]}
         numberOfLines={2}
       >
-        {getName()}
+        {displayName}
       </Text>
     </TouchableOpacity>
   );
 };
+
+// Memoized export
+export const CategoryCard = React.memo(CategoryCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.category.id === nextProps.category.id &&
+    prevProps.category.name === nextProps.category.name &&
+    prevProps.category.name_ar === nextProps.category.name_ar &&
+    prevProps.category.image_data === nextProps.category.image_data &&
+    prevProps.size === nextProps.size
+  );
+});
 
 const styles = StyleSheet.create({
   container: {
