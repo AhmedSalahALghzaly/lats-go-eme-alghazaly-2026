@@ -91,7 +91,11 @@ export default function BrandModelsScreen() {
         {/* Brand Header */}
         <View style={[styles.brandHeader, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.brandIconLarge, { backgroundColor: colors.primary + '15' }]}>
-            <Ionicons name="car-sport" size={48} color={colors.primary} />
+            {(brand?.image || brand?.logo) ? (
+              <Image source={{ uri: brand.image || brand.logo }} style={styles.brandLogoLarge} resizeMode="contain" />
+            ) : (
+              <Ionicons name="car-sport" size={48} color={colors.primary} />
+            )}
           </View>
           <Text style={[styles.brandName, { color: colors.text }]}>
             {getName(brand)}
