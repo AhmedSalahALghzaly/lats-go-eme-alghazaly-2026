@@ -92,7 +92,8 @@ export const Header: React.FC<HeaderProps> = ({
             <Image
               source={{ uri: LOGO_URL }}
               style={styles.logoImage}
-              resizeMode="contain"
+              contentFit="contain"
+              cachePolicy="disk"
             />
             <Text style={[styles.brandText, { color: '#0080FF' }]}>
               {isRTL ? 'لقطع غيار السيارات' : 'AUTO PARTS'}
