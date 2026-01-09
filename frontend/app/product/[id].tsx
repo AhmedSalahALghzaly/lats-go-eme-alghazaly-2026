@@ -313,7 +313,10 @@ export default function ProductDetailScreen() {
             <Image
               source={{ uri: productImages[selectedImageIndex] }}
               style={styles.productImage}
-              resizeMode="contain"
+              contentFit="contain"
+              cachePolicy="disk"
+              placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+              transition={200}
             />
           ) : (
             <Ionicons name="cube-outline" size={100} color={colors.textSecondary} />
