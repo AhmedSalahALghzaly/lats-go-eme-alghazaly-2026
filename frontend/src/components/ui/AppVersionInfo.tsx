@@ -2,8 +2,9 @@
  * AppVersionInfo Component
  * Displays app version, build timestamp, and cache status
  * Helps verify which code version is running
+ * Now includes deployment readiness and cache management
  */
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,11 +12,13 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
+import versionService from '../../services/versionService';
 
 // Build timestamp is injected at build time
 const BUILD_TIMESTAMP = new Date().toISOString();
@@ -35,15 +38,20 @@ const getBuildId = () => {
 interface AppVersionInfoProps {
   showDetails?: boolean;
   compact?: boolean;
+  showRefreshButton?: boolean;
 }
 
 export const AppVersionInfo: React.FC<AppVersionInfoProps> = ({
   showDetails = false,
   compact = false,
+  showRefreshButton = false,
 }) => {
   const { colors } = useTheme();
   const { language } = useTranslation();
   const [tapCount, setTapCount] = useState(0);
+  const [isChecking, setIsChecking] = useState(false);
+  const [apiVersion, setApiVersion] = useState<string | null>(null);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
 
   const appVersion = useMemo(() => getAppVersion(), []);
   const buildId = useMemo(() => getBuildId(), []);
@@ -58,6 +66,16 @@ export const AppVersionInfo: React.FC<AppVersionInfoProps> = ({
     });
   }, [language]);
 
+  // Check version compatibility on mount
+  useEffect(() => {
+    const checkVersion = async () => {
+      const result = await versionService.checkVersionCompatibility();
+      setApiVersion(result.apiVersion);
+      setNeedsRefresh(result.needsRefresh);
+    };
+    checkVersion();
+  }, []);
+
   const handleTap = () => {
     const newCount = tapCount + 1;
     setTapCount(newCount);
@@ -66,9 +84,31 @@ export const AppVersionInfo: React.FC<AppVersionInfoProps> = ({
     if (newCount >= 5) {
       Alert.alert(
         language === 'ar' ? 'معلومات التطبيق' : 'App Info',
-        `Version: ${appVersion}\nBuild: ${buildId}\nTimestamp: ${BUILD_TIMESTAMP}\nPlatform: ${Platform.OS}\n\n${language === 'ar' ? 'تم التحقق من أحدث إصدار!' : 'Latest version verified!'}`
+        `Version: ${appVersion}\nBuild: ${buildId}\nTimestamp: ${BUILD_TIMESTAMP}\nPlatform: ${Platform.OS}\nAPI Version: ${apiVersion || 'N/A'}\nUI: Modern v4.1\n\n${language === 'ar' ? 'تم التحقق من أحدث إصدار!' : 'Latest version verified!'}`
       );
       setTapCount(0);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsChecking(true);
+    try {
+      const success = await versionService.forceRefreshWithConfirmation(language as 'en' | 'ar');
+      if (success) {
+        // Re-check version after refresh
+        const result = await versionService.checkVersionCompatibility();
+        setApiVersion(result.apiVersion);
+        setNeedsRefresh(false);
+        
+        Alert.alert(
+          language === 'ar' ? 'تم التحديث' : 'Refreshed',
+          language === 'ar' ? 'تم مسح البيانات المؤقتة. يرجى إعادة تشغيل التطبيق.' : 'Cache cleared. Please restart the app.'
+        );
+      }
+    } catch (error) {
+      console.error('Refresh error:', error);
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -76,7 +116,7 @@ export const AppVersionInfo: React.FC<AppVersionInfoProps> = ({
     return (
       <TouchableOpacity onPress={handleTap} activeOpacity={0.7}>
         <Text style={[styles.compactText, { color: colors.textSecondary }]}>
-          v{appVersion}
+          v{appVersion} {needsRefresh && '🔄'}
         </Text>
       </TouchableOpacity>
     );
@@ -86,13 +126,17 @@ export const AppVersionInfo: React.FC<AppVersionInfoProps> = ({
     <TouchableOpacity
       style={[
         styles.container,
-        { backgroundColor: colors.surface, borderColor: colors.border },
+        { backgroundColor: colors.surface, borderColor: needsRefresh ? colors.warning || '#F59E0B' : colors.border },
       ]}
       onPress={handleTap}
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+        <Ionicons 
+          name={needsRefresh ? "refresh-circle-outline" : "information-circle-outline"} 
+          size={20} 
+          color={needsRefresh ? colors.warning || '#F59E0B' : colors.primary} 
+        />
       </View>
       <View style={styles.infoContainer}>
         <Text style={[styles.label, { color: colors.textSecondary }]}>
@@ -102,16 +146,38 @@ export const AppVersionInfo: React.FC<AppVersionInfoProps> = ({
           v{appVersion} ({buildId})
         </Text>
         {showDetails && (
-          <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
-            {buildDate}
-          </Text>
+          <>
+            <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
+              {buildDate}
+            </Text>
+            {apiVersion && (
+              <Text style={[styles.apiVersion, { color: colors.textSecondary }]}>
+                API: {apiVersion}
+              </Text>
+            )}
+          </>
         )}
       </View>
-      <View style={styles.badge}>
-        <Text style={[styles.badgeText, { color: colors.success || '#10B981' }]}>
-          {language === 'ar' ? 'محدث' : 'Latest'}
-        </Text>
-      </View>
+      
+      {showRefreshButton && needsRefresh ? (
+        <TouchableOpacity 
+          style={[styles.refreshButton, { backgroundColor: colors.warning || '#F59E0B' }]}
+          onPress={handleRefresh}
+          disabled={isChecking}
+        >
+          {isChecking ? (
+            <ActivityIndicator size="small" color="#FFF" />
+          ) : (
+            <Ionicons name="refresh" size={16} color="#FFF" />
+          )}
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.badge}>
+          <Text style={[styles.badgeText, { color: colors.success || '#10B981' }]}>
+            {language === 'ar' ? 'محدث' : 'Latest'}
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -148,6 +214,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
+  apiVersion: {
+    fontSize: 10,
+    marginTop: 1,
+  },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -161,6 +231,13 @@ const styles = StyleSheet.create({
   compactText: {
     fontSize: 11,
     fontWeight: '500',
+  },
+  refreshButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
