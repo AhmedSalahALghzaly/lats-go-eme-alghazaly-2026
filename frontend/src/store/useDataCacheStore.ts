@@ -350,6 +350,192 @@ export const useDataCacheStore = create<DataCacheState>()(
         });
       },
 
+      // ==================== Aggressive Purging (Zero-Waste Policy) ====================
+
+      /**
+       * Purge deleted items by comparing local cache with server's active IDs
+       * This implements the "Zero-Waste" data policy
+       */
+      purgeDeletedItems: (serverIds: { [resourceType: string]: string[] }) => {
+        const state = get();
+        const purgedCounts: { [resourceType: string]: number } = {};
+        let totalPurged = 0;
+
+        // Purge products
+        if (serverIds.products) {
+          const serverProductIds = new Set(serverIds.products);
+          const localProducts = state.products;
+          const filteredProducts = localProducts.filter((p) => serverProductIds.has(p.id));
+          const purgedCount = localProducts.length - filteredProducts.length;
+          if (purgedCount > 0) {
+            console.log(`[DataCacheStore] Purging ${purgedCount} deleted products`);
+            set({ products: filteredProducts });
+            purgedCounts.products = purgedCount;
+            totalPurged += purgedCount;
+          }
+        }
+
+        // Purge categories
+        if (serverIds.categories) {
+          const serverCategoryIds = new Set(serverIds.categories);
+          const localCategories = state.categories;
+          const filteredCategories = localCategories.filter((c) => serverCategoryIds.has(c.id));
+          const purgedCount = localCategories.length - filteredCategories.length;
+          if (purgedCount > 0) {
+            console.log(`[DataCacheStore] Purging ${purgedCount} deleted categories`);
+            set({ categories: filteredCategories });
+            purgedCounts.categories = purgedCount;
+            totalPurged += purgedCount;
+          }
+        }
+
+        // Purge car brands
+        if (serverIds.carBrands) {
+          const serverBrandIds = new Set(serverIds.carBrands);
+          const localBrands = state.carBrands;
+          const filteredBrands = localBrands.filter((b) => serverBrandIds.has(b.id));
+          const purgedCount = localBrands.length - filteredBrands.length;
+          if (purgedCount > 0) {
+            console.log(`[DataCacheStore] Purging ${purgedCount} deleted car brands`);
+            set({ carBrands: filteredBrands });
+            purgedCounts.carBrands = purgedCount;
+            totalPurged += purgedCount;
+          }
+        }
+
+        // Purge car models
+        if (serverIds.carModels) {
+          const serverModelIds = new Set(serverIds.carModels);
+          const localModels = state.carModels;
+          const filteredModels = localModels.filter((m) => serverModelIds.has(m.id));
+          const purgedCount = localModels.length - filteredModels.length;
+          if (purgedCount > 0) {
+            console.log(`[DataCacheStore] Purging ${purgedCount} deleted car models`);
+            set({ carModels: filteredModels });
+            purgedCounts.carModels = purgedCount;
+            totalPurged += purgedCount;
+          }
+        }
+
+        // Purge product brands
+        if (serverIds.productBrands) {
+          const serverBrandIds = new Set(serverIds.productBrands);
+          const localBrands = state.productBrands;
+          const filteredBrands = localBrands.filter((b) => serverBrandIds.has(b.id));
+          const purgedCount = localBrands.length - filteredBrands.length;
+          if (purgedCount > 0) {
+            console.log(`[DataCacheStore] Purging ${purgedCount} deleted product brands`);
+            set({ productBrands: filteredBrands });
+            purgedCounts.productBrands = purgedCount;
+            totalPurged += purgedCount;
+          }
+        }
+
+        // Purge orders
+        if (serverIds.orders) {
+          const serverOrderIds = new Set(serverIds.orders);
+          const localOrders = state.orders;
+          const filteredOrders = localOrders.filter((o) => serverOrderIds.has(o.id));
+          const purgedCount = localOrders.length - filteredOrders.length;
+          if (purgedCount > 0) {
+            console.log(`[DataCacheStore] Purging ${purgedCount} deleted orders`);
+            set({ orders: filteredOrders });
+            purgedCounts.orders = purgedCount;
+            totalPurged += purgedCount;
+          }
+        }
+
+        if (totalPurged > 0) {
+          console.log(`[DataCacheStore] Total items purged: ${totalPurged}`);
+        }
+
+        return { purgedCounts, totalPurged };
+      },
+
+      // ==================== Single Item Operations (Real-Time Sync) ====================
+
+      addProduct: (product) => {
+        const state = get();
+        // Prevent duplicates
+        if (!state.products.find((p) => p.id === product.id)) {
+          set({ products: [product, ...state.products] });
+        }
+      },
+
+      updateProductById: (productId, updates) => {
+        set((state) => ({
+          products: state.products.map((p) =>
+            p.id === productId ? { ...p, ...updates, _localModified: Date.now() } : p
+          ),
+        }));
+      },
+
+      removeProductById: (productId) => {
+        set((state) => ({
+          products: state.products.filter((p) => p.id !== productId),
+        }));
+      },
+
+      addCategory: (category) => {
+        const state = get();
+        if (!state.categories.find((c) => c.id === category.id)) {
+          set({ categories: [category, ...state.categories] });
+        }
+      },
+
+      removeCategoryById: (categoryId) => {
+        set((state) => ({
+          categories: state.categories.filter((c) => c.id !== categoryId),
+        }));
+      },
+
+      addProductBrand: (brand) => {
+        const state = get();
+        if (!state.productBrands.find((b) => b.id === brand.id)) {
+          set({ productBrands: [brand, ...state.productBrands] });
+        }
+      },
+
+      removeProductBrandById: (brandId) => {
+        set((state) => ({
+          productBrands: state.productBrands.filter((b) => b.id !== brandId),
+        }));
+      },
+
+      addCarBrand: (brand) => {
+        const state = get();
+        if (!state.carBrands.find((b) => b.id === brand.id)) {
+          set({ carBrands: [brand, ...state.carBrands] });
+        }
+      },
+
+      removeCarBrandById: (brandId) => {
+        set((state) => ({
+          carBrands: state.carBrands.filter((b) => b.id !== brandId),
+        }));
+      },
+
+      addCarModel: (model) => {
+        const state = get();
+        if (!state.carModels.find((m) => m.id === model.id)) {
+          set({ carModels: [model, ...state.carModels] });
+        }
+      },
+
+      updateCarModelById: (modelId, updates) => {
+        set((state) => ({
+          carModels: state.carModels.map((m) =>
+            m.id === modelId ? { ...m, ...updates, _localModified: Date.now() } : m
+          ),
+        }));
+      },
+
+      removeCarModelById: (modelId) => {
+        set((state) => ({
+          carModels: state.carModels.filter((m) => m.id !== modelId),
+        }));
+      },
+
       // ==================== Snapshot Actions ====================
 
       /**
