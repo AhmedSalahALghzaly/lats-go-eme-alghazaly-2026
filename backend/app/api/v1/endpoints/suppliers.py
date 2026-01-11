@@ -14,7 +14,6 @@ router = APIRouter(prefix="/suppliers")
 
 @router.get("")
 async def get_suppliers(request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner", "admin", "subscriber"]:
@@ -25,7 +24,6 @@ async def get_suppliers(request: Request):
 
 @router.get("/{supplier_id}")
 async def get_supplier(supplier_id: str, request: Request):
-    db = get_database()
     supplier = await db.suppliers.find_one({"_id": supplier_id})
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
@@ -33,7 +31,6 @@ async def get_supplier(supplier_id: str, request: Request):
 
 @router.post("")
 async def create_supplier(data: SupplierCreate, request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:
@@ -59,7 +56,6 @@ async def create_supplier(data: SupplierCreate, request: Request):
 
 @router.put("/{supplier_id}")
 async def update_supplier(supplier_id: str, data: SupplierCreate, request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:
@@ -82,7 +78,6 @@ async def update_supplier(supplier_id: str, data: SupplierCreate, request: Reque
 
 @router.delete("/{supplier_id}")
 async def delete_supplier(supplier_id: str, request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:

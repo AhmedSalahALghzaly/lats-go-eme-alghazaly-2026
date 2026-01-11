@@ -15,7 +15,6 @@ router = APIRouter(prefix="/admins")
 
 @router.get("/check-access")
 async def check_admin_access(request: Request):
-    db = get_database()
     user = await get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -25,7 +24,6 @@ async def check_admin_access(request: Request):
 
 @router.get("")
 async def get_admins(request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:
@@ -55,7 +53,6 @@ async def get_admins(request: Request):
 
 @router.post("")
 async def add_admin(data: AdminCreate, request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:
@@ -80,7 +77,6 @@ async def add_admin(data: AdminCreate, request: Request):
 
 @router.delete("/{admin_id}")
 async def delete_admin(admin_id: str, request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:
@@ -92,7 +88,6 @@ async def delete_admin(admin_id: str, request: Request):
 
 @router.get("/{admin_id}/products")
 async def get_admin_products(admin_id: str, request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:
@@ -103,7 +98,6 @@ async def get_admin_products(admin_id: str, request: Request):
 
 @router.post("/{admin_id}/settle")
 async def settle_admin_revenue(admin_id: str, data: SettleRevenueRequest, request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:
@@ -139,7 +133,6 @@ async def settle_admin_revenue(admin_id: str, data: SettleRevenueRequest, reques
 
 @router.post("/{admin_id}/clear-revenue")
 async def clear_admin_revenue(admin_id: str, request: Request):
-    db = get_database()
     user = await get_current_user(request)
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:
