@@ -12,8 +12,6 @@ from ....models.schemas import VersionInfo, ExportRequest, ImportRequest
 
 router = APIRouter()
 
-def get_db():
-    return get_database()
 
 @router.get("/version", response_model=VersionInfo)
 async def get_version():
