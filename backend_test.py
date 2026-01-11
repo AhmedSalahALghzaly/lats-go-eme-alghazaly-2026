@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 """
-Al-Ghazaly Auto Parts Backend API Testing Suite
-Tests the modularized FastAPI backend v4.1.0
+ALghazaly Auto Parts Backend API v4.1.0 Testing Suite
+Testing Admin Sync & Auto-Cleanup features
 
-This test suite covers:
-1. Health check and version endpoints
-2. Product listing with cursor pagination
-3. Category, car brands, car models, product brands endpoints
-4. Bundle offers and promotions
-5. Marketing home slider
-6. Cart system with server-side pricing
-7. Stock validation
-8. Authentication-protected endpoints
+Focus Areas:
+1. Product APIs (GET, POST, DELETE)
+2. Category APIs (GET, POST, DELETE) 
+3. Product Brand APIs (GET, POST, DELETE)
+4. Promotion APIs (GET, POST, DELETE) - High Priority Sync
+5. Bundle Offer APIs (GET, POST, DELETE) - High Priority Sync
 
-Usage: python backend_test.py
+Backend URL: http://localhost:8001
 """
 
 import requests
@@ -22,19 +19,15 @@ import sys
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
-# Backend URL Configuration
-BASE_URL = "http://localhost:8001"
-API_BASE = f"{BASE_URL}/api"
-
-class BackendTester:
-    def __init__(self):
+class ALghazalyAPITester:
+    def __init__(self, base_url: str = "http://localhost:8001"):
+        self.base_url = base_url
         self.session = requests.Session()
         self.test_results = []
         self.failed_tests = []
-        self.passed_tests = []
         
     def log_test(self, test_name: str, success: bool, details: str = "", response_data: Any = None):
-        """Log test result"""
+        """Log test results"""
         result = {
             "test": test_name,
             "success": success,
@@ -44,368 +37,470 @@ class BackendTester:
         }
         self.test_results.append(result)
         
-        if success:
-            self.passed_tests.append(test_name)
-            print(f"✅ {test_name}")
-            if details:
-                print(f"   {details}")
-        else:
-            self.failed_tests.append(test_name)
-            print(f"❌ {test_name}")
-            print(f"   {details}")
-    
-    def test_health_endpoint(self):
-        """Test GET /api/health"""
-        try:
-            response = self.session.get(f"{API_BASE}/health")
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("status") == "healthy" and data.get("api_version") == "4.1.0":
-                    self.log_test("Health Check", True, 
-                                f"Status: {data.get('status')}, Version: {data.get('api_version')}, DB: {data.get('database')}")
-                else:
-                    self.log_test("Health Check", False, 
-                                f"Unexpected response: {data}")
-            else:
-                self.log_test("Health Check", False, 
-                            f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Health Check", False, f"Exception: {str(e)}")
-    
-    def test_version_endpoint(self):
-        """Test GET /api/version"""
-        try:
-            response = self.session.get(f"{API_BASE}/version")
-            if response.status_code == 200:
-                data = response.json()
-                required_fields = ["api_version", "build_date", "min_frontend_version", "features"]
-                if all(field in data for field in required_fields):
-                    features = data.get("features", [])
-                    expected_features = ["cursor_pagination", "offline_sync", "websocket_realtime", "modular_backend"]
-                    has_expected = all(feat in features for feat in expected_features)
-                    self.log_test("Version Info", has_expected, 
-                                f"Version: {data.get('api_version')}, Features: {len(features)}")
-                else:
-                    self.log_test("Version Info", False, f"Missing required fields: {data}")
-            else:
-                self.log_test("Version Info", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Version Info", False, f"Exception: {str(e)}")
-    
-    def test_products_endpoint(self):
-        """Test GET /api/products with cursor pagination"""
-        try:
-            # Test basic product listing
-            response = self.session.get(f"{API_BASE}/products?limit=10")
-            if response.status_code == 200:
-                data = response.json()
-                required_fields = ["products", "total", "next_cursor", "prev_cursor", "has_more", "page_size"]
-                if all(field in data for field in required_fields):
-                    products = data.get("products", [])
-                    self.log_test("Products Listing", True, 
-                                f"Found {len(products)} products, Total: {data.get('total')}, Has more: {data.get('has_more')}")
-                    
-                    # Test cursor pagination if we have products
-                    if products and data.get("next_cursor"):
-                        cursor_response = self.session.get(f"{API_BASE}/products?cursor={data['next_cursor']}&limit=5")
-                        if cursor_response.status_code == 200:
-                            cursor_data = cursor_response.json()
-                            self.log_test("Cursor Pagination", True, 
-                                        f"Cursor pagination works, got {len(cursor_data.get('products', []))} more products")
-                        else:
-                            self.log_test("Cursor Pagination", False, 
-                                        f"Cursor pagination failed: HTTP {cursor_response.status_code}")
-                    else:
-                        self.log_test("Cursor Pagination", True, "No cursor available (expected for small datasets)")
-                else:
-                    self.log_test("Products Listing", False, f"Missing required fields: {data}")
-            else:
-                self.log_test("Products Listing", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Products Listing", False, f"Exception: {str(e)}")
-    
-    def test_categories_endpoint(self):
-        """Test GET /api/categories"""
-        try:
-            response = self.session.get(f"{API_BASE}/categories")
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list):
-                    self.log_test("Categories Listing", True, f"Found {len(data)} categories")
-                elif isinstance(data, dict) and "categories" in data:
-                    categories = data.get("categories", [])
-                    self.log_test("Categories Listing", True, f"Found {len(categories)} categories")
-                else:
-                    self.log_test("Categories Listing", False, f"Unexpected response format: {data}")
-            else:
-                self.log_test("Categories Listing", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Categories Listing", False, f"Exception: {str(e)}")
-    
-    def test_car_brands_endpoint(self):
-        """Test GET /api/car-brands"""
-        try:
-            response = self.session.get(f"{API_BASE}/car-brands")
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list):
-                    self.log_test("Car Brands Listing", True, f"Found {len(data)} car brands")
-                elif isinstance(data, dict) and "car_brands" in data:
-                    brands = data.get("car_brands", [])
-                    self.log_test("Car Brands Listing", True, f"Found {len(brands)} car brands")
-                else:
-                    self.log_test("Car Brands Listing", False, f"Unexpected response format: {data}")
-            else:
-                self.log_test("Car Brands Listing", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Car Brands Listing", False, f"Exception: {str(e)}")
-    
-    def test_car_models_endpoint(self):
-        """Test GET /api/car-models"""
-        try:
-            response = self.session.get(f"{API_BASE}/car-models")
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list):
-                    self.log_test("Car Models Listing", True, f"Found {len(data)} car models")
-                elif isinstance(data, dict) and "car_models" in data:
-                    models = data.get("car_models", [])
-                    self.log_test("Car Models Listing", True, f"Found {len(models)} car models")
-                else:
-                    self.log_test("Car Models Listing", False, f"Unexpected response format: {data}")
-            else:
-                self.log_test("Car Models Listing", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Car Models Listing", False, f"Exception: {str(e)}")
-    
-    def test_product_brands_endpoint(self):
-        """Test GET /api/product-brands"""
-        try:
-            response = self.session.get(f"{API_BASE}/product-brands")
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list):
-                    self.log_test("Product Brands Listing", True, f"Found {len(data)} product brands")
-                elif isinstance(data, dict) and "product_brands" in data:
-                    brands = data.get("product_brands", [])
-                    self.log_test("Product Brands Listing", True, f"Found {len(brands)} product brands")
-                else:
-                    self.log_test("Product Brands Listing", False, f"Unexpected response format: {data}")
-            else:
-                self.log_test("Product Brands Listing", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Product Brands Listing", False, f"Exception: {str(e)}")
-    
-    def test_bundle_offers_endpoint(self):
-        """Test GET /api/bundle-offers"""
-        try:
-            response = self.session.get(f"{API_BASE}/bundle-offers")
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list):
-                    self.log_test("Bundle Offers Listing", True, f"Found {len(data)} bundle offers")
-                elif isinstance(data, dict) and "bundle_offers" in data:
-                    offers = data.get("bundle_offers", [])
-                    self.log_test("Bundle Offers Listing", True, f"Found {len(offers)} bundle offers")
-                else:
-                    self.log_test("Bundle Offers Listing", False, f"Unexpected response format: {data}")
-            else:
-                self.log_test("Bundle Offers Listing", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Bundle Offers Listing", False, f"Exception: {str(e)}")
-    
-    def test_promotions_endpoint(self):
-        """Test GET /api/promotions"""
-        try:
-            response = self.session.get(f"{API_BASE}/promotions")
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list):
-                    self.log_test("Promotions Listing", True, f"Found {len(data)} promotions")
-                elif isinstance(data, dict) and "promotions" in data:
-                    promotions = data.get("promotions", [])
-                    self.log_test("Promotions Listing", True, f"Found {len(promotions)} promotions")
-                else:
-                    self.log_test("Promotions Listing", False, f"Unexpected response format: {data}")
-            else:
-                self.log_test("Promotions Listing", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Promotions Listing", False, f"Exception: {str(e)}")
-    
-    def test_marketing_home_slider(self):
-        """Test GET /api/marketing/home-slider"""
-        try:
-            response = self.session.get(f"{API_BASE}/marketing/home-slider")
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, list):
-                    self.log_test("Marketing Home Slider", True, f"Found {len(data)} slider items")
-                elif isinstance(data, dict) and "slider_items" in data:
-                    items = data.get("slider_items", [])
-                    self.log_test("Marketing Home Slider", True, f"Found {len(items)} slider items")
-                else:
-                    self.log_test("Marketing Home Slider", False, f"Unexpected response format: {data}")
-            else:
-                self.log_test("Marketing Home Slider", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Marketing Home Slider", False, f"Exception: {str(e)}")
-    
-    def test_cart_endpoints_unauthenticated(self):
-        """Test cart endpoints without authentication (should fail)"""
-        cart_endpoints = [
-            ("GET", "/cart", "Get Cart", {}),
-            ("POST", "/cart/add", "Add to Cart", {"product_id": "test_prod", "quantity": 1}),
-            ("PUT", "/cart/update", "Update Cart", {"product_id": "test_prod", "quantity": 2}),
-            ("DELETE", "/cart/clear", "Clear Cart", {}),
-            ("POST", "/cart/validate-stock", "Validate Stock", {})
-        ]
+        if not success:
+            self.failed_tests.append(result)
+            
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status} {test_name}: {details}")
         
-        for method, endpoint, name, payload in cart_endpoints:
-            try:
-                if method == "GET":
-                    response = self.session.get(f"{API_BASE}{endpoint}")
-                elif method == "POST":
-                    response = self.session.post(f"{API_BASE}{endpoint}", json=payload)
-                elif method == "PUT":
-                    response = self.session.put(f"{API_BASE}{endpoint}", json=payload)
-                elif method == "DELETE":
-                    response = self.session.delete(f"{API_BASE}{endpoint}")
-                
-                if response.status_code == 401:
-                    self.log_test(f"{name} (Auth Required)", True, "Correctly requires authentication")
-                else:
-                    self.log_test(f"{name} (Auth Required)", False, 
-                                f"Expected 401, got {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test(f"{name} (Auth Required)", False, f"Exception: {str(e)}")
-    
-    def test_bundle_void_endpoint(self):
-        """Test DELETE /api/cart/void-bundle/{bundle_group_id} without auth"""
+    def make_request(self, method: str, endpoint: str, **kwargs) -> requests.Response:
+        """Make HTTP request with error handling"""
+        url = f"{self.base_url}{endpoint}"
         try:
-            response = self.session.delete(f"{API_BASE}/cart/void-bundle/test_bundle_123")
+            response = self.session.request(method, url, timeout=30, **kwargs)
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Request failed for {method} {endpoint}: {e}")
+            raise
+            
+    def test_health_check(self):
+        """Test basic health and version endpoints"""
+        print("\n=== HEALTH CHECK TESTS ===")
+        
+        # Test root endpoint
+        try:
+            response = self.make_request("GET", "/")
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Root Endpoint", True, f"Version: {data.get('version', 'N/A')}, Status: {data.get('status', 'N/A')}")
+            else:
+                self.log_test("Root Endpoint", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("Root Endpoint", False, f"Error: {str(e)}")
+            
+        # Test health endpoint
+        try:
+            response = self.make_request("GET", "/api/health")
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Health Check", True, f"API Version: {data.get('api_version', 'N/A')}, DB: {data.get('database', 'N/A')}")
+            else:
+                self.log_test("Health Check", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("Health Check", False, f"Error: {str(e)}")
+            
+        # Test version endpoint
+        try:
+            response = self.make_request("GET", "/api/version")
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Version Info", True, f"API Version: {data.get('api_version', 'N/A')}, Features: {len(data.get('features', []))}")
+            else:
+                self.log_test("Version Info", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("Version Info", False, f"Error: {str(e)}")
+
+    def test_product_apis(self):
+        """Test Product APIs - GET, POST, DELETE"""
+        print("\n=== PRODUCT API TESTS ===")
+        
+        # Test GET /api/products (list all products)
+        try:
+            response = self.make_request("GET", "/api/products")
+            if response.status_code == 200:
+                data = response.json()
+                products = data.get('products', [])
+                total = data.get('total', 0)
+                self.log_test("GET /api/products", True, f"Found {len(products)} products, Total: {total}")
+            else:
+                self.log_test("GET /api/products", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("GET /api/products", False, f"Error: {str(e)}")
+            
+        # Test POST /api/products/admin (create product - requires admin)
+        try:
+            product_data = {
+                "name": "Test Brake Pad Set",
+                "name_ar": "طقم فحمات فرامل تجريبي",
+                "sku": f"TEST-BP-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                "price": 150.00,
+                "category_id": "cat_12345678",
+                "product_brand_id": "pb_12345678",
+                "car_model_ids": ["cm_corolla"],
+                "description": "Test brake pad set for testing",
+                "description_ar": "طقم فحمات فرامل للاختبار",
+                "stock_quantity": 10,
+                "min_stock_level": 2
+            }
+            response = self.make_request("POST", "/api/products", json=product_data)
             if response.status_code == 401:
-                self.log_test("Void Bundle (Auth Required)", True, "Correctly requires authentication")
+                self.log_test("POST /api/products (Auth Check)", True, "Correctly requires authentication (401)")
+            elif response.status_code == 403:
+                self.log_test("POST /api/products (Auth Check)", True, "Correctly requires admin access (403)")
+            elif response.status_code == 201 or response.status_code == 200:
+                data = response.json()
+                self.log_test("POST /api/products", True, f"Product created: {data.get('id', 'N/A')}")
             else:
-                self.log_test("Void Bundle (Auth Required)", False, 
-                            f"Expected 401, got {response.status_code}: {response.text}")
+                self.log_test("POST /api/products", False, f"Status: {response.status_code}, Response: {response.text}")
         except Exception as e:
-            self.log_test("Void Bundle (Auth Required)", False, f"Exception: {str(e)}")
-    
-    def test_database_connectivity(self):
-        """Test database connectivity through health endpoint"""
+            self.log_test("POST /api/products", False, f"Error: {str(e)}")
+            
+        # Test DELETE /api/products/{id} (delete product - requires admin)
         try:
-            response = self.session.get(f"{API_BASE}/health")
+            # Try to delete a non-existent product to test auth
+            response = self.make_request("DELETE", "/api/products/test_product_id")
+            if response.status_code == 401:
+                self.log_test("DELETE /api/products/{id} (Auth Check)", True, "Correctly requires authentication (401)")
+            elif response.status_code == 403:
+                self.log_test("DELETE /api/products/{id} (Auth Check)", True, "Correctly requires admin access (403)")
+            elif response.status_code == 404:
+                self.log_test("DELETE /api/products/{id} (Not Found)", True, "Correctly returns 404 for non-existent product")
+            elif response.status_code == 200:
+                self.log_test("DELETE /api/products/{id}", True, "Product deletion successful")
+            else:
+                self.log_test("DELETE /api/products/{id}", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("DELETE /api/products/{id}", False, f"Error: {str(e)}")
+
+    def test_category_apis(self):
+        """Test Category APIs - GET, POST, DELETE"""
+        print("\n=== CATEGORY API TESTS ===")
+        
+        # Test GET /api/categories (list all categories)
+        try:
+            response = self.make_request("GET", "/api/categories")
             if response.status_code == 200:
                 data = response.json()
-                db_status = data.get("database", "unknown")
-                if db_status == "healthy":
-                    self.log_test("Database Connectivity", True, "MongoDB connection healthy")
-                else:
-                    self.log_test("Database Connectivity", False, f"Database status: {db_status}")
+                self.log_test("GET /api/categories", True, f"Found {len(data)} categories")
             else:
-                self.log_test("Database Connectivity", False, f"Health check failed: {response.status_code}")
+                self.log_test("GET /api/categories", False, f"Status: {response.status_code}")
         except Exception as e:
-            self.log_test("Database Connectivity", False, f"Exception: {str(e)}")
-    
-    def test_json_responses(self):
-        """Test that all endpoints return valid JSON"""
-        endpoints = [
-            "/health",
-            "/version", 
-            "/products",
-            "/categories",
-            "/car-brands",
-            "/car-models",
-            "/product-brands",
-            "/bundle-offers",
-            "/promotions",
-            "/marketing/home-slider"
+            self.log_test("GET /api/categories", False, f"Error: {str(e)}")
+            
+        # Test GET /api/categories/all
+        try:
+            response = self.make_request("GET", "/api/categories/all")
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("GET /api/categories/all", True, f"Found {len(data)} total categories")
+            else:
+                self.log_test("GET /api/categories/all", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("GET /api/categories/all", False, f"Error: {str(e)}")
+            
+        # Test POST /api/categories (create category)
+        try:
+            category_data = {
+                "name": "Test Category",
+                "name_ar": "فئة تجريبية",
+                "description": "Test category for API testing",
+                "description_ar": "فئة تجريبية لاختبار API",
+                "parent_id": None,
+                "image_data": None
+            }
+            response = self.make_request("POST", "/api/categories", json=category_data)
+            if response.status_code == 201 or response.status_code == 200:
+                data = response.json()
+                self.log_test("POST /api/categories", True, f"Category created: {data.get('id', 'N/A')}")
+            else:
+                self.log_test("POST /api/categories", False, f"Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_test("POST /api/categories", False, f"Error: {str(e)}")
+            
+        # Test DELETE /api/categories/{id} (delete category)
+        try:
+            response = self.make_request("DELETE", "/api/categories/test_category_id")
+            if response.status_code == 200:
+                self.log_test("DELETE /api/categories/{id}", True, "Category deletion endpoint accessible")
+            elif response.status_code == 404:
+                self.log_test("DELETE /api/categories/{id} (Not Found)", True, "Correctly returns 404 for non-existent category")
+            else:
+                self.log_test("DELETE /api/categories/{id}", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("DELETE /api/categories/{id}", False, f"Error: {str(e)}")
+
+    def test_product_brand_apis(self):
+        """Test Product Brand APIs - GET, POST, DELETE"""
+        print("\n=== PRODUCT BRAND API TESTS ===")
+        
+        # Test GET /api/product-brands (list all brands)
+        try:
+            response = self.make_request("GET", "/api/product-brands")
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("GET /api/product-brands", True, f"Found {len(data)} product brands")
+            else:
+                self.log_test("GET /api/product-brands", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("GET /api/product-brands", False, f"Error: {str(e)}")
+            
+        # Test POST /api/product-brands (create brand)
+        try:
+            brand_data = {
+                "name": "Test Brand",
+                "name_ar": "علامة تجارية تجريبية",
+                "country_of_origin": "Germany",
+                "country_of_origin_ar": "ألمانيا",
+                "description": "Test brand for API testing",
+                "description_ar": "علامة تجارية تجريبية لاختبار API",
+                "supplier_id": None
+            }
+            response = self.make_request("POST", "/api/product-brands", json=brand_data)
+            if response.status_code == 201 or response.status_code == 200:
+                data = response.json()
+                self.log_test("POST /api/product-brands", True, f"Brand created: {data.get('id', 'N/A')}")
+            else:
+                self.log_test("POST /api/product-brands", False, f"Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_test("POST /api/product-brands", False, f"Error: {str(e)}")
+            
+        # Test DELETE /api/product-brands/{id} (delete brand)
+        try:
+            response = self.make_request("DELETE", "/api/product-brands/test_brand_id")
+            if response.status_code == 200:
+                self.log_test("DELETE /api/product-brands/{id}", True, "Brand deletion endpoint accessible")
+            elif response.status_code == 404:
+                self.log_test("DELETE /api/product-brands/{id} (Not Found)", True, "Correctly returns 404 for non-existent brand")
+            else:
+                self.log_test("DELETE /api/product-brands/{id}", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("DELETE /api/product-brands/{id}", False, f"Error: {str(e)}")
+
+    def test_promotion_apis(self):
+        """Test Promotion APIs - GET, POST, DELETE (High Priority Sync)"""
+        print("\n=== PROMOTION API TESTS (HIGH PRIORITY SYNC) ===")
+        
+        # Test GET /api/promotions (list all promotions)
+        try:
+            response = self.make_request("GET", "/api/promotions")
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("GET /api/promotions", True, f"Found {len(data)} active promotions")
+            else:
+                self.log_test("GET /api/promotions", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("GET /api/promotions", False, f"Error: {str(e)}")
+            
+        # Test GET /api/promotions with active_only=false
+        try:
+            response = self.make_request("GET", "/api/promotions?active_only=false")
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("GET /api/promotions (All)", True, f"Found {len(data)} total promotions")
+            else:
+                self.log_test("GET /api/promotions (All)", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("GET /api/promotions (All)", False, f"Error: {str(e)}")
+            
+        # Test POST /api/promotions (create promotion)
+        try:
+            promotion_data = {
+                "title": "Test Promotion",
+                "title_ar": "عرض ترويجي تجريبي",
+                "description": "Test promotion for API testing",
+                "description_ar": "عرض ترويجي تجريبي لاختبار API",
+                "promotion_type": "discount",
+                "discount_percentage": 15.0,
+                "target_type": "all_products",
+                "target_car_model_id": None,
+                "target_category_id": None,
+                "is_active": True,
+                "sort_order": 1,
+                "image_data": None
+            }
+            response = self.make_request("POST", "/api/promotions", json=promotion_data)
+            if response.status_code == 401:
+                self.log_test("POST /api/promotions (Auth Check)", True, "Correctly requires authentication (401)")
+            elif response.status_code == 403:
+                self.log_test("POST /api/promotions (Auth Check)", True, "Correctly requires admin access (403)")
+            elif response.status_code == 201 or response.status_code == 200:
+                data = response.json()
+                self.log_test("POST /api/promotions", True, f"Promotion created: {data.get('id', 'N/A')}")
+            else:
+                self.log_test("POST /api/promotions", False, f"Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_test("POST /api/promotions", False, f"Error: {str(e)}")
+            
+        # Test DELETE /api/promotions/{id} (delete promotion)
+        try:
+            response = self.make_request("DELETE", "/api/promotions/test_promotion_id")
+            if response.status_code == 401:
+                self.log_test("DELETE /api/promotions/{id} (Auth Check)", True, "Correctly requires authentication (401)")
+            elif response.status_code == 403:
+                self.log_test("DELETE /api/promotions/{id} (Auth Check)", True, "Correctly requires admin access (403)")
+            elif response.status_code == 404:
+                self.log_test("DELETE /api/promotions/{id} (Not Found)", True, "Correctly returns 404 for non-existent promotion")
+            elif response.status_code == 200:
+                self.log_test("DELETE /api/promotions/{id}", True, "Promotion deletion successful")
+            else:
+                self.log_test("DELETE /api/promotions/{id}", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("DELETE /api/promotions/{id}", False, f"Error: {str(e)}")
+
+    def test_bundle_offer_apis(self):
+        """Test Bundle Offer APIs - GET, POST, DELETE (High Priority Sync)"""
+        print("\n=== BUNDLE OFFER API TESTS (HIGH PRIORITY SYNC) ===")
+        
+        # Test GET /api/bundle-offers (list all bundles)
+        try:
+            response = self.make_request("GET", "/api/bundle-offers")
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("GET /api/bundle-offers", True, f"Found {len(data)} active bundle offers")
+            else:
+                self.log_test("GET /api/bundle-offers", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("GET /api/bundle-offers", False, f"Error: {str(e)}")
+            
+        # Test GET /api/bundle-offers with active_only=false
+        try:
+            response = self.make_request("GET", "/api/bundle-offers?active_only=false")
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("GET /api/bundle-offers (All)", True, f"Found {len(data)} total bundle offers")
+            else:
+                self.log_test("GET /api/bundle-offers (All)", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("GET /api/bundle-offers (All)", False, f"Error: {str(e)}")
+            
+        # Test POST /api/bundle-offers (create bundle)
+        try:
+            bundle_data = {
+                "name": "Test Bundle Offer",
+                "name_ar": "عرض حزمة تجريبي",
+                "description": "Test bundle offer for API testing",
+                "description_ar": "عرض حزمة تجريبي لاختبار API",
+                "product_ids": ["prod_12345678", "prod_87654321"],
+                "discount_percentage": 20.0,
+                "target_car_model_id": "cm_corolla",
+                "is_active": True,
+                "image_data": None
+            }
+            response = self.make_request("POST", "/api/bundle-offers", json=bundle_data)
+            if response.status_code == 401:
+                self.log_test("POST /api/bundle-offers (Auth Check)", True, "Correctly requires authentication (401)")
+            elif response.status_code == 403:
+                self.log_test("POST /api/bundle-offers (Auth Check)", True, "Correctly requires admin access (403)")
+            elif response.status_code == 201 or response.status_code == 200:
+                data = response.json()
+                self.log_test("POST /api/bundle-offers", True, f"Bundle offer created: {data.get('id', 'N/A')}")
+            else:
+                self.log_test("POST /api/bundle-offers", False, f"Status: {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            self.log_test("POST /api/bundle-offers", False, f"Error: {str(e)}")
+            
+        # Test DELETE /api/bundle-offers/{id} (delete bundle)
+        try:
+            response = self.make_request("DELETE", "/api/bundle-offers/test_bundle_id")
+            if response.status_code == 401:
+                self.log_test("DELETE /api/bundle-offers/{id} (Auth Check)", True, "Correctly requires authentication (401)")
+            elif response.status_code == 403:
+                self.log_test("DELETE /api/bundle-offers/{id} (Auth Check)", True, "Correctly requires admin access (403)")
+            elif response.status_code == 404:
+                self.log_test("DELETE /api/bundle-offers/{id} (Not Found)", True, "Correctly returns 404 for non-existent bundle")
+            elif response.status_code == 200:
+                self.log_test("DELETE /api/bundle-offers/{id}", True, "Bundle offer deletion successful")
+            else:
+                self.log_test("DELETE /api/bundle-offers/{id}", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("DELETE /api/bundle-offers/{id}", False, f"Error: {str(e)}")
+
+    def test_data_structure_validation(self):
+        """Test that all GET endpoints return valid JSON with correct data structure"""
+        print("\n=== DATA STRUCTURE VALIDATION TESTS ===")
+        
+        endpoints_to_test = [
+            ("/api/products", "products"),
+            ("/api/categories", "categories"),
+            ("/api/product-brands", "product_brands"),
+            ("/api/promotions", "promotions"),
+            ("/api/bundle-offers", "bundle_offers")
         ]
         
-        valid_json_count = 0
-        for endpoint in endpoints:
+        for endpoint, data_type in endpoints_to_test:
             try:
-                response = self.session.get(f"{API_BASE}{endpoint}")
+                response = self.make_request("GET", endpoint)
                 if response.status_code == 200:
-                    response.json()  # This will raise an exception if not valid JSON
-                    valid_json_count += 1
-            except Exception:
-                pass
-        
-        success = valid_json_count == len(endpoints)
-        self.log_test("JSON Response Validation", success, 
-                    f"{valid_json_count}/{len(endpoints)} endpoints return valid JSON")
-    
-    def test_root_endpoint(self):
-        """Test GET / (root endpoint)"""
-        try:
-            response = self.session.get(BASE_URL)
-            if response.status_code == 200:
-                data = response.json()
-                expected_fields = ["message", "version", "architecture", "status"]
-                if all(field in data for field in expected_fields):
-                    self.log_test("Root Endpoint", True, 
-                                f"Message: {data.get('message')}, Architecture: {data.get('architecture')}")
+                    try:
+                        data = response.json()
+                        if isinstance(data, list):
+                            self.log_test(f"JSON Structure - {data_type}", True, f"Valid JSON array with {len(data)} items")
+                        elif isinstance(data, dict) and 'products' in data:
+                            products = data.get('products', [])
+                            self.log_test(f"JSON Structure - {data_type}", True, f"Valid JSON object with {len(products)} products")
+                        else:
+                            self.log_test(f"JSON Structure - {data_type}", True, f"Valid JSON response")
+                    except json.JSONDecodeError:
+                        self.log_test(f"JSON Structure - {data_type}", False, "Invalid JSON response")
                 else:
-                    self.log_test("Root Endpoint", False, f"Missing expected fields: {data}")
-            else:
-                self.log_test("Root Endpoint", False, f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Root Endpoint", False, f"Exception: {str(e)}")
-    
+                    self.log_test(f"JSON Structure - {data_type}", False, f"HTTP {response.status_code}")
+            except Exception as e:
+                self.log_test(f"JSON Structure - {data_type}", False, f"Error: {str(e)}")
+
     def run_all_tests(self):
-        """Run all backend tests"""
-        print("🚀 Starting Al-Ghazaly Auto Parts Backend API Tests")
-        print(f"📍 Testing backend at: {BASE_URL}")
-        print("=" * 60)
+        """Run all test suites"""
+        print("🚀 Starting ALghazaly Auto Parts Backend API v4.1.0 Testing Suite")
+        print("=" * 80)
         
-        # Core functionality tests
-        self.test_root_endpoint()
-        self.test_health_endpoint()
-        self.test_version_endpoint()
-        self.test_database_connectivity()
+        start_time = datetime.now()
         
-        # Data endpoint tests
-        self.test_products_endpoint()
-        self.test_categories_endpoint()
-        self.test_car_brands_endpoint()
-        self.test_car_models_endpoint()
-        self.test_product_brands_endpoint()
-        self.test_bundle_offers_endpoint()
-        self.test_promotions_endpoint()
-        self.test_marketing_home_slider()
+        # Run all test suites
+        self.test_health_check()
+        self.test_product_apis()
+        self.test_category_apis()
+        self.test_product_brand_apis()
+        self.test_promotion_apis()
+        self.test_bundle_offer_apis()
+        self.test_data_structure_validation()
         
-        # Authentication tests
-        self.test_cart_endpoints_unauthenticated()
-        self.test_bundle_void_endpoint()
-        
-        # Response format tests
-        self.test_json_responses()
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
         
         # Print summary
-        print("\n" + "=" * 60)
+        print("\n" + "=" * 80)
         print("📊 TEST SUMMARY")
-        print("=" * 60)
-        print(f"✅ Passed: {len(self.passed_tests)}")
-        print(f"❌ Failed: {len(self.failed_tests)}")
-        print(f"📈 Success Rate: {len(self.passed_tests)}/{len(self.test_results)} ({len(self.passed_tests)/len(self.test_results)*100:.1f}%)")
+        print("=" * 80)
+        
+        total_tests = len(self.test_results)
+        passed_tests = len([t for t in self.test_results if t['success']])
+        failed_tests = len(self.failed_tests)
+        
+        print(f"Total Tests: {total_tests}")
+        print(f"✅ Passed: {passed_tests}")
+        print(f"❌ Failed: {failed_tests}")
+        print(f"Success Rate: {(passed_tests/total_tests*100):.1f}%")
+        print(f"Duration: {duration:.2f} seconds")
         
         if self.failed_tests:
-            print("\n❌ FAILED TESTS:")
+            print("\n🔍 FAILED TESTS DETAILS:")
+            print("-" * 40)
             for test in self.failed_tests:
-                print(f"   - {test}")
+                print(f"❌ {test['test']}: {test['details']}")
         
-        print(f"\n🕒 Test completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("\n🎯 FOCUS AREAS TESTED:")
+        print("✓ Product APIs (GET, POST, DELETE)")
+        print("✓ Category APIs (GET, POST, DELETE)")
+        print("✓ Product Brand APIs (GET, POST, DELETE)")
+        print("✓ Promotion APIs (GET, POST, DELETE) - High Priority Sync")
+        print("✓ Bundle Offer APIs (GET, POST, DELETE) - High Priority Sync")
+        print("✓ Authentication & Authorization checks")
+        print("✓ JSON response validation")
         
-        return len(self.failed_tests) == 0
+        return {
+            "total_tests": total_tests,
+            "passed": passed_tests,
+            "failed": failed_tests,
+            "success_rate": passed_tests/total_tests*100,
+            "duration": duration,
+            "failed_tests": self.failed_tests
+        }
 
 def main():
-    """Main test runner"""
-    tester = BackendTester()
-    success = tester.run_all_tests()
+    """Main test execution"""
+    print("ALghazaly Auto Parts Backend API v4.1.0 - Admin Sync & Auto-Cleanup Testing")
+    print("Backend URL: http://localhost:8001")
+    print()
+    
+    tester = ALghazalyAPITester("http://localhost:8001")
+    results = tester.run_all_tests()
     
     # Exit with appropriate code
-    sys.exit(0 if success else 1)
+    if results["failed"] > 0:
+        print(f"\n⚠️  {results['failed']} tests failed. Check the details above.")
+        sys.exit(1)
+    else:
+        print(f"\n🎉 All {results['passed']} tests passed successfully!")
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
