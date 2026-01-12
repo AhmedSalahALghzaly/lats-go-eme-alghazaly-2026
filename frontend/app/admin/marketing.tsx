@@ -1342,6 +1342,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  flashListSelectorContainer: {
+    flex: 1,
+    minHeight: 300,
+  },
   doneButton: {
     margin: 16,
     paddingVertical: 14,
