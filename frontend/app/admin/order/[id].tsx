@@ -66,7 +66,7 @@ export default function OrderDetailAdmin() {
     try {
       // Show loading for 1 second as per requirement
       await new Promise(resolve => setTimeout(resolve, 1000));
-      await orderApi.updateStatus(id, newStatus);
+      await orderApi.updateStatus(orderId, newStatus);
       setOrder((prev) => ({ ...prev, status: newStatus }));
     } catch (error) {
       Alert.alert(
@@ -76,7 +76,7 @@ export default function OrderDetailAdmin() {
     } finally {
       setUpdatingStatus(null);
     }
-  }, [id, language]);
+  }, [orderId, language]);
 
   const handleCancelOrder = useCallback(async () => {
     Alert.alert(
