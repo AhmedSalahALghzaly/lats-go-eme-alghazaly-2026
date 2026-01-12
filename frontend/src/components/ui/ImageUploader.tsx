@@ -577,6 +577,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 6,
   },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compressingText: {
+    fontSize: 10,
+    marginTop: 4,
+  },
   imagesRow: {
     flexDirection: 'row',
     alignItems: 'center',
