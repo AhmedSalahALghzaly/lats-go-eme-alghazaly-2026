@@ -37,7 +37,6 @@ import Animated, {
   SlideInUp,
   SlideOutDown,
   Layout,
-  Easing,
   cancelAnimation,
 } from 'react-native-reanimated';
 
