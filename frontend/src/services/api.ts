@@ -102,6 +102,7 @@ export const categoryApi = {
   getAll: () => api.get('/categories/all'),
   getTree: () => api.get('/categories/tree'),
   create: (data: any) => api.post('/categories', data),
+  update: (id: string, data: any) => api.put(`/categories/${id}`, data),
   delete: (id: string) => api.delete(`/categories/${id}`),
 };
 
