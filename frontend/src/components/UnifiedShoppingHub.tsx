@@ -843,7 +843,7 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
                 </View>
               </View>
 
-              {cartItems.length === 0 ? (
+              {safeCartItems.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Ionicons name="cart-outline" size={48} color={colors.border} />
                   <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
