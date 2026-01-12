@@ -430,7 +430,7 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
             quantity: item.quantity,
           })),
         };
-        response = await api.post('/admin/orders/create', orderPayload);
+        response = await api.post('/orders/admin/create', orderPayload);
       } else {
         // Customer placing own order
         response = await orderApi.create({
