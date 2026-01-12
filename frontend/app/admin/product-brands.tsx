@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +32,13 @@ export default function ProductBrandsAdmin() {
   const [countryOfOriginAr, setCountryOfOriginAr] = useState('');
   const [logoImage, setLogoImage] = useState<string>('');
 
+  // Edit mode state
+  const [editingBrand, setEditingBrand] = useState<any>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Toast state
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -52,6 +59,18 @@ export default function ProductBrandsAdmin() {
     }
   };
 
+  // Filter brands based on search query
+  const filteredBrands = useMemo(() => {
+    if (!searchQuery.trim()) return brands;
+    const query = searchQuery.toLowerCase();
+    return brands.filter((brand) => {
+      const name = (brand.name || '').toLowerCase();
+      const nameAr = (brand.name_ar || '').toLowerCase();
+      const country = (brand.country_of_origin || '').toLowerCase();
+      return name.includes(query) || nameAr.includes(query) || country.includes(query);
+    });
+  }, [brands, searchQuery]);
+
   const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setToastMessage(message);
     setToastType(type);
@@ -64,6 +83,20 @@ export default function ProductBrandsAdmin() {
     setCountryOfOrigin('');
     setCountryOfOriginAr('');
     setLogoImage('');
+    setError('');
+    setIsEditMode(false);
+    setEditingBrand(null);
+  };
+
+  const handleEditBrand = (brand: any) => {
+    // Populate form with brand data
+    setName(brand.name || '');
+    setNameAr(brand.name_ar || '');
+    setCountryOfOrigin(brand.country_of_origin || '');
+    setCountryOfOriginAr(brand.country_of_origin_ar || '');
+    setLogoImage(brand.logo || '');
+    setEditingBrand(brand);
+    setIsEditMode(true);
     setError('');
   };
 
@@ -85,16 +118,37 @@ export default function ProductBrandsAdmin() {
     };
 
     try {
-      // Use optimistic update via AdminSyncService
-      const result = await adminSync.createProductBrand(brandData);
+      let result;
       
-      if (result.success) {
-        showToast(language === 'ar' ? 'تم إضافة الماركة بنجاح' : 'Brand created successfully', 'success');
-        resetForm();
-        // Refresh to get server data with ID
-        fetchBrands();
+      if (isEditMode && editingBrand) {
+        // Update existing brand
+        result = await adminSync.updateProductBrand(editingBrand.id, brandData);
+        
+        if (result.success) {
+          setBrands(prev => prev.map(b => 
+            b.id === editingBrand.id ? { ...b, ...brandData, ...result.data } : b
+          ));
+          showToast(language === 'ar' ? 'تم تحديث الماركة بنجاح' : 'Brand updated successfully', 'success');
+        } else {
+          showToast(result.error || (language === 'ar' ? 'فشل في تحديث الماركة' : 'Failed to update brand'), 'error');
+        }
       } else {
-        showToast(result.error || (language === 'ar' ? 'فشل في حفظ الماركة' : 'Failed to save brand'), 'error');
+        // Create new brand using optimistic update via AdminSyncService
+        result = await adminSync.createProductBrand(brandData);
+        
+        if (result.success) {
+          showToast(language === 'ar' ? 'تم إضافة الماركة بنجاح' : 'Brand created successfully', 'success');
+          // Refresh to get server data with ID
+          fetchBrands();
+        } else {
+          showToast(result.error || (language === 'ar' ? 'فشل في حفظ الماركة' : 'Failed to save brand'), 'error');
+        }
+      }
+
+      if (result.success) {
+        setShowSuccess(true);
+        resetForm();
+        setTimeout(() => setShowSuccess(false), 2000);
       }
     } catch (error: any) {
       showToast(language === 'ar' ? 'فشل في حفظ الماركة' : 'Failed to save brand', 'error');
@@ -148,11 +202,27 @@ export default function ProductBrandsAdmin() {
           </Text>
         </View>
 
-        {/* Add New Form */}
-        <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.formTitle, { color: colors.text }]}>
-            {language === 'ar' ? 'إضافة ماركة جديدة' : 'Add New Brand'}
-          </Text>
+        {/* Add/Edit Form */}
+        <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: isEditMode ? colors.primary : colors.border }]}>
+          <View style={styles.formTitleRow}>
+            <Text style={[styles.formTitle, { color: isEditMode ? colors.primary : colors.text }]}>
+              {isEditMode 
+                ? (language === 'ar' ? 'تعديل الماركة' : 'Edit Brand')
+                : (language === 'ar' ? 'إضافة ماركة جديدة' : 'Add New Brand')
+              }
+            </Text>
+            {isEditMode && (
+              <TouchableOpacity
+                style={[styles.cancelEditBtn, { backgroundColor: colors.error + '20' }]}
+                onPress={resetForm}
+              >
+                <Ionicons name="close" size={18} color={colors.error} />
+                <Text style={[styles.cancelEditText, { color: colors.error }]}>
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           {/* Logo Upload Section */}
           <View style={styles.formGroup}>
@@ -244,9 +314,12 @@ export default function ProductBrandsAdmin() {
               </>
             ) : (
               <>
-                <Ionicons name="save" size={20} color="#FFF" />
+                <Ionicons name={isEditMode ? "create" : "save"} size={20} color="#FFF" />
                 <Text style={styles.saveButtonText}>
-                  {language === 'ar' ? 'حفظ' : 'Save'}
+                  {isEditMode 
+                    ? (language === 'ar' ? 'تحديث' : 'Update')
+                    : (language === 'ar' ? 'حفظ' : 'Save')
+                  }
                 </Text>
               </>
             )}
@@ -256,23 +329,40 @@ export default function ProductBrandsAdmin() {
         {/* Existing Brands List */}
         <View style={[styles.listCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.listTitle, { color: colors.text }]}>
-            {language === 'ar' ? 'الماركات الحالية' : 'Existing Brands'} ({brands.length})
+            {language === 'ar' ? 'الماركات الحالية' : 'Existing Brands'} ({filteredBrands.length})
           </Text>
+
+          {/* Search Bar */}
+          <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons name="search" size={20} color={colors.textSecondary} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={language === 'ar' ? 'ابحث بالاسم أو البلد...' : 'Search by name or country...'}
+              placeholderTextColor={colors.textSecondary}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
 
           {loading ? (
             <ActivityIndicator size="large" color={colors.primary} />
-          ) : brands.length === 0 ? (
+          ) : filteredBrands.length === 0 ? (
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              {language === 'ar' ? 'لا توجد ماركات' : 'No brands found'}
+              {searchQuery ? (language === 'ar' ? 'لا توجد نتائج' : 'No results found') : (language === 'ar' ? 'لا توجد ماركات' : 'No brands found')}
             </Text>
           ) : (
-            brands.map((brand) => (
+            filteredBrands.map((brand) => (
               <View key={brand.id} style={[styles.listItem, { borderColor: colors.border }]}>
                 {brand.logo ? (
                   <Image source={{ uri: brand.logo }} style={styles.brandLogo} />
                 ) : (
                   <View style={[styles.brandIcon, { backgroundColor: colors.primary + '20' }]}>
-                    <Ionicons name="pricetag" size={20} color={colors.primary} />
+                    <Ionicons name="pricetag" size={24} color={colors.primary} />
                   </View>
                 )}
                 <View style={styles.brandInfo}>
@@ -288,12 +378,20 @@ export default function ProductBrandsAdmin() {
                     </View>
                   )}
                 </View>
-                <TouchableOpacity
-                  style={[styles.deleteButton, { backgroundColor: colors.error + '20' }]}
-                  onPress={() => handleDelete(brand.id)}
-                >
-                  <Ionicons name="trash" size={18} color={colors.error} />
-                </TouchableOpacity>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={[styles.editButton, { backgroundColor: colors.primary + '20' }]}
+                    onPress={() => handleEditBrand(brand)}
+                  >
+                    <Ionicons name="create" size={18} color={colors.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.deleteButton, { backgroundColor: colors.error + '20' }]}
+                    onPress={() => handleDelete(brand.id)}
+                  >
+                    <Ionicons name="trash" size={18} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))
           )}
@@ -318,7 +416,10 @@ const styles = StyleSheet.create({
   breadcrumbRTL: { flexDirection: 'row-reverse' },
   breadcrumbText: { fontSize: 14 },
   formCard: { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 16 },
-  formTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  formTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  formTitle: { fontSize: 18, fontWeight: '700' },
+  cancelEditBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 4 },
+  cancelEditText: { fontSize: 14, fontWeight: '600' },
   formGroup: { marginBottom: 16 },
   formSection: { borderTopWidth: 1, paddingTop: 16, marginTop: 8, marginBottom: 16 },
   sectionLabel: { fontSize: 14, fontWeight: '700', marginBottom: 12 },
@@ -338,13 +439,31 @@ const styles = StyleSheet.create({
   saveButtonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
   listCard: { borderRadius: 12, borderWidth: 1, padding: 16 },
   listTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  // Search Bar Styles
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 16,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    paddingVertical: 0,
+  },
   emptyText: { textAlign: 'center', padding: 20 },
-  listItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1 },
-  brandLogo: { width: 48, height: 48, borderRadius: 8 },
-  brandIcon: { width: 48, height: 48, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  listItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1 },
+  brandLogo: { width: 56, height: 56, borderRadius: 28 },
+  brandIcon: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
   brandInfo: { flex: 1, marginLeft: 12 },
   brandName: { fontSize: 16, fontWeight: '600' },
   countryRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 },
   countryText: { fontSize: 13 },
+  actionButtons: { flexDirection: 'column', gap: 8 },
+  editButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   deleteButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });
