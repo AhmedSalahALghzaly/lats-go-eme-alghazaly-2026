@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,12 +7,15 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { carBrandsApi, carModelsApi } from '../../src/services/api';
+import { useAdminSync } from '../../src/services/adminSyncService';
 import { Header } from '../../src/components/Header';
+import { Toast } from '../../src/components/ui/FormFeedback';
 
 export default function ModelsAdmin() {
   const { colors } = useTheme();
   const { language, isRTL } = useTranslation();
   const router = useRouter();
+  const adminSync = useAdminSync();
 
   const [brands, setBrands] = useState<any[]>([]);
   const [models, setModels] = useState<any[]>([]);
@@ -29,6 +32,18 @@ export default function ModelsAdmin() {
   const [yearTo, setYearTo] = useState('');
   const [modelImage, setModelImage] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState('');
+
+  // Edit mode state
+  const [editingModel, setEditingModel] = useState<any>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Toast state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
 
   useEffect(() => {
     fetchData();
@@ -47,6 +62,24 @@ export default function ModelsAdmin() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Filter models based on search query
+  const filteredModels = useMemo(() => {
+    if (!searchQuery.trim()) return models;
+    const query = searchQuery.toLowerCase();
+    return models.filter((model) => {
+      const name = (model.name || '').toLowerCase();
+      const nameAr = (model.name_ar || '').toLowerCase();
+      const brandName = getBrandName(model.brand_id)?.toLowerCase() || '';
+      return name.includes(query) || nameAr.includes(query) || brandName.includes(query);
+    });
+  }, [models, searchQuery, brands]);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
   };
 
   const pickImage = async () => {
@@ -68,6 +101,33 @@ export default function ModelsAdmin() {
     }
   };
 
+  const resetForm = () => {
+    setName('');
+    setNameAr('');
+    setSelectedBrandId('');
+    setYearFrom('');
+    setYearTo('');
+    setModelImage(null);
+    setImageUrl('');
+    setIsEditMode(false);
+    setEditingModel(null);
+    setError('');
+  };
+
+  const handleEditModel = (model: any) => {
+    // Populate form with model data
+    setName(model.name || '');
+    setNameAr(model.name_ar || '');
+    setSelectedBrandId(model.brand_id || '');
+    setYearFrom(model.year_start?.toString() || '');
+    setYearTo(model.year_end?.toString() || '');
+    setModelImage(model.image_url || null);
+    setImageUrl('');
+    setEditingModel(model);
+    setIsEditMode(true);
+    setError('');
+  };
+
   const handleSave = async () => {
     if (!selectedBrandId || !name.trim() || !nameAr.trim()) {
       setError(language === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
@@ -77,39 +137,76 @@ export default function ModelsAdmin() {
     setSaving(true);
     setError('');
 
+    const modelData = {
+      name: name.trim(),
+      name_ar: nameAr.trim(),
+      brand_id: selectedBrandId,
+      year_start: yearFrom ? parseInt(yearFrom) : null,
+      year_end: yearTo ? parseInt(yearTo) : null,
+      image_url: modelImage || imageUrl.trim() || null,
+    };
+
     try {
-      await carModelsApi.create({
-        name: name.trim(),
-        name_ar: nameAr.trim(),
-        brand_id: selectedBrandId,
-        year_start: yearFrom ? parseInt(yearFrom) : null,
-        year_end: yearTo ? parseInt(yearTo) : null,
-        image_url: modelImage || imageUrl.trim() || null,
-      });
+      let result;
+      
+      if (isEditMode && editingModel) {
+        // Update existing model
+        result = await adminSync.updateCarModel(editingModel.id, modelData);
+        
+        if (result.success) {
+          setModels(prev => prev.map(m => 
+            m.id === editingModel.id ? { ...m, ...modelData, ...result.data } : m
+          ));
+          showToast(language === 'ar' ? 'تم تحديث الموديل بنجاح' : 'Model updated successfully', 'success');
+        } else {
+          showToast(result.error || 'Failed to update model', 'error');
+        }
+      } else {
+        // Create new model
+        result = await adminSync.createCarModel(modelData);
+        
+        if (result.success) {
+          fetchData();
+          showToast(language === 'ar' ? 'تم إضافة الموديل بنجاح' : 'Model created successfully', 'success');
+        } else {
+          showToast(result.error || 'Failed to create model', 'error');
+        }
+      }
 
-      setShowSuccess(true);
-      setName('');
-      setNameAr('');
-      setYearFrom('');
-      setYearTo('');
-      setModelImage(null);
-      setImageUrl('');
-      fetchData();
-
-      setTimeout(() => setShowSuccess(false), 2000);
+      if (result.success) {
+        setShowSuccess(true);
+        resetForm();
+        setTimeout(() => setShowSuccess(false), 2000);
+      }
     } catch (error: any) {
       setError(error.response?.data?.detail || 'Error saving model');
+      showToast(error.response?.data?.detail || 'Operation failed', 'error');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
+    const modelToDelete = models.find(m => m.id === id);
+    setModels(prev => prev.filter(m => m.id !== id));
+    
     try {
-      await carModelsApi.delete(id);
-      fetchData();
+      const result = await adminSync.deleteCarModel(id);
+      
+      if (!result.success) {
+        if (modelToDelete) {
+          setModels(prev => [...prev, modelToDelete]);
+        }
+        showToast(result.error || 'Failed to delete model', 'error');
+      } else {
+        showToast(language === 'ar' ? 'تم حذف الموديل بنجاح' : 'Model deleted successfully', 'success');
+      }
     } catch (error) {
+      if (modelToDelete) {
+        setModels(prev => [...prev, modelToDelete]);
+      }
       console.error('Error deleting model:', error);
+      showToast(language === 'ar' ? 'فشل في حذف الموديل' : 'Failed to delete model', 'error');
     }
   };
 
@@ -136,11 +233,27 @@ export default function ModelsAdmin() {
           </Text>
         </View>
 
-        {/* Add New Form */}
-        <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.formTitle, { color: colors.text }]}>
-            {language === 'ar' ? 'إضافة موديل جديد' : 'Add New Model'}
-          </Text>
+        {/* Add/Edit Form */}
+        <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: isEditMode ? colors.primary : colors.border }]}>
+          <View style={styles.formTitleRow}>
+            <Text style={[styles.formTitle, { color: isEditMode ? colors.primary : colors.text }]}>
+              {isEditMode 
+                ? (language === 'ar' ? 'تعديل الموديل' : 'Edit Model')
+                : (language === 'ar' ? 'إضافة موديل جديد' : 'Add New Model')
+              }
+            </Text>
+            {isEditMode && (
+              <TouchableOpacity
+                style={[styles.cancelEditBtn, { backgroundColor: colors.error + '20' }]}
+                onPress={resetForm}
+              >
+                <Ionicons name="close" size={18} color={colors.error} />
+                <Text style={[styles.cancelEditText, { color: colors.error }]}>
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           {/* Model Image Upload */}
           <View style={styles.formGroup}>
@@ -283,9 +396,12 @@ export default function ModelsAdmin() {
               </>
             ) : (
               <>
-                <Ionicons name="save" size={20} color="#FFF" />
+                <Ionicons name={isEditMode ? "create" : "save"} size={20} color="#FFF" />
                 <Text style={styles.saveButtonText}>
-                  {language === 'ar' ? 'حفظ' : 'Save'}
+                  {isEditMode 
+                    ? (language === 'ar' ? 'تحديث' : 'Update')
+                    : (language === 'ar' ? 'حفظ' : 'Save')
+                  }
                 </Text>
               </>
             )}
@@ -295,42 +411,75 @@ export default function ModelsAdmin() {
         {/* Existing Models List */}
         <View style={[styles.listCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.listTitle, { color: colors.text }]}>
-            {language === 'ar' ? 'الموديلات الحالية' : 'Existing Models'} ({models.length})
+            {language === 'ar' ? 'الموديلات الحالية' : 'Existing Models'} ({filteredModels.length})
           </Text>
+
+          {/* Search Bar */}
+          <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons name="search" size={20} color={colors.textSecondary} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={language === 'ar' ? 'ابحث بالاسم أو الماركة...' : 'Search by name or brand...'}
+              placeholderTextColor={colors.textSecondary}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
 
           {loading ? (
             <ActivityIndicator size="large" color={colors.primary} />
-          ) : models.length === 0 ? (
+          ) : filteredModels.length === 0 ? (
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              {language === 'ar' ? 'لا توجد موديلات' : 'No models found'}
+              {searchQuery ? (language === 'ar' ? 'لا توجد نتائج' : 'No results found') : (language === 'ar' ? 'لا توجد موديلات' : 'No models found')}
             </Text>
           ) : (
-            models.map((model) => (
+            filteredModels.map((model) => (
               <View key={model.id} style={[styles.listItem, { borderColor: colors.border }]}>
                 {model.image_url ? (
                   <Image source={{ uri: model.image_url }} style={styles.modelThumb} />
                 ) : (
                   <View style={[styles.modelIcon, { backgroundColor: colors.primary + '20' }]}>
-                    <Ionicons name="layers" size={20} color={colors.primary} />
+                    <Ionicons name="layers" size={24} color={colors.primary} />
                   </View>
                 )}
                 <View style={styles.modelInfo}>
                   <Text style={[styles.modelName, { color: colors.text }]}>{model.name}</Text>
+                  <Text style={[styles.modelNameAr, { color: colors.textSecondary }]}>{model.name_ar}</Text>
                   <Text style={[styles.modelMeta, { color: colors.textSecondary }]}>
                     {getBrandName(model.brand_id)} {model.year_start && model.year_end ? `(${model.year_start}-${model.year_end})` : ''}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  style={[styles.deleteButton, { backgroundColor: colors.error + '20' }]}
-                  onPress={() => handleDelete(model.id)}
-                >
-                  <Ionicons name="trash" size={18} color={colors.error} />
-                </TouchableOpacity>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={[styles.editButton, { backgroundColor: colors.primary + '20' }]}
+                    onPress={() => handleEditModel(model)}
+                  >
+                    <Ionicons name="create" size={18} color={colors.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.deleteButton, { backgroundColor: colors.error + '20' }]}
+                    onPress={() => handleDelete(model.id)}
+                  >
+                    <Ionicons name="trash" size={18} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))
           )}
         </View>
       </ScrollView>
+      
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onDismiss={() => setToastVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -343,7 +492,10 @@ const styles = StyleSheet.create({
   breadcrumbRTL: { flexDirection: 'row-reverse' },
   breadcrumbText: { fontSize: 14 },
   formCard: { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 16 },
-  formTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  formTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  formTitle: { fontSize: 18, fontWeight: '700' },
+  cancelEditBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 4 },
+  cancelEditText: { fontSize: 14, fontWeight: '600' },
   formGroup: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
   input: { borderWidth: 1, borderRadius: 8, padding: 12, fontSize: 16 },
@@ -364,12 +516,31 @@ const styles = StyleSheet.create({
   saveButtonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
   listCard: { borderRadius: 12, borderWidth: 1, padding: 16 },
   listTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  // Search Bar Styles
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 16,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    paddingVertical: 0,
+  },
   emptyText: { textAlign: 'center', padding: 20 },
-  listItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1 },
-  modelIcon: { width: 48, height: 48, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  modelThumb: { width: 48, height: 48, borderRadius: 8 },
+  listItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1 },
+  modelIcon: { width: 64, height: 64, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  modelThumb: { width: 64, height: 64, borderRadius: 12 },
   modelInfo: { flex: 1, marginLeft: 12 },
   modelName: { fontSize: 16, fontWeight: '600' },
-  modelMeta: { fontSize: 13, marginTop: 2 },
+  modelNameAr: { fontSize: 14, marginTop: 2 },
+  modelMeta: { fontSize: 13, marginTop: 4 },
+  actionButtons: { flexDirection: 'column', gap: 8 },
+  editButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   deleteButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });
