@@ -27,7 +27,8 @@ export default function OrderDetailAdmin() {
   const { colors } = useTheme();
   const { language, isRTL } = useTranslation();
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const orderId = Array.isArray(params.id) ? params.id[0] : params.id;
   const isOwner = useIsOwner();
   const isAdmin = useCanAccessAdminPanel();
 
@@ -40,12 +41,14 @@ export default function OrderDetailAdmin() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    fetchOrder();
-  }, [id]);
+    if (orderId) {
+      fetchOrder();
+    }
+  }, [orderId]);
 
   const fetchOrder = async () => {
     try {
-      const response = await api.get(`/orders/admin/${id}`);
+      const response = await api.get(`/orders/admin/${orderId}`);
       setOrder(response.data);
       if (response.data?.discount > 0) {
         setDiscountInput(response.data.discount.toString());
