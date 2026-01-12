@@ -114,62 +114,65 @@ export default function CategoryScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <FlatList
-        data={products}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.listContent}
-        columnWrapperStyle={styles.row}
+      <ScrollView
+        style={styles.scrollContainer}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        ListHeaderComponent={
-          <>
-            {/* Subcategories */}
-            {subcategories.length > 0 && (
-              <View style={styles.subcategoriesSection}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  {t('subcategories')}
-                </Text>
-                <FlatList
-                  data={subcategories}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <CategoryCard category={item} size="small" />
-                  )}
-                  contentContainerStyle={styles.subcategoriesList}
-                />
-              </View>
-            )}
-
-            {/* Products Header */}
-            <View style={styles.productsHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('products')}
-              </Text>
-              <Text style={[styles.productCount, { color: colors.textSecondary }]}>
-                ({products.length})
-              </Text>
-            </View>
-          </>
-        }
-        renderItem={({ item }) => (
-          <ProductCard
-            product={item}
-            onAddToCart={() => handleAddToCart(item)}
-          />
+      >
+        {/* Subcategories */}
+        {subcategories.length > 0 && (
+          <View style={styles.subcategoriesSection}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {t('subcategories')}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.subcategoriesList}
+            >
+              {subcategories.map((item) => (
+                <CategoryCard key={item.id} category={item} size="small" />
+              ))}
+            </ScrollView>
+          </View>
         )}
-        ListEmptyComponent={
+
+        {/* Products Header */}
+        <View style={styles.productsHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            {t('products')}
+          </Text>
+          <Text style={[styles.productCount, { color: colors.textSecondary }]}>
+            ({products.length})
+          </Text>
+        </View>
+
+        {/* Products List using FlashList */}
+        {products.length > 0 ? (
+          <View style={styles.flashListContainer}>
+            <FlashList
+              data={products}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              estimatedItemSize={250}
+              renderItem={({ item }) => (
+                <ProductCard
+                  product={item}
+                  onAddToCart={() => handleAddToCart(item)}
+                />
+              )}
+            />
+          </View>
+        ) : (
           <View style={styles.emptyContainer}>
             <Ionicons name="cube-outline" size={60} color={colors.textSecondary} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               {t('noProducts')}
             </Text>
           </View>
-        }
-      />
+        )}
+      </ScrollView>
     </View>
   );
 }
