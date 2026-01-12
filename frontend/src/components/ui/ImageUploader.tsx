@@ -61,7 +61,46 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const [isLoading, setIsLoading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Process image with compression if needed (>1MB -> 50% compression, preserve PNG)
+   */
+  const processImageWithCompression = async (uri: string, mimeType: string): Promise<string> => {
+    try {
+      setIsCompressing(true);
+      console.log('[ImageUploader] Processing image for compression...');
+      
+      // Use the compression service (auto-compresses if >1MB, preserves PNG)
+      const result = await imageCompressionService.compressForUpload(uri, {
+        maxWidth: 1920,
+        maxHeight: 1080,
+        preserveFormat: true, // Preserve PNG format
+      });
+
+      if (result.base64) {
+        const format = result.format === 'png' ? 'image/png' : 'image/jpeg';
+        const base64Url = `data:${format};base64,${result.base64}`;
+        
+        if (result.wasCompressed) {
+          console.log(`[ImageUploader] Image compressed: ${(result.originalSize / 1024).toFixed(1)}KB -> ${(result.compressedSize / 1024).toFixed(1)}KB (${(result.compressionRatio * 100).toFixed(1)}%)`);
+        } else {
+          console.log('[ImageUploader] Image under 1MB, no compression needed');
+        }
+        
+        return base64Url;
+      }
+      
+      // Fallback to original
+      return uri;
+    } catch (error) {
+      console.error('[ImageUploader] Compression error:', error);
+      return uri;
+    } finally {
+      setIsCompressing(false);
+    }
+  };
 
   // Request media library permissions
   const requestPermissions = async (): Promise<boolean> => {
