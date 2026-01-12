@@ -732,7 +732,7 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
             {/* Quick Stats */}
             <View style={[styles.statsGrid, { marginTop: 16 }]}>
               <View style={[styles.statCard, { backgroundColor: '#3B82F6' + '20' }]}>
-                <Text style={[styles.statValue, { color: '#3B82F6' }]}>{orders.length}</Text>
+                <Text style={[styles.statValue, { color: '#3B82F6' }]}>{safeOrders.length}</Text>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                   {language === 'ar' ? 'الطلبات' : 'Orders'}
                 </Text>
