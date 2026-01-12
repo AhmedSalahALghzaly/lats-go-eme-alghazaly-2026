@@ -161,12 +161,18 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
     setLoading(true);
     try {
       if (isAdminView && customerId) {
-        // Admin viewing customer data
+        // Admin viewing customer data - use correct endpoint paths
         const [favRes, cartRes, ordersRes] = await Promise.all([
-          api.get(`/admin/customer/${customerId}/favorites`).catch(() => ({ data: { favorites: [] } })),
-          api.get(`/admin/customer/${customerId}/cart`).catch(() => ({ data: { items: [] } })),
-          api.get(`/admin/customer/${customerId}/orders`).catch(() => ({ data: { orders: [] } })),
+          api.get(`/customers/admin/customer/${customerId}/favorites`).catch((e) => { console.log('Favorites error:', e); return { data: { favorites: [] } }; }),
+          api.get(`/customers/admin/customer/${customerId}/cart`).catch((e) => { console.log('Cart error:', e); return { data: { items: [] } }; }),
+          api.get(`/customers/admin/customer/${customerId}/orders`).catch((e) => { console.log('Orders error:', e); return { data: { orders: [] } }; }),
         ]);
+
+        console.log('Admin view data loaded:', { 
+          favCount: favRes.data?.favorites?.length || 0, 
+          cartCount: favRes.data?.items?.length || 0,
+          ordersCount: ordersRes.data?.orders?.length || 0 
+        });
 
         // Ensure favorites have proper structure with product data
         const favoritesData = favRes.data?.favorites || [];
