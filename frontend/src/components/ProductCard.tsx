@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     marginBottom: 6,
-    gap: 3,
+    gap: 4,
   },
   detailRow: {
     flexDirection: 'row',
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
   },
   detailText: {
-    fontSize: 10,
+    fontSize: 10.5, // 5% increase from 10
     flex: 1,
   },
   brandText: {
