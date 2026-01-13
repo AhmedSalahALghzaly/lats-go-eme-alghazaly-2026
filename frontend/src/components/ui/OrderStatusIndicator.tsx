@@ -184,11 +184,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 6,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0,0,0,0.15)',
+    // Centered within the indicator
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -6 }, { translateY: -6 }],
   },
 });
 
