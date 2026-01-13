@@ -235,19 +235,21 @@ async def update_order_status(order_id: str, status: str, request: Request):
     )
     
     if order.get("user_id"):
-        status_messages = {
-            "preparing": "is being prepared",
-            "shipped": "has been shipped",
-            "out_for_delivery": "is out for delivery",
-            "delivered": "has been delivered",
-            "cancelled": "has been cancelled"
-        }
-        if status in status_messages:
-            await create_notification(
-                order["user_id"],
-                f"Order {status.replace('_', ' ').title()}",
-                f"Your order {order.get('order_number')} {status_messages[status]}.",
-                "info" if status != "cancelled" else "warning"
+        # Use enhanced localized notification system
+        await create_order_status_notification(
+            user_id=order["user_id"],
+            order_number=order.get('order_number', 'N/A'),
+            status=status,
+            order_id=order_id
+        )
+        
+        # Also notify admins if order is cancelled
+        if status == "cancelled":
+            await notify_admins_order_cancelled(
+                order_number=order.get('order_number', 'N/A'),
+                order_id=order_id,
+                customer_name=order.get('user_name'),
+                cancelled_by="admin"
             )
     
     await manager.broadcast({"type": "sync", "tables": ["orders"]})
