@@ -270,15 +270,10 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({
       {/* Image Container */}
       <View style={imageContainerStyle}>
         {product.image_url ? (
-          <Image
+          <RNImage
             source={{ uri: product.image_url }}
             style={styles.image}
-            contentFit="cover"
-            backgroundColor="transparent"
-            cachePolicy="disk"
-            placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-            placeholderContentFit="contain"
-            transition={200}
+            resizeMode="cover"
           />
         ) : (
           <Ionicons name="cube-outline" size={48} color={colors.textSecondary} />
