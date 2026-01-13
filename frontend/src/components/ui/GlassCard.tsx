@@ -1,32 +1,67 @@
 /**
- * GlassCard - Glassmorphism styled card container
- * Reusable component with theme support
+ * GlassCard - Glassmorphism styled card container with BlurView
+ * Reusable component with theme support and frosted glass effect
  */
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../../hooks/useTheme';
 
 interface GlassCardProps {
   children: React.ReactNode;
   style?: ViewStyle;
+  intensity?: number;
+  tint?: 'light' | 'dark' | 'default';
 }
 
-export const GlassCard: React.FC<GlassCardProps> = ({ children, style }) => {
+export const GlassCard: React.FC<GlassCardProps> = ({ 
+  children, 
+  style,
+  intensity = 50,
+  tint,
+}) => {
   const { isDark } = useTheme();
+  
+  // Auto-select tint based on theme if not provided
+  const blurTint = tint || (isDark ? 'dark' : 'light');
+
+  // BlurView works best on iOS, fallback to semi-transparent background on web/Android
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        style={[
+          styles.glassCard,
+          {
+            backgroundColor: isDark
+              ? 'rgba(30, 41, 59, 0.85)'
+              : 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(10px)',
+          },
+          style,
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
 
   return (
-    <View
-      style={[
-        styles.glassCard,
+    <View style={[styles.glassCard, style]}>
+      <BlurView
+        intensity={intensity}
+        tint={blurTint}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[
+        styles.glassContent,
         {
           backgroundColor: isDark
-            ? 'rgba(30, 41, 59, 0.8)'
-            : 'rgba(255, 255, 255, 0.9)',
-        },
-        style,
-      ]}
-    >
-      {children}
+            ? 'rgba(30, 41, 59, 0.3)'
+            : 'rgba(255, 255, 255, 0.3)',
+        }
+      ]}>
+        {children}
+      </View>
     </View>
   );
 };
@@ -34,7 +69,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, style }) => {
 const styles = StyleSheet.create({
   glassCard: {
     borderRadius: 16,
-    padding: 16,
+    overflow: 'hidden',
     marginHorizontal: 16,
     marginBottom: 12,
     shadowColor: '#000',
@@ -42,6 +77,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+  },
+  glassContent: {
+    padding: 16,
   },
 });
 
