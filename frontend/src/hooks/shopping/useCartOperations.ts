@@ -2,7 +2,7 @@
  * useCartOperations - Cart manipulation operations hook
  * Handles add, update, remove operations with optimistic updates
  */
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useAppStore } from '../../store/appStore';
 import { cartApi } from '../../services/api';
 
@@ -25,11 +25,37 @@ export const useCartOperations = ({
   const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
 
   /**
+   * Remove item from cart (defined FIRST to avoid circular reference)
+   */
+  const removeFromCart = useCallback(
+    async (productId: string) => {
+      // Optimistic update
+      setLocalCartItems(
+        safeCartItems.filter((item) => item.product_id !== productId)
+      );
+
+      if (!isAdminView) {
+        try {
+          await cartApi.updateItem(productId, 0);
+          const cartRes = await cartApi.get();
+          const items = cartRes.data?.items || [];
+          setCartItems(items);
+        } catch (error) {
+          console.error('[useCartOperations] Error removing from cart:', error);
+          loadData();
+        }
+      }
+    },
+    [safeCartItems, setLocalCartItems, isAdminView, setCartItems, loadData]
+  );
+
+  /**
    * Update cart item quantity
    */
   const updateCartQuantity = useCallback(
     async (productId: string, newQuantity: number) => {
       if (newQuantity < 1) {
+        // Call removeFromCart directly
         removeFromCart(productId);
         return;
       }
@@ -56,32 +82,7 @@ export const useCartOperations = ({
         }
       }
     },
-    [safeCartItems, setLocalCartItems, isAdminView, setCartItems, loadData]
-  );
-
-  /**
-   * Remove item from cart
-   */
-  const removeFromCart = useCallback(
-    async (productId: string) => {
-      // Optimistic update
-      setLocalCartItems(
-        safeCartItems.filter((item) => item.product_id !== productId)
-      );
-
-      if (!isAdminView) {
-        try {
-          await cartApi.updateItem(productId, 0);
-          const cartRes = await cartApi.get();
-          const items = cartRes.data?.items || [];
-          setCartItems(items);
-        } catch (error) {
-          console.error('[useCartOperations] Error removing from cart:', error);
-          loadData();
-        }
-      }
-    },
-    [safeCartItems, setLocalCartItems, isAdminView, setCartItems, loadData]
+    [safeCartItems, setLocalCartItems, isAdminView, setCartItems, loadData, removeFromCart]
   );
 
   /**
