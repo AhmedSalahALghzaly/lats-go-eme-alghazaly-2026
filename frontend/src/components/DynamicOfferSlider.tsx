@@ -639,18 +639,19 @@ const styles = StyleSheet.create({
   },
   actionSection: {
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    minWidth: 65,
+    justifyContent: 'space-between', // Distribute: discount at top, icon in middle
+    minWidth: 70,
     height: '100%',
     paddingTop: 0,
+    paddingBottom: 35, // Space for price row
   },
   discountBadge: {
     paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     minWidth: 60,
-    marginBottom: 12,
+    marginBottom: 0, // Remove margin - space-between handles spacing
     ...Platform.select({
       web: {
         boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
