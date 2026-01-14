@@ -60,7 +60,7 @@ const calculateCardWidth = () => {
 const HOME_PRODUCT_CARD_WIDTH = calculateCardWidth();
 
 export default function HomeScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, isRTL, language } = useTranslation();
   const router = useRouter();
   const { user, addToLocalCart, setCategories: setGlobalCategories, setCarBrands: setGlobalCarBrands, setProducts: setGlobalProducts, setCarModels: setGlobalCarModels, setProductBrands: setGlobalProductBrands, setPartners: setGlobalPartners } = useAppStore();
