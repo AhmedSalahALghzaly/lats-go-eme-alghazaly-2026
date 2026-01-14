@@ -358,9 +358,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Glassblur Background Effect with gradient overlay */}
+      {/* Glassblur Background Effect with gradient overlay - Responsive to theme */}
       <LinearGradient
-        colors={['#0a1628', '#152238', '#1a2744', '#0d1b2a']}
+        colors={isDark 
+          ? ['#0a1628', '#152238', '#1a2744', '#0d1b2a']  // Dark mode
+          : ['#f0f4f8', '#e2e8f0', '#cbd5e1', '#f8fafc']   // Light mode
+        }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -369,12 +372,12 @@ export default function HomeScreen() {
       {Platform.OS !== 'web' && (
         <BlurView
           intensity={15}
-          tint="dark"
+          tint={isDark ? 'dark' : 'light'}
           style={[StyleSheet.absoluteFill, styles.blurOverlay]}
         />
       )}
       {/* Glass overlay effect */}
-      <View style={styles.glassOverlay} />
+      <View style={[styles.glassOverlay, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)' }]} />
       
       <Header showBack={false} />
       
