@@ -100,6 +100,134 @@ type PriceFilter = 'all' | 'low' | 'medium' | 'high';
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
+// CRITICAL FIX: Separate component for product cards to avoid hooks-in-renderItem violation
+interface ProductCardItemProps {
+  item: Product;
+  index: number;
+  isDark: boolean;
+  mood: { primary?: string } | null;
+  colors: { text: string; textSecondary: string; primary: string };
+  language: string;
+  onPress: (id: string) => void;
+}
+
+const ProductCardItem: React.FC<ProductCardItemProps> = React.memo(({
+  item,
+  index,
+  isDark,
+  mood,
+  colors,
+  language,
+  onPress,
+}) => {
+  const itemScale = useSharedValue(1);
+  
+  const productCardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: itemScale.value }],
+  }));
+
+  const getName = (i: { name: string; name_ar?: string }) =>
+    language === 'ar' ? (i.name_ar || i.name) : i.name;
+
+  return (
+    <Animated.View
+      entering={FadeIn.delay(Math.min(index * 40, 300)).duration(250).springify()}
+      layout={Layout.springify()}
+      style={[productCardItemStyles.wrapper, productCardStyle]}
+    >
+      <TouchableOpacity
+        style={[
+          productCardItemStyles.card,
+          { 
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)', 
+            borderColor: (mood?.primary || '#009688') + '30',
+            shadowColor: mood?.primary || '#009688',
+          },
+        ]}
+        onPressIn={() => {
+          itemScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+        }}
+        onPressOut={() => {
+          itemScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+        }}
+        onPress={() => onPress(item.id)}
+        activeOpacity={0.9}
+      >
+        {item.image_url ? (
+          <Image 
+            source={{ uri: item.image_url }} 
+            style={productCardItemStyles.image}
+            contentFit="cover"
+            cachePolicy="disk"
+            transition={200}
+          />
+        ) : (
+          <View style={[productCardItemStyles.placeholder, { backgroundColor: (mood?.primary || '#009688') + '15' }]}>
+            <Ionicons name="cube-outline" size={36} color={mood?.primary || colors.textSecondary} />
+          </View>
+        )}
+        <View style={productCardItemStyles.info}>
+          <Text style={[productCardItemStyles.name, { color: colors.text }]} numberOfLines={2}>
+            {getName(item)}
+          </Text>
+          <View style={[productCardItemStyles.priceTag, { backgroundColor: (mood?.primary || '#009688') + '20' }]}>
+            <Text style={[productCardItemStyles.price, { color: mood?.primary || colors.primary }]}>
+              {item.price?.toFixed(2)} {language === 'ar' ? 'ج.م' : 'EGP'}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+});
+
+const productCardItemStyles = StyleSheet.create({
+  wrapper: {
+    width: '48%',
+    marginHorizontal: '1%',
+    marginBottom: 12,
+  },
+  card: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  image: {
+    width: '100%',
+    height: 120,
+    backgroundColor: 'transparent',
+  },
+  placeholder: {
+    width: '100%',
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  info: {
+    padding: 10,
+    gap: 6,
+  },
+  name: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  priceTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  price: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+});
+
 export const InteractiveCarSelector: React.FC = () => {
   const { colors, isDark } = useTheme();
   const { language, isRTL } = useTranslation();
