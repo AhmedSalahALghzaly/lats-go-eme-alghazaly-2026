@@ -224,7 +224,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
         aspect: aspectRatio,
-        quality: 0.7,
+        quality: 1, // CRITICAL: Use full quality to preserve PNG alpha channel
         base64: true,
       });
 
