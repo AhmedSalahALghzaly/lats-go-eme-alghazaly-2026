@@ -587,14 +587,16 @@ export const InteractiveCarSelector: React.FC = () => {
   }));
 
   const chassisGlowStyle = useAnimatedStyle(() => ({
-    shadowOpacity: interpolate(chassisIconGlow.value, [0, 1], [0.3, 0.9]),
-    shadowRadius: interpolate(chassisIconGlow.value, [0, 1], [4, 16]),
+    shadowOpacity: interpolate(chassisIconGlow.value, [0, 1], [0.4, 1]),
+    shadowRadius: interpolate(chassisIconGlow.value, [0, 1], [6, 20]),
+    transform: [{ scale: chassisPulseAnim.value }],
   }));
 
   const vinAnimStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(vinShiftAnim.value, [0, 0.5, 1], [1, 0.6, 1]),
+    opacity: interpolate(vinShiftAnim.value, [0, 0.5, 1], [1, 0.7, 1]),
     transform: [
-      { scale: interpolate(vinShiftAnim.value, [0, 0.5, 1], [1, 0.9, 1]) },
+      { scale: interpolate(vinShiftAnim.value, [0, 0.5, 1], [1, 0.92, 1]) },
+      { rotate: `${interpolate(barcodeScanAnim.value, [0, 0.5, 1], [0, 3, 0])}deg` },
     ],
   }));
 
