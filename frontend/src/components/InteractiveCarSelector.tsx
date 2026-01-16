@@ -1324,6 +1324,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  dualHintRowRTL: {
+    flexDirection: 'row-reverse',
+  },
   hintTouchable: {
     paddingVertical: 6,
     paddingHorizontal: 8,
