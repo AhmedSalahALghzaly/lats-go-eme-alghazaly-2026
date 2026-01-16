@@ -102,7 +102,9 @@ async def create_database_indexes():
         # Car Models indexes
         await db.car_models.create_index("deleted_at", background=True)
         await db.car_models.create_index("brand_id", background=True)
+        await db.car_models.create_index("chassis_number", background=True)
         await db.car_models.create_index([("deleted_at", 1), ("brand_id", 1)], background=True)
+        await db.car_models.create_index([("deleted_at", 1), ("chassis_number", 1)], background=True)
         
         # Product Brands indexes
         await db.product_brands.create_index("deleted_at", background=True)
