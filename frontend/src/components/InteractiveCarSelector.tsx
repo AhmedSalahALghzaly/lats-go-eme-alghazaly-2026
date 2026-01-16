@@ -1578,13 +1578,13 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   gridItemText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
     marginTop: 1,
     textAlign: 'center',
   },
   gridItemSubtext: {
-    fontSize: 10,
+    fontSize: 11,
     marginTop: 3,
     fontWeight: '500',
   },
