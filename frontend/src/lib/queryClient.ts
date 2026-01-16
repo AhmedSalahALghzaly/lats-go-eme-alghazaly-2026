@@ -19,8 +19,6 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       // Refetch on reconnect
       refetchOnReconnect: true,
-      // Keep previous data while loading new
-      placeholderData: (previousData: unknown) => previousData,
     },
     mutations: {
       // Retry mutations once
