@@ -1083,26 +1083,29 @@ export const InteractiveCarSelector: React.FC = () => {
           </Animated.View>
         )}
 
-        {/* Chassis Search Results */}
+        {/* Chassis Search Results - Grid Layout with FlashList */}
         {selectorState === 'chassis_search' && (
           <Animated.View style={[styles.chassisResultsContainer, gridStyle]}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.chassisResultsScroll}
-            >
-              {chassisFilteredModels.length === 0 ? (
-                <View style={styles.chassisEmptyState}>
-                  <MaterialCommunityIcons name="car-off" size={40} color={colors.textSecondary} />
-                  <Text style={[styles.chassisEmptyText, { color: colors.textSecondary }]}>
-                    {language === 'ar' ? 'لا توجد نتائج' : 'No results found'}
-                  </Text>
-                </View>
-              ) : (
-                chassisFilteredModels.slice(0, 10).map((model, index) => (
-                  <ChassisModelCard key={model.id} model={model} index={index} />
-                ))
-              )}
-            </ScrollView>
+            {chassisFilteredModels.length === 0 ? (
+              <View style={styles.chassisEmptyState}>
+                <MaterialCommunityIcons name="car-off" size={40} color={colors.textSecondary} />
+                <Text style={[styles.chassisEmptyText, { color: colors.textSecondary }]}>
+                  {language === 'ar' ? 'لا توجد نتائج' : 'No results found'}
+                </Text>
+              </View>
+            ) : (
+              <FlashList
+                data={chassisFilteredModels.slice(0, 12)}
+                numColumns={3}
+                keyExtractor={(item: CarModel) => item.id}
+                estimatedItemSize={160}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.chassisGridContainer}
+                renderItem={({ item, index }: { item: CarModel; index: number }) => (
+                  <ChassisModelGridCard model={item} index={index} />
+                )}
+              />
+            )}
           </Animated.View>
         )}
       </Animated.View>
