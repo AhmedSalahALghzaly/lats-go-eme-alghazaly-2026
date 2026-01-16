@@ -589,15 +589,12 @@ export const InteractiveCarSelector: React.FC = () => {
   const chassisGlowStyle = useAnimatedStyle(() => ({
     shadowOpacity: interpolate(chassisIconGlow.value, [0, 1], [0.4, 1]),
     shadowRadius: interpolate(chassisIconGlow.value, [0, 1], [6, 20]),
-    transform: [{ scale: chassisPulseAnim.value }],
+    // Removed scale animation as per user request
   }));
 
   const vinAnimStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(vinShiftAnim.value, [0, 0.5, 1], [1, 0.7, 1]),
-    transform: [
-      { scale: interpolate(vinShiftAnim.value, [0, 0.5, 1], [1, 0.92, 1]) },
-      { rotate: `${interpolate(barcodeScanAnim.value, [0, 0.5, 1], [0, 3, 0])}deg` },
-    ],
+    opacity: interpolate(vinShiftAnim.value, [0, 0.5, 1], [1, 0.85, 1]),
+    // Simple subtle animation without scale
   }));
 
   const morphStyle = useAnimatedStyle(() => ({
