@@ -269,6 +269,10 @@ export const InteractiveCarSelector: React.FC = () => {
   const pulseAnim = useSharedValue(1);
   const glassOpacity = useSharedValue(0);
   const morphProgress = useSharedValue(0);
+  // New chassis barcode animation values
+  const barcodeScanAnim = useSharedValue(0);
+  const chassisPulseAnim = useSharedValue(1);
+  const chassisGlowIntensity = useSharedValue(0.4);
 
   // Haptic feedback helper
   const triggerHaptic = useCallback((type: keyof typeof HAPTIC_PATTERNS = 'selection') => {
