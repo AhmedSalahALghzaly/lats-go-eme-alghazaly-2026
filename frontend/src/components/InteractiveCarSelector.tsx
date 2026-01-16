@@ -713,75 +713,102 @@ export const InteractiveCarSelector: React.FC = () => {
     );
   };
 
-  // Model card for chassis search
-  const ChassisModelCard = ({ model, index }: { model: CarModel; index: number }) => {
+  // Chassis Model Card Component - Grid Style matching car models grid
+  const ChassisModelGridCard = ({ model, index }: { model: CarModel; index: number }) => {
     const itemScale = useSharedValue(1);
+    const glowAnim = useSharedValue(0);
     
     const itemAnimatedStyle = useAnimatedStyle(() => ({
       transform: [{ scale: itemScale.value }],
     }));
 
+    const itemGlowStyle = useAnimatedStyle(() => ({
+      shadowOpacity: interpolate(glowAnim.value, [0, 1], [0, 0.6]),
+      shadowRadius: interpolate(glowAnim.value, [0, 1], [0, 12]),
+    }));
+
     const brand = carBrands.find(b => b.id === model.brand_id);
+
+    const handlePress = () => {
+      triggerHaptic('selection');
+      itemScale.value = withSequence(
+        withSpring(0.92, { damping: 10, stiffness: 400 }),
+        withSpring(1.02, { damping: 8, stiffness: 300 }),
+        withSpring(1, { damping: 12, stiffness: 200 })
+      );
+      glowAnim.value = withSequence(
+        withTiming(1, { duration: 150 }),
+        withTiming(0, { duration: 300 })
+      );
+      
+      setTimeout(() => {
+        handleModelSelect(model);
+      }, 100);
+    };
 
     return (
       <Animated.View
-        entering={FadeIn.delay(index * 50).duration(250).springify()}
+        entering={FadeIn.delay(Math.min(index * 50, 250)).duration(250).springify()}
         layout={Layout.springify()}
-        style={itemAnimatedStyle}
+        style={[styles.chassisGridCardWrapper, itemAnimatedStyle, itemGlowStyle]}
       >
         <TouchableOpacity
           style={[
-            styles.chassisModelCard,
+            styles.chassisGridCard,
             {
               backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
               borderColor: mood?.primary + '40',
+              shadowColor: mood?.primary || colors.primary,
             },
           ]}
-          onPressIn={() => {
-            itemScale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
-          }}
-          onPressOut={() => {
-            itemScale.value = withSpring(1, { damping: 12, stiffness: 200 });
-          }}
-          onPress={() => handleModelSelect(model)}
-          activeOpacity={0.8}
+          onPress={handlePress}
+          activeOpacity={0.85}
         >
+          {/* Model Image */}
           {model.image_url ? (
             <Image
               source={{ uri: model.image_url }}
-              style={styles.chassisModelImage}
-              contentFit="contain"
+              style={styles.chassisGridCardImage}
+              contentFit="cover"
               transition={200}
             />
           ) : (
-            <View style={[styles.chassisModelPlaceholder, { backgroundColor: mood?.primary + '15' }]}>
-              <MaterialCommunityIcons name="car-side" size={32} color={mood?.primary || colors.primary} />
+            <View style={[styles.chassisGridCardPlaceholder, { backgroundColor: mood?.primary + '15' }]}>
+              <MaterialCommunityIcons name="car-side" size={36} color={mood?.primary || colors.primary} />
             </View>
           )}
-          <View style={styles.chassisModelInfo}>
-            <Text style={[styles.chassisModelName, { color: colors.text }]} numberOfLines={1}>
+          
+          {/* Card Info */}
+          <View style={styles.chassisGridCardInfo}>
+            {/* Model Name */}
+            <Text style={[styles.chassisGridCardName, { color: colors.text }]} numberOfLines={1}>
               {getName(model)}
             </Text>
+            
+            {/* Brand Name */}
             {brand && (
-              <Text style={[styles.chassisModelBrand, { color: mood?.primary || colors.primary }]} numberOfLines={1}>
+              <Text style={[styles.chassisGridCardBrand, { color: mood?.primary || colors.primary }]} numberOfLines={1}>
                 {getName(brand)}
               </Text>
             )}
+            
+            {/* Year */}
+            {model.year_start && (
+              <Text style={[styles.chassisGridCardYear, { color: colors.textSecondary }]}>
+                {model.year_start}{model.year_end ? ` - ${model.year_end}` : '+'}
+              </Text>
+            )}
+            
+            {/* Chassis Number Tag */}
             {model.chassis_number && (
-              <View style={[styles.chassisTag, { backgroundColor: mood?.primary + '20' }]}>
-                <MaterialCommunityIcons name="barcode" size={12} color={mood?.primary || colors.primary} />
-                <Text style={[styles.chassisTagText, { color: mood?.primary || colors.primary }]} numberOfLines={1}>
+              <View style={[styles.chassisGridTag, { backgroundColor: mood?.primary + '20' }]}>
+                <Ionicons name="key-outline" size={10} color={mood?.primary || colors.primary} />
+                <Text style={[styles.chassisGridTagText, { color: mood?.primary || colors.primary }]} numberOfLines={1}>
                   {model.chassis_number}
                 </Text>
               </View>
             )}
-            {model.year_start && (
-              <Text style={[styles.chassisModelYear, { color: colors.textSecondary }]}>
-                {model.year_start}{model.year_end ? ` - ${model.year_end}` : '+'}
-              </Text>
-            )}
           </View>
-          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={mood?.primary || colors.textSecondary} />
         </TouchableOpacity>
       </Animated.View>
     );
