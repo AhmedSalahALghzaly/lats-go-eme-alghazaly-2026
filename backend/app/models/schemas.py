@@ -23,6 +23,7 @@ class CarModelCreate(BaseModel):
     description: Optional[str] = None
     description_ar: Optional[str] = None
     variants: List[dict] = []
+    chassis_number: Optional[str] = None  # VIN/Chassis Number for direct lookup
 
 class ProductBrandCreate(BaseModel):
     name: str
