@@ -120,6 +120,7 @@ export default function ModelsAdmin() {
     setSelectedBrandId('');
     setYearFrom('');
     setYearTo('');
+    setChassisNumber('');
     setModelImage(null);
     setImageUrl('');
     setIsEditMode(false);
@@ -134,6 +135,7 @@ export default function ModelsAdmin() {
     setSelectedBrandId(model.brand_id || '');
     setYearFrom(model.year_start?.toString() || '');
     setYearTo(model.year_end?.toString() || '');
+    setChassisNumber(model.chassis_number || '');
     setModelImage(model.image_url || null);
     setImageUrl('');
     setEditingModel(model);
