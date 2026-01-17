@@ -582,4 +582,10 @@ const styles = StyleSheet.create({
   brandCircle: { alignItems: 'center', marginRight: 16 },
   brandImage: { width: 60, height: 60, borderRadius: 30 },
   brandName: { fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 6, width: 60, textAlign: 'center' },
+  // New styles for enhanced profile view
+  infoSectionTitle: { fontSize: 14, fontWeight: '700', color: 'rgba(255,255,255,0.8)', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 0.5 },
+  arabicNameText: { fontSize: 18, fontWeight: '600', color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginTop: 8 },
+  gallerySection: { marginTop: 24 },
+  galleryImageContainer: { width: 120, height: 80, borderRadius: 12, overflow: 'hidden', marginRight: 12 },
+  galleryImage: { width: '100%', height: '100%' },
 });
