@@ -1342,4 +1342,51 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 10,
   },
+  // Supplier Button Styles
+  supplierButton: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#14B8A6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  supplierGradient: {
+    borderRadius: 16,
+  },
+  supplierContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  supplierIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  supplierTextContainer: {
+    flex: 1,
+  },
+  supplierLabel: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  supplierName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFF',
+    marginTop: 2,
+  },
 });
