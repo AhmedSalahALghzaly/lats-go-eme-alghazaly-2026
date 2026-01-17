@@ -756,4 +756,53 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     fontStyle: 'italic',
   },
+  // New styles for image picker
+  profileImageActual: {
+    width: '100%',
+    height: '100%',
+  },
+  profileImageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  sliderImagesSection: {
+    marginBottom: 20,
+  },
+  sliderImagesScroll: {
+    marginTop: 8,
+  },
+  sliderImageItem: {
+    width: 80,
+    height: 60,
+    marginRight: 10,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  sliderImageThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  sliderImageRemove: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+  },
+  addSliderImageBtn: {
+    width: 80,
+    height: 60,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
 });
