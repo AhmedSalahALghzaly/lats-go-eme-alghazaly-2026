@@ -13,6 +13,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -20,11 +22,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { useAppStore } from '../../src/store/appStore';
 import { supplierApi, distributorApi } from '../../src/services/api';
 import { ErrorCapsule } from '../../src/components/ui/ErrorCapsule';
 import { ConfettiEffect } from '../../src/components/ui/ConfettiEffect';
-import { ImageUploader } from '../../src/components/ui/ImageUploader';
 
 type EntityType = 'supplier' | 'distributor';
 
