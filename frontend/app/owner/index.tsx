@@ -46,7 +46,7 @@ const MANAGEMENT_ICONS_ROW2 = [
   { id: 'analytics', icon: 'bar-chart', label: 'Analytics', labelAr: 'التحليلات', color: '#EC4899', route: '/owner/analytics' },
   { id: 'collection', icon: 'cube', label: 'Collection', labelAr: 'المجموعة', color: '#F59E0B', route: '/owner/collection' },
   { id: 'subscriptions', icon: 'card', label: 'Subscriptions', labelAr: 'الاشتراكات', color: '#8B5CF6', route: '/owner/subscriptions' },
-  { id: 'settings', icon: 'settings', label: 'Settings', labelAr: 'الإعدادات', color: '#6B7280', route: '/owner/settings' },
+  { id: 'new-entity', icon: 'add-circle', label: 'New Entity', labelAr: 'جهة جديدة', color: '#10B981', route: '/owner/new-entity-dashboard' },
 ];
 
 export default function OwnerDashboard() {
