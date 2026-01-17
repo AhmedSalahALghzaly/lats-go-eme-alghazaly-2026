@@ -112,6 +112,39 @@ export default function CarModelDetailScreen() {
           )}
         </View>
 
+        {/* Distributor Contact Button - Only visible if distributor is linked */}
+        {carModel.distributor && (
+          <TouchableOpacity
+            style={[styles.distributorButton, { backgroundColor: colors.primary }]}
+            onPress={() => router.push(`/owner/distributors?viewMode=profile&id=${carModel.distributor.id}`)}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={['#DC2626', '#EF4444', '#F87171']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.distributorGradient}
+            >
+              <View style={styles.distributorContent}>
+                <View style={styles.distributorIconContainer}>
+                  <Ionicons name="business" size={22} color="#FFF" />
+                </View>
+                <View style={styles.distributorTextContainer}>
+                  <Text style={styles.distributorLabel}>
+                    {language === 'ar' ? 'موزع هذه السيارة' : 'Car Distributor'}
+                  </Text>
+                  <Text style={styles.distributorName}>
+                    {language === 'ar' && carModel.distributor.name_ar 
+                      ? carModel.distributor.name_ar 
+                      : carModel.distributor.name}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.8)" />
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+
         {/* Car Info */}
         <View style={styles.infoContainer}>
           {/* Brand Badge - Clickable */}
