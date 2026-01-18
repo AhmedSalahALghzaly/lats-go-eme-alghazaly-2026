@@ -285,8 +285,8 @@ export default function DistributorsScreen() {
             {/* Email */}
             {selectedDistributor.contact_email && (
               <TouchableOpacity style={styles.infoRowThemed} onPress={() => Linking.openURL(`mailto:${selectedDistributor.contact_email}`)}>
-                <View style={[styles.infoIconContainer, { backgroundColor: colors.error + '15' }]}>
-                  <Ionicons name="mail" size={18} color={colors.error} />
+                <View style={[styles.infoIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons name="mail" size={18} color={colors.primary} />
                 </View>
                 <Text style={[styles.infoTextThemed, { color: colors.text }]}>{selectedDistributor.contact_email}</Text>
                 <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
@@ -296,8 +296,8 @@ export default function DistributorsScreen() {
             {/* Website */}
             {(selectedDistributor.website_url || selectedDistributor.website) && (
               <TouchableOpacity style={styles.infoRowThemed} onPress={() => Linking.openURL(selectedDistributor.website_url || selectedDistributor.website)}>
-                <View style={[styles.infoIconContainer, { backgroundColor: colors.error + '15' }]}>
-                  <Ionicons name="globe" size={18} color={colors.error} />
+                <View style={[styles.infoIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons name="globe" size={18} color={colors.primary} />
                 </View>
                 <Text style={[styles.infoTextThemed, { color: colors.text, flex: 1 }]} numberOfLines={1}>
                   {selectedDistributor.website_url || selectedDistributor.website}
@@ -314,14 +314,14 @@ export default function DistributorsScreen() {
                 {isRTL ? 'العنوان' : 'Address'}
               </Text>
               <View style={styles.infoRowThemed}>
-                <View style={[styles.infoIconContainer, { backgroundColor: colors.error + '15' }]}>
-                  <Ionicons name="location" size={18} color={colors.error} />
+                <View style={[styles.infoIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons name="location" size={18} color={colors.primary} />
                 </View>
                 <Text style={[styles.infoTextThemed, { color: colors.text, flex: 1 }]}>{displayAddress}</Text>
               </View>
               {selectedDistributor.address_ar && selectedDistributor.address && selectedDistributor.address !== selectedDistributor.address_ar && (
                 <View style={[styles.infoRowThemed, { marginTop: 8 }]}>
-                  <View style={[styles.infoIconContainer, { backgroundColor: colors.error + '10' }]}>
+                  <View style={[styles.infoIconContainer, { backgroundColor: colors.primary + '10' }]}>
                     <Ionicons name="location-outline" size={18} color={colors.textSecondary} />
                   </View>
                   <Text style={[styles.infoTextThemed, { color: colors.textSecondary, flex: 1, fontStyle: 'italic' }]}>
