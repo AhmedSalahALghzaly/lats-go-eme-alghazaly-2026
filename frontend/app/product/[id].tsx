@@ -381,33 +381,36 @@ export default function ProductDetailScreen() {
         {/* Supplier Contact Button - Only visible if supplier is linked */}
         {product.supplier && (
           <TouchableOpacity
-            style={styles.supplierButton}
+            style={[styles.supplierButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push(`/owner/suppliers?viewMode=profile&id=${product.supplier.id}`)}
             activeOpacity={0.85}
           >
-            <LinearGradient
-              colors={['#0D9488', '#14B8A6', '#2DD4BF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.supplierGradient}
-            >
-              <View style={styles.supplierContent}>
-                <View style={styles.supplierIconContainer}>
-                  <Ionicons name="briefcase" size={22} color="#FFF" />
-                </View>
-                <View style={styles.supplierTextContainer}>
-                  <Text style={styles.supplierLabel}>
-                    {language === 'ar' ? 'مورد هذا المنتج' : 'Product Supplier'}
-                  </Text>
-                  <Text style={styles.supplierName}>
-                    {language === 'ar' && product.supplier.name_ar 
-                      ? product.supplier.name_ar 
-                      : product.supplier.name}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.8)" />
+            <View style={styles.supplierContent}>
+              <View style={[styles.supplierImageContainer, { backgroundColor: colors.surface }]}>
+                {product.supplier.profile_image ? (
+                  <Image 
+                    source={{ uri: product.supplier.profile_image }} 
+                    style={styles.supplierProfileImage}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <Ionicons name="person-circle" size={44} color={colors.secondary} />
+                )}
               </View>
-            </LinearGradient>
+              <View style={styles.supplierTextContainer}>
+                <Text style={[styles.supplierLabel, { color: colors.textSecondary }]}>
+                  {language === 'ar' ? 'مورد هذا المنتج' : 'Product Supplier'}
+                </Text>
+                <Text style={[styles.supplierName, { color: colors.text }]}>
+                  {language === 'ar' && product.supplier.name_ar 
+                    ? product.supplier.name_ar 
+                    : product.supplier.name}
+                </Text>
+              </View>
+              <View style={[styles.supplierArrowContainer, { backgroundColor: colors.secondary + '20' }]}>
+                <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+              </View>
+            </View>
           </TouchableOpacity>
         )}
 
