@@ -231,7 +231,7 @@ export default function DistributorsScreen() {
             <Text style={[styles.profileHeaderTitle, { color: colors.text }]}>{displayName}</Text>
             {isOwnerOrAdmin && (
               <TouchableOpacity 
-                style={[styles.profileEditButton, { backgroundColor: colors.error }]} 
+                style={[styles.profileEditButton, { backgroundColor: colors.primary }]} 
                 onPress={() => router.push(`/owner/add-entity-form?entityType=distributor&id=${selectedDistributor.id}`)}
               >
                 <Ionicons name="pencil" size={20} color="#FFF" />
@@ -245,7 +245,7 @@ export default function DistributorsScreen() {
               <Image source={{ uri: selectedDistributor.profile_image }} style={styles.profileImageThemed} />
             ) : (
               <View style={[styles.profilePlaceholderThemed, { backgroundColor: colors.surface }]}>
-                <Ionicons name="car" size={60} color={colors.error} />
+                <Ionicons name="car" size={60} color={colors.primary} />
               </View>
             )}
           </View>
@@ -265,8 +265,8 @@ export default function DistributorsScreen() {
             {selectedDistributor.phone_numbers && selectedDistributor.phone_numbers.length > 0 ? (
               selectedDistributor.phone_numbers.map((phone: string, index: number) => (
                 <TouchableOpacity key={index} style={styles.infoRowThemed} onPress={() => Linking.openURL(`tel:${phone}`)}>
-                  <View style={[styles.infoIconContainer, { backgroundColor: colors.error + '15' }]}>
-                    <Ionicons name="call" size={18} color={colors.error} />
+                  <View style={[styles.infoIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                    <Ionicons name="call" size={18} color={colors.primary} />
                   </View>
                   <Text style={[styles.infoTextThemed, { color: colors.text }]}>{phone}</Text>
                   <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
@@ -274,8 +274,8 @@ export default function DistributorsScreen() {
               ))
             ) : selectedDistributor.phone ? (
               <TouchableOpacity style={styles.infoRowThemed} onPress={() => Linking.openURL(`tel:${selectedDistributor.phone}`)}>
-                <View style={[styles.infoIconContainer, { backgroundColor: colors.error + '15' }]}>
-                  <Ionicons name="call" size={18} color={colors.error} />
+                <View style={[styles.infoIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons name="call" size={18} color={colors.primary} />
                 </View>
                 <Text style={[styles.infoTextThemed, { color: colors.text }]}>{selectedDistributor.phone}</Text>
                 <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
