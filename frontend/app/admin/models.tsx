@@ -187,6 +187,7 @@ export default function ModelsAdmin() {
       year_end: yearTo ? parseInt(yearTo) : null,
       chassis_number: chassisNumber.trim() || null,
       image_url: modelImage || imageUrl.trim() || null,
+      catalog_pdf: catalogPdf || null,
     };
 
     try {
