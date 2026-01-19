@@ -61,6 +61,9 @@ export default function CarModelDetailScreen() {
 
   // Download and open PDF catalog
   const handleDownloadCatalog = async () => {
+    console.log('handleDownloadCatalog called');
+    console.log('catalog_pdf:', carModel?.catalog_pdf ? 'exists' : 'not found');
+    
     if (!carModel?.catalog_pdf) {
       Alert.alert(
         language === 'ar' ? 'غير متاح' : 'Not Available',
@@ -72,40 +75,64 @@ export default function CarModelDetailScreen() {
     setDownloadingCatalog(true);
     try {
       const catalogData = carModel.catalog_pdf;
+      const fileName = `${(carModel.name || 'catalog').replace(/[^a-zA-Z0-9]/g, '_')}_catalog.pdf`;
+      
+      console.log('Processing catalog, data type:', catalogData.substring(0, 50));
       
       // Check if it's a base64 data URI
       if (catalogData.startsWith('data:application/pdf;base64,')) {
         const base64Data = catalogData.replace('data:application/pdf;base64,', '');
-        const fileName = `${carModel.name || 'catalog'}_catalog.pdf`;
-        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
         
-        // Write base64 to file
-        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        
-        // Check if sharing is available
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(fileUri, {
-            mimeType: 'application/pdf',
-            dialogTitle: language === 'ar' ? 'فتح الكتالوج' : 'Open Catalog',
-          });
+        // Handle web platform
+        if (Platform.OS === 'web') {
+          // Create blob and download
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          Alert.alert(
+            language === 'ar' ? 'تم التحميل' : 'Downloaded',
+            language === 'ar' ? 'تم تحميل الكتالوج بنجاح' : 'Catalog downloaded successfully'
+          );
         } else {
-          // Fallback for web
-          if (Platform.OS === 'web') {
-            const link = document.createElement('a');
-            link.href = catalogData;
-            link.download = fileName;
-            link.click();
+          // Mobile platforms - use FileSystem and Sharing
+          const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+          
+          // Write base64 to file
+          await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          
+          console.log('File written to:', fileUri);
+          
+          // Check if sharing is available
+          if (await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(fileUri, {
+              mimeType: 'application/pdf',
+              dialogTitle: language === 'ar' ? 'فتح الكتالوج' : 'Open Catalog',
+              UTI: 'com.adobe.pdf',
+            });
           } else {
-            Alert.alert(
-              language === 'ar' ? 'خطأ' : 'Error',
-              language === 'ar' ? 'المشاركة غير متاحة على هذا الجهاز' : 'Sharing is not available on this device'
-            );
+            // Try to open with Linking as fallback
+            await Linking.openURL(fileUri);
           }
         }
       } else {
         // It's a URL, open directly
+        console.log('Opening URL directly:', catalogData);
         await Linking.openURL(catalogData);
       }
     } catch (error) {
