@@ -53,6 +53,8 @@ export default function SubscriptionsScreen() {
   const [requests, setRequests] = useState<any[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showRequestDetail, setShowRequestDetail] = useState(false);
+  const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
+  const [showSubscriberDetail, setShowSubscriberDetail] = useState(false);
 
   const fetchData = async () => {
     try {
