@@ -38,6 +38,7 @@ export default function CarModelDetailScreen() {
 
   const [carModel, setCarModel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [downloadingCatalog, setDownloadingCatalog] = useState(false);
 
   useEffect(() => {
     fetchCarModel();
@@ -51,6 +52,66 @@ export default function CarModelDetailScreen() {
       console.error('Error fetching car model:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Download and open PDF catalog
+  const handleDownloadCatalog = async () => {
+    if (!carModel?.catalog_pdf) {
+      Alert.alert(
+        language === 'ar' ? 'غير متاح' : 'Not Available',
+        language === 'ar' ? 'لا يوجد كتالوج متاح لهذا الموديل حالياً' : 'No catalog available for this model yet'
+      );
+      return;
+    }
+
+    setDownloadingCatalog(true);
+    try {
+      const catalogData = carModel.catalog_pdf;
+      
+      // Check if it's a base64 data URI
+      if (catalogData.startsWith('data:application/pdf;base64,')) {
+        const base64Data = catalogData.replace('data:application/pdf;base64,', '');
+        const fileName = `${carModel.name || 'catalog'}_catalog.pdf`;
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+        
+        // Write base64 to file
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        
+        // Check if sharing is available
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'application/pdf',
+            dialogTitle: language === 'ar' ? 'فتح الكتالوج' : 'Open Catalog',
+          });
+        } else {
+          // Fallback for web
+          if (Platform.OS === 'web') {
+            const link = document.createElement('a');
+            link.href = catalogData;
+            link.download = fileName;
+            link.click();
+          } else {
+            Alert.alert(
+              language === 'ar' ? 'خطأ' : 'Error',
+              language === 'ar' ? 'المشاركة غير متاحة على هذا الجهاز' : 'Sharing is not available on this device'
+            );
+          }
+        }
+      } else {
+        // It's a URL, open directly
+        await Linking.openURL(catalogData);
+      }
+    } catch (error) {
+      console.error('Error downloading catalog:', error);
+      Alert.alert(
+        language === 'ar' ? 'خطأ' : 'Error',
+        language === 'ar' ? 'فشل تحميل الكتالوج' : 'Failed to download catalog'
+      );
+    } finally {
+      setDownloadingCatalog(false);
     }
   };
 
