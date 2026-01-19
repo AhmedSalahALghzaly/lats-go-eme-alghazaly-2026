@@ -207,6 +207,9 @@ interface AppState {
   customers: any[];
   orders: any[];
   
+  // Subscription Status (for current user)
+  subscriptionStatus: 'none' | 'pending' | 'approved' | 'subscriber';
+  
   // Analytics dashboard layout
   dashboardLayout: any[];
   
@@ -217,6 +220,8 @@ interface AppState {
   setHasHydrated: (hydrated: boolean) => void;
   logout: () => void;
   validateSession: () => Promise<boolean>; // التحقق من صلاحية الجلسة
+  checkSubscriptionStatus: (email?: string, phone?: string) => Promise<void>;
+  setSubscriptionStatus: (status: 'none' | 'pending' | 'approved' | 'subscriber') => void;
   setTheme: (theme: 'light' | 'dark') => void;
   setLanguage: (language: 'en' | 'ar') => void;
   setColorMood: (mood: ColorMood) => void;
