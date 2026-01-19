@@ -391,6 +391,28 @@ export const useAppStore = create<AppState>()(
       
       setLastSyncTime: (time) => set({ lastSyncTime: time }),
 
+      setSubscriptionStatus: (status) => set({ subscriptionStatus: status }),
+      
+      checkSubscriptionStatus: async (email, phone) => {
+        try {
+          const { subscriptionRequestApi } = await import('../services/api');
+          const response = await subscriptionRequestApi.getStatus(email, phone);
+          const data = response.data;
+          
+          if (data.is_subscriber) {
+            set({ subscriptionStatus: 'subscriber' });
+          } else if (data.has_pending) {
+            set({ subscriptionStatus: 'pending' });
+          } else if (data.status === 'approved') {
+            set({ subscriptionStatus: 'approved' });
+          } else {
+            set({ subscriptionStatus: 'none' });
+          }
+        } catch (error) {
+          console.error('Error checking subscription status:', error);
+        }
+      },
+
       // Cart Actions
       addToCart: (item, quantity = 1) => {
         const { cartItems } = get();
