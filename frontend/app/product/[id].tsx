@@ -1438,17 +1438,20 @@ const styles = StyleSheet.create({
   },
   supplierTextContainer: {
     flex: 1,
+    alignItems: 'center',
   },
   supplierLabel: {
     fontSize: 11,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
   supplierName: {
     fontSize: 16,
     fontWeight: '700',
     marginTop: 2,
+    textAlign: 'center',
   },
   supplierArrowContainer: {
     width: 32,
