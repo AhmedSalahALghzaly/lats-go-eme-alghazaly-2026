@@ -164,6 +164,7 @@ class SubscriberCreate(BaseModel):
 
 class SubscriptionRequestCreate(BaseModel):
     customer_name: str
+    email: str
     phone: str
     governorate: str
     village: str
