@@ -280,6 +280,12 @@ export default function SubscriptionRequestScreen() {
               placeholderAr: 'أدخل اسمك الكامل',
             })}
 
+            {renderInput('email', 'Email Address', 'البريد الإلكتروني', {
+              keyboardType: 'email-address',
+              placeholder: 'example@email.com',
+              placeholderAr: 'example@email.com',
+            })}
+
             {renderInput('phone', 'Phone Number', 'رقم الهاتف', {
               keyboardType: 'phone-pad',
               placeholder: '01xxxxxxxxx',
