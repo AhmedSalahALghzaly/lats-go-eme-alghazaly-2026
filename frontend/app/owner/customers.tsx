@@ -1,5 +1,6 @@
 /**
  * Customers Management Screen - With Toggle Logic & Real-Time Status Indicators
+ * OPTIMIZED: Uses FlashList for high-performance customer list rendering
  */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
@@ -10,6 +11,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
