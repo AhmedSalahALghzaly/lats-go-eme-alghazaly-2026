@@ -927,15 +927,12 @@ export default function ProductsAdmin() {
               {language === 'ar' ? 'لا توجد منتجات' : 'No products found'}
             </Text>
           ) : (
-            <View style={styles.flashListContainer}>
-              <FlashList
-                data={filteredProducts}
-                renderItem={renderProductItem}
-                keyExtractor={(product) => product.id}
-                estimatedItemSize={200}
-                scrollEnabled={false}
-                extraData={{ quantityInputs, updatingQuantityId }}
-              />
+            <View style={styles.productsListContainer}>
+              {filteredProducts.map((product) => (
+                <View key={product.id}>
+                  {renderProductItem({ item: product })}
+                </View>
+              ))}
             </View>
           )}
         </View>
