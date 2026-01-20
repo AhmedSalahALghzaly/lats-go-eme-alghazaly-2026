@@ -62,7 +62,7 @@ export default function CarModelDetailScreen() {
   // Download and open PDF catalog
   const handleDownloadCatalog = async () => {
     console.log('handleDownloadCatalog called');
-    console.log('catalog_pdf:', carModel?.catalog_pdf ? 'exists' : 'not found');
+    console.log('catalog_pdf:', carModel?.catalog_pdf ? 'exists (length: ' + carModel.catalog_pdf.length + ')' : 'not found');
     
     if (!carModel?.catalog_pdf) {
       Alert.alert(
@@ -77,7 +77,7 @@ export default function CarModelDetailScreen() {
       const catalogData = carModel.catalog_pdf;
       const fileName = `${(carModel.name || 'catalog').replace(/[^a-zA-Z0-9]/g, '_')}_catalog.pdf`;
       
-      console.log('Processing catalog, data type:', catalogData.substring(0, 50));
+      console.log('Processing catalog, starts with:', catalogData.substring(0, 50));
       
       // Check if it's a base64 data URI
       if (catalogData.startsWith('data:application/pdf;base64,')) {
@@ -85,28 +85,51 @@ export default function CarModelDetailScreen() {
         
         // Handle web platform
         if (Platform.OS === 'web') {
-          // Create blob and download
-          const byteCharacters = atob(base64Data);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          try {
+            // Create blob and trigger download
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            
+            // Create download link
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.style.display = 'none';
+            link.href = downloadUrl;
+            link.setAttribute('download', fileName);
+            
+            // Append to body, click, and cleanup
+            document.body.appendChild(link);
+            link.click();
+            
+            // Cleanup after a short delay
+            setTimeout(() => {
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(downloadUrl);
+            }, 100);
+            
+            Alert.alert(
+              language === 'ar' ? 'تم التحميل' : 'Downloaded',
+              language === 'ar' ? 'تم تحميل الكتالوج بنجاح' : 'Catalog downloaded successfully'
+            );
+          } catch (webError) {
+            console.error('Web download error:', webError);
+            // Fallback: open in new tab
+            const newWindow = window.open();
+            if (newWindow) {
+              newWindow.document.write(`
+                <html>
+                  <body style="margin:0;padding:0;">
+                    <iframe src="${catalogData}" style="width:100%;height:100vh;border:none;"></iframe>
+                  </body>
+                </html>
+              `);
+            }
           }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          
-          Alert.alert(
-            language === 'ar' ? 'تم التحميل' : 'Downloaded',
-            language === 'ar' ? 'تم تحميل الكتالوج بنجاح' : 'Catalog downloaded successfully'
-          );
         } else {
           // Mobile platforms - use FileSystem and Sharing
           const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
