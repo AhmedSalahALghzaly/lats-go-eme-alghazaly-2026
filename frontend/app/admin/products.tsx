@@ -927,132 +927,16 @@ export default function ProductsAdmin() {
               {language === 'ar' ? 'لا توجد منتجات' : 'No products found'}
             </Text>
           ) : (
-            products
-              .filter((product) => {
-                if (!searchQuery.trim()) return true;
-                const query = searchQuery.toLowerCase();
-                const name = (product.name || '').toLowerCase();
-                const nameAr = (product.name_ar || '').toLowerCase();
-                const sku = (product.sku || '').toLowerCase();
-                return name.includes(query) || nameAr.includes(query) || sku.includes(query);
-              })
-              .map((product) => (
-              <View key={product.id} style={[styles.productCard, { borderColor: colors.border }]}>
-                <View style={styles.productHeader}>
-                  {product.image_url || (product.images && product.images.length > 0) ? (
-                    <Image 
-                      source={{ uri: product.images?.[0] || product.image_url }} 
-                      style={styles.productImage} 
-                    />
-                  ) : (
-                    <View style={[styles.productImagePlaceholder, { backgroundColor: colors.surface }]}>
-                      <Ionicons name="cube" size={24} color={colors.textSecondary} />
-                    </View>
-                  )}
-                  <View style={styles.productMainInfo}>
-                    <Text style={[styles.productName, { color: colors.text }]} numberOfLines={1}>
-                      {language === 'ar' ? product.name_ar : product.name}
-                    </Text>
-                    <Text style={[styles.productSku, { color: colors.textSecondary }]}>
-                      SKU: {product.sku}
-                    </Text>
-                    <Text style={[styles.productPrice, { color: colors.primary }]}>
-                      {product.price?.toFixed(2)} ج.م
-                    </Text>
-                  </View>
-                  
-                  {/* Action Buttons Container */}
-                  <View style={styles.actionButtonsContainer}>
-                    {/* Delete Button */}
-                    <TouchableOpacity
-                      style={[styles.actionButton, { backgroundColor: colors.error + '20' }]}
-                      onPress={() => openDeleteConfirm(product)}
-                    >
-                      <Ionicons name="trash" size={18} color={colors.error} />
-                    </TouchableOpacity>
-                    
-                    {/* Edit Button */}
-                    <TouchableOpacity
-                      style={[styles.actionButton, { backgroundColor: colors.primary + '20' }]}
-                      onPress={() => handleEditProduct(product)}
-                    >
-                      <Ionicons name="create" size={18} color={colors.primary} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                
-                {/* Product Relationships Display */}
-                <View style={[styles.productMeta, { backgroundColor: colors.surface }]}>
-                  <View style={styles.metaRow}>
-                    <Ionicons name="pricetag" size={12} color={colors.textSecondary} />
-                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>
-                      {language === 'ar' ? 'الماركة:' : 'Brand:'}
-                    </Text>
-                    <Text style={[styles.metaValue, { color: colors.text }]}>
-                      {getBrandName(product.product_brand_id) || '-'}
-                    </Text>
-                  </View>
-                  <View style={styles.metaRow}>
-                    <Ionicons name="grid" size={12} color={colors.textSecondary} />
-                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>
-                      {language === 'ar' ? 'الفئة:' : 'Category:'}
-                    </Text>
-                    <Text style={[styles.metaValue, { color: colors.text }]}>
-                      {getCategoryName(product.category_id) || '-'}
-                    </Text>
-                  </View>
-                  {product.car_model_ids?.length > 0 && (
-                    <View style={styles.metaRow}>
-                      <Ionicons name="car" size={12} color={colors.textSecondary} />
-                      <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>
-                        {language === 'ar' ? 'الموديلات:' : 'Models:'}
-                      </Text>
-                      <Text style={[styles.metaValue, { color: colors.text }]} numberOfLines={1}>
-                        {getCarModelNames(product.car_model_ids)}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Quantity Display and Edit Section */}
-                <View style={styles.quantitySection}>
-                  {/* Current Quantity Display (Green Field) */}
-                  <View style={[styles.currentQuantity, { backgroundColor: '#10b981' }]}>
-                    <Ionicons name="cube" size={14} color="#FFF" />
-                    <Text style={styles.currentQuantityText}>
-                      {product.stock_quantity || product.stock || 0}
-                    </Text>
-                  </View>
-
-                  {/* Edit Quantity Input */}
-                  <TextInput
-                    style={[styles.quantityInput, { 
-                      backgroundColor: colors.surface, 
-                      borderColor: colors.border, 
-                      color: colors.text 
-                    }]}
-                    value={quantityInputs[product.id] || '0'}
-                    onChangeText={(text) => setQuantityInputs({ ...quantityInputs, [product.id]: text })}
-                    keyboardType="number-pad"
-                    placeholder="0"
-                    placeholderTextColor={colors.textSecondary}
-                  />
-
-                  {/* Update Quantity Button (Yellow with Checkmark) */}
-                  <TouchableOpacity
-                    style={[styles.updateQuantityBtn, { backgroundColor: '#f59e0b' }]}
-                    onPress={() => handleUpdateQuantity(product.id)}
-                    disabled={updatingQuantityId === product.id}
-                  >
-                    {updatingQuantityId === product.id ? (
-                      <ActivityIndicator size="small" color="#FFF" />
-                    ) : (
-                      <Ionicons name="checkmark" size={16} color="#FFF" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))
+            <View style={styles.flashListContainer}>
+              <FlashList
+                data={filteredProducts}
+                renderItem={renderProductItem}
+                keyExtractor={(product) => product.id}
+                estimatedItemSize={200}
+                scrollEnabled={false}
+                extraData={{ quantityInputs, updatingQuantityId }}
+              />
+            </View>
           )}
         </View>
       </ScrollView>
