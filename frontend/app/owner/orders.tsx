@@ -1,6 +1,7 @@
 /**
  * Orders Screen with Status Filtering
  * Deep-linked from Dashboard metrics
+ * OPTIMIZED: Uses FlashList for high-performance order list rendering
  */
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
@@ -12,6 +13,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
