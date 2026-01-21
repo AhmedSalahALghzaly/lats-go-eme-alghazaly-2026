@@ -246,14 +246,27 @@ export default function ProductsAdmin() {
     return map;
   }, [carModels]);
 
-  // Initialize quantity inputs when products load
-  useMemo(() => {
-    const quantities: { [key: string]: string } = {};
-    products.forEach((p: any) => {
-      quantities[p.id] = (p.stock_quantity || p.stock || 0).toString();
-    });
-    setQuantityInputs(quantities);
+  // Track if we've initialized quantity inputs to prevent re-initialization
+  const quantityInputsInitialized = useRef(false);
+
+  // Initialize quantity inputs when products load - use useEffect instead of useMemo
+  useEffect(() => {
+    if (products.length > 0 && !quantityInputsInitialized.current) {
+      const quantities: { [key: string]: string } = {};
+      products.forEach((p: any) => {
+        quantities[p.id] = (p.stock_quantity || p.stock || 0).toString();
+      });
+      setQuantityInputs(quantities);
+      quantityInputsInitialized.current = true;
+    }
   }, [products]);
+
+  // Reset initialized flag when products change significantly (e.g., after refresh)
+  useEffect(() => {
+    if (products.length === 0) {
+      quantityInputsInitialized.current = false;
+    }
+  }, [products.length]);
 
   const onRefresh = useCallback(async () => {
     await refetch();
