@@ -246,43 +246,20 @@ export default function ProductsAdmin() {
     return map;
   }, [carModels]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Initialize quantity inputs when products load
+  const [quantityInputs, setQuantityInputs] = useState<{ [key: string]: string }>({});
 
-  const fetchData = async () => {
-    try {
-      const [productsRes, brandsRes, catsRes, modelsRes, carBrandsRes] = await Promise.all([
-        productsApi.getAllAdmin(),
-        productBrandsApi.getAll(),
-        categoriesApi.getAll(),
-        carModelsApi.getAll(),
-        carBrandsApi.getAll(),
-      ]);
-      const productsList = productsRes.data?.products || [];
-      setProducts(productsList);
-      setProductBrands(brandsRes.data || []);
-      setCategories(catsRes.data || []);
-      setCarModels(modelsRes.data || []);
-      setCarBrands(carBrandsRes.data || []);
-      
-      const quantities: { [key: string]: string } = {};
-      productsList.forEach((p: any) => {
-        quantities[p.id] = (p.stock_quantity || p.stock || 0).toString();
-      });
-      setQuantityInputs(quantities);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useMemo(() => {
+    const quantities: { [key: string]: string } = {};
+    products.forEach((p: any) => {
+      quantities[p.id] = (p.stock_quantity || p.stock || 0).toString();
+    });
+    setQuantityInputs(quantities);
+  }, [products]);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const handleSave = async () => {
     if (!name.trim() || !nameAr.trim() || !price || !sku || !selectedBrandId || !selectedCategoryId) {
