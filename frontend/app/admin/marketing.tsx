@@ -371,20 +371,20 @@ export default function MarketingSuiteScreen() {
     );
   };
 
-  // Filter items by search
-  const filteredProducts = products.filter((p) => {
+  // Filter items by search - use useMemo for performance
+  const filteredProducts = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return (
+    return products.filter((p) =>
       p.name?.toLowerCase().includes(q) ||
       p.name_ar?.toLowerCase().includes(q) ||
       p.sku?.toLowerCase().includes(q)
     );
-  });
+  }, [products, searchQuery]);
 
-  const filteredCarModels = carModels.filter((m) => {
+  const filteredCarModels = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return m.name?.toLowerCase().includes(q) || m.name_ar?.toLowerCase().includes(q);
-  });
+    return carModels.filter((m) => m.name?.toLowerCase().includes(q) || m.name_ar?.toLowerCase().includes(q));
+  }, [carModels, searchQuery]);
 
   // Get selected product/model names
   const getSelectedProductName = (id: string) => {
