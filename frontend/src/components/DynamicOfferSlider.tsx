@@ -652,18 +652,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minWidth: 60,
     marginBottom: 0, // Remove margin - space-between handles spacing
-    ...Platform.select({
-      web: {
-        boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-      },
-      default: {
-        elevation: 6,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
-      },
-    }),
+    // Shadow removed as per user request
   },
   discountNum: {
     color: '#1a1a2e',
