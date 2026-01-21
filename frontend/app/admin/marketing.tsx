@@ -132,8 +132,6 @@ export default function MarketingSuiteScreen() {
   const [showProductSelector, setShowProductSelector] = useState(false);
   const [showCarModelSelector, setShowCarModelSelector] = useState(false);
   const [selectorMode, setSelectorMode] = useState<'promo' | 'bundle'>('promo');
-  const [products, setProducts] = useState<any[]>([]);
-  const [carModels, setCarModels] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   const [saving, setSaving] = useState(false);
@@ -149,56 +147,21 @@ export default function MarketingSuiteScreen() {
     setToastVisible(true);
   };
 
-  // Handle promotion reorder
+  // Handle promotion reorder using React Query mutation
   const handlePromotionReorder = async (newOrder: Promotion[]) => {
-    // Optimistic update
-    setPromotions(newOrder);
-    
     try {
-      // Update each promotion's sort_order on the backend
-      await Promise.all(
-        newOrder.map((promo, index) =>
-          promotionApi.update(promo.id, { ...promo, sort_order: index })
-        )
-      );
+      await reorderPromotions.mutateAsync(newOrder);
       showToast(language === 'ar' ? 'تم تحديث الترتيب بنجاح' : 'Order updated successfully', 'success');
     } catch (error) {
       console.error('Error updating promotion order:', error);
       showToast(language === 'ar' ? 'فشل في تحديث الترتيب' : 'Failed to update order', 'error');
-      fetchData(); // Revert to original order
     }
   };
 
-  // Fetch data
-  const fetchData = useCallback(async () => {
-    try {
-      const [promosRes, bundlesRes, productsRes, modelsRes] = await Promise.all([
-        promotionApi.getAllForAdmin(),  // Use admin endpoint to see ALL promotions (active + inactive)
-        bundleOfferApi.getAllForAdmin(), // Use admin endpoint to see ALL bundles (active + inactive)
-        productApi.getAll({ limit: 1000 }),
-        carModelApi.getAll(),
-      ]);
-      setPromotions(promosRes.data || []);
-      setBundleOffers(bundlesRes.data || []);
-      setProducts(productsRes.data?.products || []);
-      setCarModels(modelsRes.data || []);
-    } catch (error) {
-      console.error('Error fetching marketing data:', error);
-      showToast(language === 'ar' ? 'فشل في تحميل البيانات' : 'Failed to load data', 'error');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [language]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchData();
-  };
+  // Refresh data function
+  const onRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   // Reset promotion form
   const resetPromotionForm = () => {
