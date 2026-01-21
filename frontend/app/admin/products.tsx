@@ -168,15 +168,29 @@ export default function ProductsAdmin() {
   const insets = useSafeAreaInsets();
   
   const adminSync = useAdminSync();
-  const cacheStore = useDataCacheStore();
 
-  const [products, setProducts] = useState<any[]>([]);
-  const [productBrands, setProductBrands] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [carModels, setCarModels] = useState<any[]>([]);
-  const [carBrands, setCarBrands] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  // Use React Query for data fetching
+  const {
+    data: products = [],
+    isLoading: loading,
+    isRefetching: refreshing,
+    refetch,
+  } = useAdminProductsQuery();
+
+  const {
+    data: metadata,
+    isLoading: metadataLoading,
+  } = useProductMetadataQuery();
+
+  // Extract metadata with defaults
+  const productBrands = useMemo(() => metadata?.productBrands || [], [metadata]);
+  const categories = useMemo(() => metadata?.categories || [], [metadata]);
+  const carModels = useMemo(() => metadata?.carModels || [], [metadata]);
+  const carBrands = useMemo(() => metadata?.carBrands || [], [metadata]);
+
+  // Mutations
+  const { updateQuantity: updateQuantityMutation, deleteProduct: deleteProductMutation } = useAdminProductMutations();
+
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState('');
