@@ -11,8 +11,8 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Any
 
-# Test Configuration - Using public URL
-BASE_URL = "/api"  # Using the public endpoint from REACT_APP_BACKEND_URL
+# Test Configuration - Using backend URL
+BASE_URL = "http://localhost:8001/api"  # Backend running on port 8001
 
 class FocusedAPITester:
     def __init__(self):
