@@ -1,10 +1,11 @@
 /**
  * CartTab - Shopping cart display and management tab
  * Shows cart items with quantity controls and order summary
- * FIXED: Proper scroll handling - items are touchable and scrollable
+ * REFACTORED: Uses FlashList for better performance on long lists
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { EmptyState } from '../ui/EmptyState';
@@ -43,15 +44,15 @@ export const CartTab: React.FC<CartTabProps> = ({
 
   const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
 
-  // Render each cart item - using map for proper scroll propagation
-  const renderCartItem = (item: any, index: number) => {
+  // Render cart item for FlashList
+  const renderCartItem = useCallback(({ item, index }: { item: any; index: number }) => {
     const originalPrice = item.original_unit_price || item.product?.price || 0;
     const finalPrice = item.final_unit_price || item.product?.price || 0;
     const hasDiscount = originalPrice > finalPrice;
     const lineTotal = finalPrice * item.quantity;
 
     return (
-      <View key={item.product_id || index} style={[styles.cartItem, { borderColor: colors.border }]}>
+      <View style={[styles.cartItem, { borderColor: colors.border }]}>
         <Pressable
           style={({ pressed }) => [
             styles.productThumb,
@@ -135,30 +136,49 @@ export const CartTab: React.FC<CartTabProps> = ({
         </View>
       </View>
     );
-  };
+  }, [colors, language, isRTL, router, onUpdateQuantity, onRemove]);
+
+  // List header with section title
+  const ListHeaderComponent = useCallback(() => (
+    <View style={[styles.sectionHeader, isRTL && styles.rowReverse]}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        {language === 'ar' ? 'سلة التسوق' : 'Shopping Cart'}
+      </Text>
+      <View style={[styles.countBadge, { backgroundColor: NEON_NIGHT_THEME.primary }]}>
+        <Text style={styles.countBadgeText}>{getItemCount()}</Text>
+      </View>
+    </View>
+  ), [colors, language, isRTL, getItemCount]);
+
+  // Empty state
+  const ListEmptyComponent = useCallback(() => (
+    <EmptyState
+      icon="cart-outline"
+      title={language === 'ar' ? 'السلة فارغة' : 'Cart is empty'}
+      actionLabel={language === 'ar' ? 'تصفح المنتجات' : 'Browse Products'}
+      onAction={() => router.push('/')}
+    />
+  ), [language, router]);
 
   return (
     <>
       <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={[styles.sectionHeader, isRTL && styles.rowReverse]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {language === 'ar' ? 'سلة التسوق' : 'Shopping Cart'}
-          </Text>
-          <View style={[styles.countBadge, { backgroundColor: NEON_NIGHT_THEME.primary }]}>
-            <Text style={styles.countBadgeText}>{getItemCount()}</Text>
-          </View>
-        </View>
-
         {safeCartItems.length === 0 ? (
-          <EmptyState
-            icon="cart-outline"
-            title={language === 'ar' ? 'السلة فارغة' : 'Cart is empty'}
-            actionLabel={language === 'ar' ? 'تصفح المنتجات' : 'Browse Products'}
-            onAction={() => router.push('/')}
-          />
+          <>
+            <ListHeaderComponent />
+            <ListEmptyComponent />
+          </>
         ) : (
-          <View style={styles.listContainer}>
-            {safeCartItems.map(renderCartItem)}
+          <View style={styles.listWrapper}>
+            <FlashList
+              data={safeCartItems}
+              renderItem={renderCartItem}
+              keyExtractor={(item, index) => item.product_id || `cart-item-${index}`}
+              estimatedItemSize={150}
+              ListHeaderComponent={ListHeaderComponent}
+              scrollEnabled={false}
+              extraData={[colors, language, isRTL]}
+            />
           </View>
         )}
       </View>
@@ -248,6 +268,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
   },
+  listWrapper: {
+    minHeight: 100,
+  },
   summaryContainer: {
     marginHorizontal: 16,
     marginTop: 12,
@@ -277,9 +300,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 12,
     fontWeight: '700',
-  },
-  listContainer: {
-    minHeight: 50,
   },
   cartItem: {
     flexDirection: 'row',
