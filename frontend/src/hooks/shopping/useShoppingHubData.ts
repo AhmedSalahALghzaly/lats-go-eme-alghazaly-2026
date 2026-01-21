@@ -1,11 +1,16 @@
 /**
  * useShoppingHubData - Main data fetching and state management hook
+ * REFACTORED: Uses React Query for data fetching with caching and optimistic updates
  * Handles loading data for both customer and admin views
  */
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useAppStore } from '../../store/appStore';
-import { cartApi, favoriteApi, orderApi } from '../../services/api';
-import api from '../../services/api';
+import {
+  useShoppingHubQuery,
+  useCustomerShoppingDataQuery,
+  useCartMutations,
+  useFavoritesMutations,
+} from '../queries';
 
 export interface ShoppingHubState {
   loading: boolean;
@@ -23,23 +28,8 @@ export interface UseShoppingHubDataProps {
 }
 
 /**
- * Processes favorites data to ensure consistent structure
+ * Main hook for shopping hub data - uses React Query for all data fetching
  */
-const processFavoritesData = (favoritesData: any[]): any[] => {
-  return favoritesData.map((fav: any) => ({
-    ...fav,
-    product_id: fav.product_id || fav.product?.id,
-    product: fav.product || {
-      id: fav.product_id,
-      name: fav.name,
-      name_ar: fav.name_ar,
-      price: fav.price,
-      image_url: fav.image_url,
-      sku: fav.sku,
-    },
-  }));
-};
-
 export const useShoppingHubData = ({
   customerId,
   customerData,
@@ -48,130 +38,95 @@ export const useShoppingHubData = ({
   const user = useAppStore((state) => state.user);
   const setCartItems = useAppStore((state) => state.setCartItems);
 
-  const [state, setState] = useState<ShoppingHubState>({
-    loading: true,
-    refreshing: false,
-    favorites: [],
-    cartItems: [],
-    orders: [],
-    profileData: null,
-  });
-
   // Determine target user
   const targetUserId = customerId || user?.id;
   const isOwnProfile = !isAdminView && !customerId;
 
-  /**
-   * Load data based on view type (admin vs customer)
-   */
-  const loadData = useCallback(async () => {
-    if (!targetUserId && !isOwnProfile) {
-      setState((prev) => ({ ...prev, loading: false }));
-      return;
+  // Use React Query hooks for data fetching
+  const userDataQuery = useShoppingHubQuery(!isAdminView && isOwnProfile);
+  const customerDataQuery = useCustomerShoppingDataQuery(
+    customerId,
+    isAdminView && !!customerId
+  );
+
+  // Derive state from queries
+  const loading = useMemo(() => {
+    if (isAdminView && customerId) {
+      return customerDataQuery.isLoading;
     }
+    return userDataQuery.isLoading;
+  }, [isAdminView, customerId, customerDataQuery.isLoading, userDataQuery.isLoading]);
 
-    setState((prev) => ({ ...prev, loading: true }));
-
-    try {
-      if (isAdminView && customerId) {
-        // Admin viewing customer data
-        const [favRes, cartRes, ordersRes] = await Promise.all([
-          api
-            .get(`/customers/admin/customer/${customerId}/favorites`)
-            .catch(() => ({ data: { favorites: [] } })),
-          api
-            .get(`/customers/admin/customer/${customerId}/cart`)
-            .catch(() => ({ data: { items: [] } })),
-          api
-            .get(`/customers/admin/customer/${customerId}/orders`)
-            .catch(() => ({ data: { orders: [] } })),
-        ]);
-
-        const processedFavorites = processFavoritesData(
-          favRes.data?.favorites || []
-        );
-
-        setState((prev) => ({
-          ...prev,
-          favorites: processedFavorites,
-          cartItems: cartRes.data?.items || [],
-          orders: ordersRes.data?.orders || [],
-          profileData: customerData,
-          loading: false,
-          refreshing: false,
-        }));
-      } else {
-        // User viewing own data
-        const [favRes, cartRes, ordersRes] = await Promise.all([
-          favoriteApi.getAll().catch(() => ({ data: [] })),
-          cartApi.get().catch(() => ({ data: { items: [] } })),
-          orderApi.getAll().catch(() => ({ data: [] })),
-        ]);
-
-        const favoritesData = Array.isArray(favRes.data)
-          ? favRes.data
-          : favRes.data?.favorites || [];
-        const processedFavorites = processFavoritesData(favoritesData);
-        const items = cartRes.data?.items || [];
-        const ordersData = Array.isArray(ordersRes.data)
-          ? ordersRes.data
-          : ordersRes.data?.orders || [];
-
-        // Sync cart with global store
-        setCartItems(items);
-
-        setState((prev) => ({
-          ...prev,
-          favorites: processedFavorites,
-          cartItems: items,
-          orders: ordersData,
-          profileData: user,
-          loading: false,
-          refreshing: false,
-        }));
-      }
-    } catch (error) {
-      console.error('[useShoppingHubData] Error loading data:', error);
-      setState((prev) => ({ ...prev, loading: false, refreshing: false }));
+  const refreshing = useMemo(() => {
+    if (isAdminView && customerId) {
+      return customerDataQuery.isRefetching;
     }
-  }, [targetUserId, isAdminView, customerId, customerData, user, setCartItems, isOwnProfile]);
+    return userDataQuery.isRefetching;
+  }, [isAdminView, customerId, customerDataQuery.isRefetching, userDataQuery.isRefetching]);
 
-  /**
-   * Refresh data with pull-to-refresh support
-   */
+  const favorites = useMemo(() => {
+    if (isAdminView && customerId) {
+      return customerDataQuery.favorites;
+    }
+    return userDataQuery.favorites;
+  }, [isAdminView, customerId, customerDataQuery.favorites, userDataQuery.favorites]);
+
+  const cartItems = useMemo(() => {
+    if (isAdminView && customerId) {
+      return customerDataQuery.cart;
+    }
+    return userDataQuery.cartItems;
+  }, [isAdminView, customerId, customerDataQuery.cart, userDataQuery.cartItems]);
+
+  const orders = useMemo(() => {
+    if (isAdminView && customerId) {
+      return customerDataQuery.orders;
+    }
+    return userDataQuery.orders;
+  }, [isAdminView, customerId, customerDataQuery.orders, userDataQuery.orders]);
+
+  const profileData = useMemo(() => {
+    if (isAdminView && customerId) {
+      return customerData;
+    }
+    return userDataQuery.profileData;
+  }, [isAdminView, customerId, customerData, userDataQuery.profileData]);
+
+  // Refresh function
   const onRefresh = useCallback(() => {
-    setState((prev) => ({ ...prev, refreshing: true }));
-    loadData();
-  }, [loadData]);
+    if (isAdminView && customerId) {
+      customerDataQuery.refetch();
+    } else {
+      userDataQuery.refetch();
+    }
+  }, [isAdminView, customerId, customerDataQuery, userDataQuery]);
 
-  // Initial data load
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  // Load data function (for backward compatibility)
+  const loadData = useCallback(() => {
+    onRefresh();
+  }, [onRefresh]);
 
-  /**
-   * Update favorites locally
-   */
-  const setFavorites = useCallback((favorites: any[]) => {
-    setState((prev) => ({ ...prev, favorites }));
+  // Update functions (for local state management if needed)
+  const setFavorites = useCallback((newFavorites: any[]) => {
+    // This is now handled by React Query
+    // Manual updates will be reflected after refetch
   }, []);
 
-  /**
-   * Update cart items locally
-   */
-  const setLocalCartItems = useCallback((cartItems: any[]) => {
-    setState((prev) => ({ ...prev, cartItems }));
-  }, []);
+  const setLocalCartItems = useCallback((newCartItems: any[]) => {
+    setCartItems(newCartItems);
+  }, [setCartItems]);
 
-  /**
-   * Update orders locally
-   */
-  const setOrders = useCallback((orders: any[]) => {
-    setState((prev) => ({ ...prev, orders }));
+  const setOrders = useCallback((newOrders: any[]) => {
+    // This is now handled by React Query
   }, []);
 
   return {
-    ...state,
+    loading,
+    refreshing,
+    favorites,
+    cartItems,
+    orders,
+    profileData,
     targetUserId,
     isOwnProfile,
     loadData,
