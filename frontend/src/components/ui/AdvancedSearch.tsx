@@ -575,7 +575,7 @@ export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
                   style={[styles.quickAction, { backgroundColor: colors.error + '15' }]}
                   onPress={() => {
                     onClose();
-                    router.push('/favorites');
+                    router.push('/cart?tab=favorites');
                   }}
                 >
                   <Ionicons name="heart" size={24} color={colors.error} />
