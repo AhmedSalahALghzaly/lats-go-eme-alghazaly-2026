@@ -1,10 +1,11 @@
 /**
  * FavoritesTab - Favorites list display tab
  * Shows user's favorite products with actions
- * FIXED: Proper scroll handling - items are touchable and scrollable
+ * REFACTORED: Uses FlashList for better performance on long lists
  */
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { EmptyState } from '../ui/EmptyState';
@@ -33,11 +34,9 @@ export const FavoritesTab: React.FC<FavoritesTabProps> = ({
 
   const safeFavorites = Array.isArray(favorites) ? favorites : [];
 
-  // Render each favorite item - using regular map instead of FlashList
-  // This allows proper scroll propagation to parent ScrollView
-  const renderFavoriteItem = (item: any, index: number) => (
+  // Render favorite item for FlashList
+  const renderFavoriteItem = useCallback(({ item, index }: { item: any; index: number }) => (
     <Pressable
-      key={item.product_id || item.id || index}
       style={({ pressed }) => [
         styles.productCard,
         { borderColor: colors.border },
@@ -92,27 +91,46 @@ export const FavoritesTab: React.FC<FavoritesTabProps> = ({
         )}
       </View>
     </Pressable>
-  );
+  ), [colors, language, router, isAdminView, onAddToCart, onToggleFavorite]);
+
+  // List header with section title
+  const ListHeaderComponent = useCallback(() => (
+    <View style={[styles.sectionHeader, isRTL && styles.rowReverse]}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        {language === 'ar' ? 'المنتجات المفضلة' : 'Favorite Products'}
+      </Text>
+      <View style={[styles.countBadge, { backgroundColor: NEON_NIGHT_THEME.primary }]}>
+        <Text style={styles.countBadgeText}>{safeFavorites.length}</Text>
+      </View>
+    </View>
+  ), [colors, language, isRTL, safeFavorites.length]);
+
+  // Empty state
+  const ListEmptyComponent = useCallback(() => (
+    <EmptyState
+      icon="heart-outline"
+      title={language === 'ar' ? 'لا توجد منتجات مفضلة' : 'No favorites yet'}
+    />
+  ), [language]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={[styles.sectionHeader, isRTL && styles.rowReverse]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          {language === 'ar' ? 'المنتجات المفضلة' : 'Favorite Products'}
-        </Text>
-        <View style={[styles.countBadge, { backgroundColor: NEON_NIGHT_THEME.primary }]}>
-          <Text style={styles.countBadgeText}>{safeFavorites.length}</Text>
-        </View>
-      </View>
-
       {safeFavorites.length === 0 ? (
-        <EmptyState
-          icon="heart-outline"
-          title={language === 'ar' ? 'لا توجد منتجات مفضلة' : 'No favorites yet'}
-        />
+        <>
+          <ListHeaderComponent />
+          <ListEmptyComponent />
+        </>
       ) : (
-        <View style={styles.listContainer}>
-          {safeFavorites.map(renderFavoriteItem)}
+        <View style={styles.listWrapper}>
+          <FlashList
+            data={safeFavorites}
+            renderItem={renderFavoriteItem}
+            keyExtractor={(item, index) => item.product_id || item.id || `fav-item-${index}`}
+            estimatedItemSize={80}
+            ListHeaderComponent={ListHeaderComponent}
+            scrollEnabled={false}
+            extraData={[colors, language, isRTL, isAdminView]}
+          />
         </View>
       )}
     </View>
@@ -125,6 +143,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
+  },
+  listWrapper: {
+    minHeight: 100,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -148,9 +169,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 12,
     fontWeight: '700',
-  },
-  listContainer: {
-    minHeight: 50,
   },
   productCard: {
     flexDirection: 'row',
