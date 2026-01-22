@@ -651,7 +651,7 @@ export default function ProductsAdmin() {
   const adminSync = useAdminSync();
 
   // React Query hooks
-  const { data: products = [], isLoading: loading, isRefetching: refreshing, refetch } = useAdminProductsQuery();
+  const { data: products = [], isLoading: loading, isRefetching: refreshing, refetch } = useAdminProductsListQuery();
   const { data: metadata, isLoading: metadataLoading } = useProductMetadataQuery();
   const { updateQuantity: updateQuantityMutation, deleteProduct: deleteProductMutation } = useAdminProductMutations();
 
