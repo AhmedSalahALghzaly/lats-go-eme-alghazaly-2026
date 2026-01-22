@@ -1079,8 +1079,11 @@ export default function ProductsAdmin() {
 // ============================================================================
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  flashListContent: { paddingHorizontal: 16 },
-  listHeaderContainer: { paddingTop: 16 },
+  mainScrollView: { flex: 1 },
+  mainScrollContent: { paddingHorizontal: 16 },
+  formSection: { paddingTop: 16 },
+  productsListSection: { },
+  productsList: { },
   loadingContainer: { padding: 40, alignItems: 'center' },
   emptyContainer: { padding: 40, alignItems: 'center' },
   breadcrumb: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 8 },
@@ -1091,7 +1094,7 @@ const styles = StyleSheet.create({
   formTitle: { fontSize: 20, fontWeight: '700' },
   cancelEditBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, gap: 6 },
   cancelEditText: { fontSize: 14, fontWeight: '600' },
-  formSection: { borderBottomWidth: 1, paddingBottom: 20, marginBottom: 20 },
+  formSectionInner: { borderBottomWidth: 1, paddingBottom: 20, marginBottom: 20 },
   sectionLabel: { fontSize: 14, fontWeight: '700', marginBottom: 16 },
   formGroup: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 6 },
