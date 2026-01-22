@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,12 +17,30 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+  interpolateColor,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
 import { Header } from '../../src/components/Header';
 import { Footer } from '../../src/components/Footer';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useAppStore } from '../../src/store/appStore';
 import { carModelsApi, cartApi } from '../../src/services/api';
+
+const GOLD_COLOR = '#FFD700';
+
+// Check if user can view entity profiles
+const canViewEntityProfile = (userRole?: string, subscriptionStatus?: string): boolean => {
+  const allowedRoles = ['owner', 'admin', 'partner', 'subscriber'];
+  return allowedRoles.includes(userRole || '') || subscriptionStatus === 'subscriber';
+};
 
 export default function CarModelDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
