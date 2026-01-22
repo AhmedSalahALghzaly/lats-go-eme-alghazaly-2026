@@ -11,7 +11,7 @@ import { Header } from '../../src/components/Header';
 import { ImageUploader } from '../../src/components/ui/ImageUploader';
 import { Toast } from '../../src/components/ui/FormFeedback';
 import {
-  useAdminProductsQuery,
+  useAdminProductsListQuery,
   useProductMetadataQuery,
   useAdminProductMutations,
 } from '../../src/hooks/queries';
