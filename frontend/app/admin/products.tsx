@@ -901,6 +901,8 @@ export default function ProductsAdmin() {
   ), [colors, language, quantityInputs, updatingQuantityId, handleQuantityInputChange, handleUpdateQuantity, handleEditProduct, openDeleteConfirm]);
 
   // Header component - uses the standalone ProductFormHeader
+  // CRITICAL: Empty dependency array to prevent re-creating the header on every state change
+  // The ProductFormHeader receives fresh props via the refs/state, but the callback itself stays stable
   const ListHeaderComponent = useCallback(() => (
     <ProductFormHeader
       formState={formState}
@@ -912,7 +914,7 @@ export default function ProductsAdmin() {
       productsCount={products.length}
       router={router}
     />
-  ), [formState, formHandlers, lookups, colors, language, isRTL, products.length, router]);
+  ), []);
 
   // Empty component
   const ListEmptyComponent = useCallback(() => {
