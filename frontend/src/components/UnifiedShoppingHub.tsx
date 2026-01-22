@@ -370,9 +370,8 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
         </ScrollView>
       </View>
 
-      {/* Content Area - FIXED: Each tab now handles its own scrolling */}
+      {/* Content Area - FIXED: No gaps, each tab handles its own scrolling */}
       <View style={styles.content}>
-        {/* Tab Content */}
         {activeTab === 'profile' && (
           <ScrollView
             style={styles.tabScrollView}
