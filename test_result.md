@@ -932,3 +932,42 @@ agent_communication:
     message: "✅ ANALYTICS & SUBSCRIBER ENDPOINTS TESTING COMPLETE: All 17 backend API tests passed (100% success rate). NEW ANALYTICS ENDPOINTS VERIFIED: All 5 analytics sub-endpoints successfully implemented and properly secured - GET /api/analytics/customers (customer growth, retention, spending tiers), GET /api/analytics/products (top sellers, category performance, stock alerts), GET /api/analytics/orders (status breakdown, day/hour patterns, fulfillment times), GET /api/analytics/revenue (daily/monthly revenue, discount analysis), GET /api/analytics/admin-performance (admin sales metrics). NEW SUBSCRIBER ENDPOINTS VERIFIED: All 3 subscriber enhancement endpoints working - PATCH /api/subscription-requests/{id}/reject (reject subscription request), GET /api/subscribers/{id} (get single subscriber), PUT /api/subscribers/{id} (update subscriber info). SECURITY ANALYSIS: All endpoints correctly require owner/partner authentication (HTTP 403 for unauthenticated access). Date parameter support confirmed for all analytics endpoints. All existing endpoints (health, analytics overview, subscribers, subscription-requests) continue to work properly. Backend v4.1.0 analytics and subscriber enhancements fully operational and ready for production use."
   - agent: "testing"
     message: "✅ ADMIN PRODUCTS PANEL FOCUS RETENTION FIX - FINAL VERIFICATION COMPLETE: Comprehensive testing performed on iPhone viewport (390x844) as requested in review. SECURITY VERIFICATION: ✅ Admin routes properly secured with Google OAuth authentication - /admin/products correctly requires authentication and shows login screen with Arabic interface 'الغزالي متجر قطع غيار السيارات' (Al-Ghazaly Auto Parts Store). ARCHITECTURAL ANALYSIS: ✅ Code review confirms critical fix implementation - ProductFormHeader component extracted as standalone memo component outside main component (lines 90-100) to prevent re-mounting on state changes. This architectural change directly addresses the TextInput focus loss issue where inputs would lose focus after typing one character. MOBILE RESPONSIVENESS: ✅ App displays correctly on mobile viewport with Arabic RTL interface, proper navigation structure, and responsive design. AUTHENTICATION FLOW: ✅ Google OAuth integration working correctly with proper redirect handling and session management. CONCLUSION: The TextInput focus retention fix has been properly implemented through component architecture improvements. Cannot perform live input testing due to authentication requirements, but code analysis confirms the fix addresses the root cause of focus loss by preventing component re-mounting during state changes."
+
+  - task: "Unified Entity Management System Refactoring (Suppliers & Distributors)"
+    implemented: true
+    working: "NA"
+    file: "frontend/app/owner/suppliers.tsx, frontend/app/owner/distributors.tsx, frontend/app/owner/add-entity-form.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: |
+          Refactored Supplier and Distributor management system to use unified navigation and form approach:
+          1. Navigation Updates:
+             - Product detail page already navigates correctly to /owner/suppliers?viewMode=profile&id=${supplierId}
+             - Car model detail page already navigates correctly to /owner/distributors?viewMode=profile&id=${distributorId}
+          2. Unified Form Integration:
+             - Suppliers: Add button now navigates to /owner/add-entity-form?entityType=supplier
+             - Suppliers: Edit button navigates to /owner/add-entity-form?entityType=supplier&id=${selectedSupplier.id}
+             - Distributors: Add button now navigates to /owner/add-entity-form?entityType=distributor
+             - Distributors: Edit button navigates to /owner/add-entity-form?entityType=distributor&id=${selectedDistributor.id}
+          3. Code Cleanup:
+             - Removed viewMode === 'add' and viewMode === 'edit' conditional return blocks from both files
+             - Removed local form state variables (formData, phoneInput, etc.)
+             - Removed createMutation and updateMutation from both files (kept deleteMutation)
+             - Removed unused imports (KeyboardAvoidingView, Platform, ImageUploader)
+             - ViewMode type now only includes 'list' | 'profile'
+          4. All linting passed for both refactored files.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Completed Unified Entity Management System Refactoring task:
+      - Updated suppliers.tsx: Add button navigates to add-entity-form, removed legacy form code
+      - Updated distributors.tsx: Add button navigates to add-entity-form, removed legacy form code
+      - Both files now only support 'list' and 'profile' viewModes
+      - Edit functionality redirects to add-entity-form with id parameter
+      - Maintained existing profile navigation from product/car detail pages
+      - Code is linted and ready for testing
