@@ -289,6 +289,11 @@ export default function SuppliersScreen() {
           return;
         }
         
+        // Avoid re-triggering if already showing this profile
+        if (viewMode === 'profile' && selectedSupplier?.id === params.id) {
+          return;
+        }
+        
         // Set loading state immediately
         setIsProfileLoading(true);
         
@@ -312,21 +317,25 @@ export default function SuppliersScreen() {
         }
         
         if (supplier) {
+          // CRITICAL: Set supplier FIRST, then viewMode
           setSelectedSupplier(supplier);
           setSelectedGalleryImage(0);
-          setViewMode('profile');
+          // Small delay to ensure state is set before switching view
+          setTimeout(() => {
+            setViewMode('profile');
+            setIsProfileLoading(false);
+          }, 50);
         } else {
           // Supplier not found
           setError(isRTL ? 'المورد غير موجود' : 'Supplier not found');
+          setIsProfileLoading(false);
           router.setParams({ viewMode: undefined, id: undefined });
         }
-        
-        setIsProfileLoading(false);
       }
     };
     
     handleProfileNavigation();
-  }, [params.viewMode, params.id, canViewProfile, isRTL]);
+  }, [params.viewMode, params.id, canViewProfile, isRTL, suppliers]);
 
   const handleDeleteSupplier = useCallback((supplierId: string) => {
     deleteMutation.mutate(supplierId);
