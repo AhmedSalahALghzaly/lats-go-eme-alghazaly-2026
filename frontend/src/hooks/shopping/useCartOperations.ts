@@ -1,10 +1,13 @@
 /**
  * useCartOperations - Cart manipulation operations hook
+ * FIXED: Uses React Query mutations for real-time UI updates
  * Handles add, update, remove operations with optimistic updates
  */
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/appStore';
 import { cartApi } from '../../services/api';
+import { shoppingHubKeys, useCartMutations } from '../queries/useShoppingHubQuery';
 
 interface UseCartOperationsProps {
   cartItems: any[];
@@ -19,74 +22,72 @@ export const useCartOperations = ({
   isAdminView,
   loadData,
 }: UseCartOperationsProps) => {
+  const queryClient = useQueryClient();
   const setCartItems = useAppStore((state) => state.setCartItems);
+  
+  // Use React Query mutations for real-time updates
+  const { updateQuantity: updateQuantityMutation, removeFromCart: removeFromCartMutation, addToCart: addToCartMutation } = useCartMutations();
 
   // Safe array helper
   const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
 
   /**
-   * Remove item from cart (defined FIRST to avoid circular reference)
+   * Remove item from cart - uses React Query mutation for instant UI update
    */
   const removeFromCart = useCallback(
     async (productId: string) => {
-      // Optimistic update
-      setLocalCartItems(
-        safeCartItems.filter((item) => item.product_id !== productId)
-      );
+      if (isAdminView) {
+        // Admin view - just update local state
+        setLocalCartItems(
+          safeCartItems.filter((item) => item.product_id !== productId)
+        );
+        return;
+      }
 
-      if (!isAdminView) {
-        try {
-          await cartApi.updateItem(productId, 0);
-          const cartRes = await cartApi.get();
-          const items = cartRes.data?.items || [];
-          setCartItems(items);
-        } catch (error) {
-          console.error('[useCartOperations] Error removing from cart:', error);
-          loadData();
-        }
+      // Use mutation for optimistic update
+      try {
+        await removeFromCartMutation.mutateAsync(productId);
+      } catch (error) {
+        console.error('[useCartOperations] Error removing from cart:', error);
       }
     },
-    [safeCartItems, setLocalCartItems, isAdminView, setCartItems, loadData]
+    [safeCartItems, setLocalCartItems, isAdminView, removeFromCartMutation]
   );
 
   /**
-   * Update cart item quantity
+   * Update cart item quantity - uses React Query mutation for instant UI update
    */
   const updateCartQuantity = useCallback(
     async (productId: string, newQuantity: number) => {
       if (newQuantity < 1) {
-        // Call removeFromCart directly
         removeFromCart(productId);
         return;
       }
 
-      // Optimistic update
-      setLocalCartItems(
-        safeCartItems.map((item) =>
-          item.product_id === productId
-            ? { ...item, quantity: newQuantity }
-            : item
-        )
-      );
+      if (isAdminView) {
+        // Admin view - just update local state
+        setLocalCartItems(
+          safeCartItems.map((item) =>
+            item.product_id === productId
+              ? { ...item, quantity: newQuantity }
+              : item
+          )
+        );
+        return;
+      }
 
-      if (!isAdminView) {
-        try {
-          await cartApi.updateItem(productId, newQuantity);
-          const cartRes = await cartApi.get();
-          const items = cartRes.data?.items || [];
-          setLocalCartItems(items);
-          setCartItems(items);
-        } catch (error) {
-          console.error('[useCartOperations] Error updating cart:', error);
-          loadData(); // Revert on error
-        }
+      // Use mutation for optimistic update
+      try {
+        await updateQuantityMutation.mutateAsync({ productId, quantity: newQuantity });
+      } catch (error) {
+        console.error('[useCartOperations] Error updating cart:', error);
       }
     },
-    [safeCartItems, setLocalCartItems, isAdminView, setCartItems, loadData, removeFromCart]
+    [safeCartItems, setLocalCartItems, isAdminView, updateQuantityMutation, removeFromCart]
   );
 
   /**
-   * Add product to cart
+   * Add product to cart - uses React Query mutation for instant UI update
    */
   const addToCart = useCallback(
     async (product: any, quantity: number = 1) => {
@@ -97,30 +98,27 @@ export const useCartOperations = ({
       if (existing) {
         await updateCartQuantity(product.id, existing.quantity + quantity);
       } else {
-        const newItem = {
-          product_id: product.id,
-          product: product,
-          quantity: quantity,
-          original_unit_price: product.price,
-          final_unit_price: product.price,
-        };
+        if (isAdminView) {
+          const newItem = {
+            product_id: product.id,
+            product: product,
+            quantity: quantity,
+            original_unit_price: product.price,
+            final_unit_price: product.price,
+          };
+          setLocalCartItems([...safeCartItems, newItem]);
+          return;
+        }
 
-        setLocalCartItems([...safeCartItems, newItem]);
-
-        if (!isAdminView) {
-          try {
-            await cartApi.addItem(product.id, quantity);
-            const cartRes = await cartApi.get();
-            const items = cartRes.data?.items || [];
-            setLocalCartItems(items);
-            setCartItems(items);
-          } catch (error) {
-            console.error('[useCartOperations] Error adding to cart:', error);
-          }
+        // Use mutation for optimistic update
+        try {
+          await addToCartMutation.mutateAsync(product.id);
+        } catch (error) {
+          console.error('[useCartOperations] Error adding to cart:', error);
         }
       }
     },
-    [safeCartItems, setLocalCartItems, isAdminView, setCartItems, updateCartQuantity]
+    [safeCartItems, setLocalCartItems, isAdminView, updateCartQuantity, addToCartMutation]
   );
 
   /**

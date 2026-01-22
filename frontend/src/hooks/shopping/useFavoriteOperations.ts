@@ -1,9 +1,9 @@
 /**
- * useFavoriteOperations - Favorites management hook
- * Handles toggling favorites and adding to cart
+ * useFavoriteOperations - Favorites manipulation operations hook
+ * FIXED: Uses React Query mutations for real-time UI updates
  */
 import { useCallback } from 'react';
-import { favoriteApi } from '../../services/api';
+import { useFavoritesMutations } from '../queries/useShoppingHubQuery';
 
 interface UseFavoriteOperationsProps {
   setFavorites: (favorites: any[]) => void;
@@ -14,23 +14,26 @@ export const useFavoriteOperations = ({
   setFavorites,
   isAdminView,
 }: UseFavoriteOperationsProps) => {
+  // Use React Query mutations for real-time updates
+  const { toggleFavorite: toggleFavoriteMutation } = useFavoritesMutations();
+
   /**
-   * Toggle favorite status
+   * Toggle favorite status - uses React Query mutation for instant UI update
    */
   const toggleFavorite = useCallback(
     async (productId: string) => {
-      if (isAdminView) return;
+      if (isAdminView) {
+        // Admin view - don't modify favorites
+        return;
+      }
 
       try {
-        await favoriteApi.toggle(productId);
-        // Refresh favorites
-        const favRes = await favoriteApi.getAll();
-        setFavorites(favRes.data || []);
+        await toggleFavoriteMutation.mutateAsync(productId);
       } catch (error) {
         console.error('[useFavoriteOperations] Error toggling favorite:', error);
       }
     },
-    [isAdminView, setFavorites]
+    [isAdminView, toggleFavoriteMutation]
   );
 
   return {

@@ -1,7 +1,7 @@
 /**
  * CartTab - Shopping cart display and management tab
  * REDESIGNED: Larger product cards with SKU and compatible car models
- * FIXED: Proper list spacing and FlashList configuration
+ * FIXED: Proper list spacing, no gaps, car models display from car_model_ids
  */
 import React, { useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, RefreshControl } from 'react-native';
@@ -51,27 +51,41 @@ export const CartTab: React.FC<CartTabProps> = ({
     [cartItems]
   );
 
-  // Format compatible car models for display
-  const formatCarModels = useCallback((product: any) => {
-    if (!product?.compatible_car_models || product.compatible_car_models.length === 0) {
-      return null;
+  // Format compatible car models for display - check multiple sources
+  const formatCarModels = useCallback((product: any, item: any) => {
+    // Check for pre-populated car models array
+    const carModels = product?.compatible_car_models || 
+                      product?.car_models || 
+                      item?.compatible_car_models ||
+                      item?.car_models;
+    
+    if (carModels && Array.isArray(carModels) && carModels.length > 0) {
+      if (carModels.length <= 2) {
+        return carModels.map((m: any) => m.name || m.name_ar || m).join(', ');
+      }
+      const firstTwo = carModels.slice(0, 2).map((m: any) => m.name || m.name_ar || m).join(', ');
+      return `${firstTwo} +${carModels.length - 2} ${language === 'ar' ? 'أخرى' : 'more'}`;
     }
-    const models = product.compatible_car_models;
-    if (models.length <= 2) {
-      return models.map((m: any) => m.name || m).join(', ');
+    
+    // Check for car_model_ids count
+    const carModelIds = product?.car_model_ids || item?.car_model_ids;
+    if (carModelIds && Array.isArray(carModelIds) && carModelIds.length > 0) {
+      return language === 'ar' 
+        ? `${carModelIds.length} موديل متوافق` 
+        : `${carModelIds.length} compatible models`;
     }
-    const firstTwo = models.slice(0, 2).map((m: any) => m.name || m).join(', ');
-    return `${firstTwo} +${models.length - 2} ${language === 'ar' ? 'أخرى' : 'more'}`;
+    
+    return null;
   }, [language]);
 
-  // Render professional cart item card
+  // Render professional cart item card - INCREASED HEIGHT
   const renderCartItem = useCallback(({ item }: { item: any }) => {
     const product = item.product || {};
     const originalPrice = item.original_unit_price || product.price || 0;
     const finalPrice = item.final_unit_price || product.price || 0;
     const hasDiscount = originalPrice > finalPrice;
     const lineTotal = finalPrice * item.quantity;
-    const carModelsDisplay = formatCarModels(product);
+    const carModelsDisplay = formatCarModels(product, item);
     const sku = product.sku || item.sku || 'N/A';
 
     return (
@@ -101,7 +115,7 @@ export const CartTab: React.FC<CartTabProps> = ({
         <View style={styles.cartItemInfo}>
           {/* Product Name */}
           <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>
-            {language === 'ar' ? product.name_ar : product.name}
+            {language === 'ar' ? product.name_ar || product.name : product.name || product.name_ar}
           </Text>
 
           {/* SKU Badge */}
@@ -112,7 +126,7 @@ export const CartTab: React.FC<CartTabProps> = ({
             </Text>
           </View>
 
-          {/* Compatible Car Models */}
+          {/* Compatible Car Models - Always show if available */}
           {carModelsDisplay && (
             <View style={[styles.carModelsContainer, { backgroundColor: '#3B82F6' + '15' }]}>
               <Ionicons name="car-outline" size={12} color="#3B82F6" />
@@ -248,23 +262,21 @@ export const CartTab: React.FC<CartTabProps> = ({
     );
   }, [colors, language, isRTL, getSubtotal, getTotalSavings, onCheckout, safeCartItems.length]);
 
-  // List Header - minimal padding
+  // List Header - ZERO top padding to fix gap
   const ListHeaderComponent = useCallback(() => (
-    <View style={styles.sectionHeader}>
-      <View style={[styles.headerRow, isRTL && styles.rowReverse]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          {language === 'ar' ? 'سلة التسوق' : 'Shopping Cart'}
-        </Text>
-        <View style={[styles.countBadge, { backgroundColor: NEON_NIGHT_THEME.primary }]}>
-          <Text style={styles.countBadgeText}>{getItemCount()}</Text>
-        </View>
+    <View style={[styles.headerRow, isRTL && styles.rowReverse]}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        {language === 'ar' ? 'سلة التسوق' : 'Shopping Cart'}
+      </Text>
+      <View style={[styles.countBadge, { backgroundColor: NEON_NIGHT_THEME.primary }]}>
+        <Text style={styles.countBadgeText}>{getItemCount()}</Text>
       </View>
     </View>
   ), [colors, language, isRTL, getItemCount]);
 
   // List Footer with summary
   const ListFooterComponent = useCallback(() => (
-    <View style={styles.footerContainer}>
+    <View>
       {OrderSummary}
       <View style={{ height: 100 }} />
     </View>
@@ -287,7 +299,7 @@ export const CartTab: React.FC<CartTabProps> = ({
       data={safeCartItems}
       renderItem={renderCartItem}
       keyExtractor={(item, index) => item.product_id || `cart-item-${index}`}
-      estimatedItemSize={180}
+      estimatedItemSize={200}
       ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListFooterComponent}
       ListEmptyComponent={ListEmptyComponent}
@@ -310,15 +322,13 @@ export const CartTab: React.FC<CartTabProps> = ({
 const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 16,
-  },
-  sectionHeader: {
-    paddingTop: 8,
-    marginBottom: 12,
+    paddingTop: 4,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 12,
   },
   rowReverse: {
     flexDirection: 'row-reverse',
@@ -337,11 +347,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  footerContainer: {
-    marginTop: 8,
-  },
   emptyContainer: {
-    marginTop: 8,
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
@@ -352,18 +358,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     marginBottom: 12,
+    minHeight: 140,
   },
   productThumb: {
-    width: 90,
-    height: 90,
+    width: 100,
+    height: 100,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
   productImage: {
-    width: 90,
-    height: 90,
+    width: 100,
+    height: 100,
     borderRadius: 12,
   },
   bundleBadge: {
@@ -379,7 +386,7 @@ const styles = StyleSheet.create({
   cartItemInfo: {
     flex: 1,
     marginLeft: 12,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   productName: {
     fontSize: 15,
@@ -392,10 +399,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 6,
     gap: 4,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   skuText: {
     fontSize: 11,
@@ -409,12 +416,12 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
     gap: 4,
-    marginBottom: 6,
+    marginBottom: 8,
     maxWidth: '100%',
   },
   carModelsText: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
     flexShrink: 1,
   },
   priceRow: {
@@ -486,6 +493,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
+    marginTop: 8,
   },
   summaryRow: {
     flexDirection: 'row',
