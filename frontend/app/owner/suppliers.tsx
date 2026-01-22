@@ -345,9 +345,11 @@ export default function SuppliersScreen() {
   }, [deleteMutation]);
 
   const openProfileMode = useCallback((supplier: Supplier) => {
+    console.log('[Suppliers] openProfileMode called with supplier:', supplier.id, supplier.name);
     setSelectedSupplier(supplier);
     setSelectedGalleryImage(0);
     setViewMode('profile');
+    console.log('[Suppliers] State updated - viewMode set to profile');
     // Sync URL with UI state
     router.setParams({ viewMode: 'profile', id: supplier.id });
   }, [router]);

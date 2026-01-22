@@ -359,9 +359,11 @@ export default function DistributorsScreen() {
   }, [deleteMutation]);
 
   const openProfileMode = useCallback((distributor: Distributor) => {
+    console.log('[Distributors] openProfileMode called with distributor:', distributor.id, distributor.name);
     setSelectedDistributor(distributor);
     setSelectedGalleryImage(0);
     setViewMode('profile');
+    console.log('[Distributors] State updated - viewMode set to profile');
     // Sync URL with UI state
     router.setParams({ viewMode: 'profile', id: distributor.id });
   }, [router]);
