@@ -595,6 +595,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
   },
+  bundleLockedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 6,
+  },
+  bundleLockedText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   qtyBtn: {
     paddingHorizontal: 12,
     paddingVertical: 8,
