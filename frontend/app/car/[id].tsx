@@ -609,14 +609,17 @@ export default function CarModelDetailScreen() {
                       </View>
                     </View>
                   </View>
-                  <TouchableOpacity
-                    style={[styles.addToCartBtn, { backgroundColor: colors.primary }]}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleAddToCart(product);
-                    }}
-                  >
-                    <Ionicons name="cart-outline" size={18} color="#FFF" />
+                  {/* AnimatedCartButton with ref for shake animation and checkmark */}
+                  <View style={styles.addToCartBtnWrapper}>
+                    <AnimatedCartButton
+                      ref={(ref) => setCartButtonRef(product.id, ref)}
+                      isInCart={addedProducts.has(product.id)}
+                      isLoading={addingProductId === product.id}
+                      onPress={() => handleAddToCart(product)}
+                      size={18}
+                      primaryColor={colors.primary}
+                    />
+                  </View>
                   </TouchableOpacity>
                 </TouchableOpacity>
               ))}
