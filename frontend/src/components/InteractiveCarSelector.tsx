@@ -32,11 +32,8 @@ import Animated, {
   withRepeat,
   interpolate,
   Extrapolation,
-  runOnJS,
   FadeIn,
   FadeOut,
-  SlideInUp,
-  SlideOutDown,
   Layout,
   cancelAnimation,
 } from 'react-native-reanimated';
