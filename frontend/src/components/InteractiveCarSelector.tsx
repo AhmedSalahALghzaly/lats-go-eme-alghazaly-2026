@@ -318,52 +318,14 @@ export const InteractiveCarSelector: React.FC = () => {
     };
   }, [selectorState]);
 
-  // Chassis number animation - shifting VIN characters with electric blue glow
+  // Chassis number animation - VIN character cycling (NO ANIMATIONS ON MOBILE)
   useEffect(() => {
     let vinInterval: ReturnType<typeof setInterval> | null = null;
     
     if (selectorState === 'collapsed') {
-      // VIN character cycling
       vinInterval = setInterval(() => {
         setCurrentVinIndex((prev) => (prev + 1) % VIN_CHARS.length);
-      }, 1000);
-      
-      // Chassis glow animation
-      chassisIconGlow.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 800 }),
-          withTiming(0.3, { duration: 800 })
-        ),
-        -1,
-        true
-      );
-      
-      // Barcode scan animation
-      barcodeScanAnim.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 1500 }),
-          withTiming(0, { duration: 0 })
-        ),
-        -1,
-        false
-      );
-      
-      // Chassis pulse animation
-      chassisPulseAnim.value = withRepeat(
-        withSequence(
-          withTiming(1.1, { duration: 1000 }),
-          withTiming(1, { duration: 1000 })
-        ),
-        -1,
-        true
-      );
-    } else {
-      cancelAnimation(chassisIconGlow);
-      cancelAnimation(barcodeScanAnim);
-      cancelAnimation(chassisPulseAnim);
-      cancelAnimation(chassisGlowIntensity);
-      chassisIconGlow.value = 0.8;
-      chassisPulseAnim.value = 1;
+      }, 1200);
     }
     
     return () => {
