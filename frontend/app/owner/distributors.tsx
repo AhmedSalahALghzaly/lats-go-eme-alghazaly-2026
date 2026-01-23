@@ -738,7 +738,7 @@ export default function DistributorsScreen() {
           {linkedBrandObjects.length > 0 && (
             <View style={styles.brandsSection}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {isRTL ? 'الماركات المرتبطة' : 'Linked Brands'}
+                {isRTL ? 'ماركات السيارات المرتبطة' : 'Linked Car Brands'}
               </Text>
               <ScrollView 
                 horizontal 
@@ -750,8 +750,8 @@ export default function DistributorsScreen() {
                   <AnimatedBrandCard
                     key={brand.id}
                     brand={brand}
-                    type="product"
-                    onPress={() => router.push(`/search?product_brand_id=${brand.id}`)}
+                    type="car"
+                    onPress={() => router.push(`/search?car_brand_id=${brand.id}`)}
                   />
                 ))}
               </ScrollView>
