@@ -875,6 +875,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 10,
   },
+  addToCartBtnWrapper: {
+    marginLeft: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyProducts: {
     alignItems: 'center',
     paddingVertical: 40,
