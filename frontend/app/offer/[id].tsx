@@ -233,8 +233,8 @@ export default function OfferDetailsScreen() {
       return;
     }
 
-    // Check if product already exists in cart as bundle item
-    if (checkBundleDuplicate(product.id)) {
+    // BIDIRECTIONAL: Check if product already exists in cart (as bundle OR normal item)
+    if (checkDuplicate(product.id)) {
       // Haptic feedback for warning
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
