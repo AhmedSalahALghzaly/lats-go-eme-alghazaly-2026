@@ -186,18 +186,65 @@ export function useShoppingHubQuery(enabled = true) {
 
 /**
  * Hook for cart mutations (add, update, remove)
+ * ENHANCED: Bundle duplicate prevention with professional Arabic alerts
  * FIXED: Enhanced cache invalidation for immediate UI updates
  */
 export function useCartMutations() {
   const queryClient = useQueryClient();
+  const language = useAppStore((state) => state.language);
+
+  /**
+   * Check if product already exists in cart as a bundle item
+   */
+  const checkBundleDuplicate = (productId: string): boolean => {
+    const cartData = queryClient.getQueryData<any[]>(shoppingHubKeys.cart);
+    if (!cartData) return false;
+    
+    return cartData.some(item => 
+      item.product_id === productId && item.bundle_group_id
+    );
+  };
+
+  /**
+   * Show professional alert for bundle duplicate
+   */
+  const showBundleDuplicateAlert = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+    
+    Alert.alert(
+      language === 'ar' ? 'تنبيه' : 'Notice',
+      'عرض المنتج تم اضافته بالفعل',
+      [
+        {
+          text: language === 'ar' ? 'حسناً' : 'OK',
+          style: 'default',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   const addToCart = useMutation({
     mutationFn: async (productId: string) => {
+      // Check for bundle duplicate BEFORE making API call
+      if (checkBundleDuplicate(productId)) {
+        showBundleDuplicateAlert();
+        throw new Error('BUNDLE_DUPLICATE');
+      }
       return cartApi.add(productId);
     },
     onSuccess: () => {
       // Immediately invalidate and refetch cart data
       queryClient.invalidateQueries({ queryKey: shoppingHubKeys.cart });
+    },
+    onError: (error: any) => {
+      // Don't show error for bundle duplicate - already handled
+      if (error?.message === 'BUNDLE_DUPLICATE') {
+        return;
+      }
+      console.error('[useCartMutations] Add to cart error:', error);
     },
   });
 
@@ -288,6 +335,7 @@ export function useCartMutations() {
     updateQuantity,
     removeFromCart,
     clearCart,
+    checkBundleDuplicate,
   };
 }
 
