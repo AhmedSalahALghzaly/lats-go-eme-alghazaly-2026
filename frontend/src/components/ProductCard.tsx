@@ -51,6 +51,10 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({
   const router = useRouter();
   const user = useAppStore(useCallback((state) => state.user, []));
   
+  // Check if product is in any active bundle
+  const { isProductInBundle } = useBundleProducts();
+  const isInBundle = useMemo(() => isProductInBundle(product.id), [product.id, isProductInBundle]);
+  
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
