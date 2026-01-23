@@ -56,6 +56,9 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({
   const { isProductInBundle } = useBundleProducts();
   const isInBundle = useMemo(() => isProductInBundle(product.id), [product.id, isProductInBundle]);
   
+  // Cart mutations for duplicate checking
+  const { checkBundleDuplicate } = useCartMutations();
+  
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
