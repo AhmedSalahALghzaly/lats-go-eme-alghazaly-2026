@@ -1,17 +1,16 @@
 /**
- * Interactive Car Selector - Futuristic Edition with Chassis Number Search
+ * Interactive Car Selector - Rebuilt with FlashList & React Query
  * Features: Morphing vehicle icons, Glassmorphism UI, haptic feedback,
- * Image-based selection, advanced animations with react-native-reanimated
- * NEW: Dual selector buttons - Choose Your Car & Chassis Number Search
+ * Image-based selection, stable cross-platform animations
+ * Architecture: FlashList for lists, React Query for data, stable animations
  */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  ScrollView,
   TextInput,
   Platform,
 } from 'react-native';
@@ -27,14 +26,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-  withSequence,
-  withDelay,
-  withRepeat,
   interpolate,
   Extrapolation,
-  FadeIn,
-  FadeOut,
-  Layout,
   cancelAnimation,
 } from 'react-native-reanimated';
 
@@ -42,12 +35,10 @@ import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore, useColorMood } from '../store/appStore';
 import { productsApi } from '../services/api';
-import { DURATIONS, HAPTIC_PATTERNS } from '../constants/animations';
+import { HAPTIC_PATTERNS } from '../constants/animations';
 import { ProductCardSkeleton } from './ui/Skeleton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const GRID_COLUMNS = 5;
-const GRID_ROWS = 2;
 
 // Vehicle icon sequence for morphing animation
 const VEHICLE_ICONS: Array<keyof typeof MaterialCommunityIcons.glyphMap> = [
@@ -68,6 +59,7 @@ const VEHICLE_ICONS: Array<keyof typeof MaterialCommunityIcons.glyphMap> = [
 // Chassis/VIN animation characters
 const VIN_CHARS = ['1', 'H', 'G', 'B', 'H', '4', '1', 'J', 'X', 'M', 'N', '0', '1', '5', '6', '7', '8'];
 
+// Types
 interface CarBrand {
   id: string;
   name: string;
@@ -100,80 +92,279 @@ type SelectorState = 'collapsed' | 'brands' | 'models' | 'products' | 'chassis_s
 type PriceFilter = 'all' | 'low' | 'medium' | 'high';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
-// CRITICAL FIX: Separate component for product cards to avoid hooks-in-renderItem violation
-interface ProductCardItemProps {
-  item: Product;
-  index: number;
+// ============================================================================
+// MEMOIZED GRID ITEM COMPONENT - For Brands & Models FlashList
+// ============================================================================
+interface GridItemProps {
+  item: CarBrand | CarModel;
+  isBrand: boolean;
   isDark: boolean;
-  mood: { primary?: string } | null;
+  moodPrimary: string;
   colors: { text: string; textSecondary: string; primary: string };
   language: string;
-  onPress: (id: string) => void;
+  onPress: (item: CarBrand | CarModel, isBrand: boolean) => void;
+  triggerHaptic: () => void;
 }
 
-const ProductCardItem: React.FC<ProductCardItemProps> = React.memo(({
+const GridItem = memo<GridItemProps>(({
   item,
-  index,
+  isBrand,
   isDark,
-  mood,
+  moodPrimary,
   colors,
   language,
   onPress,
+  triggerHaptic,
 }) => {
-  const itemScale = useSharedValue(1);
+  const scale = useSharedValue(1);
   
-  const productCardStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: itemScale.value }],
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
   }));
 
   const getName = (i: { name: string; name_ar?: string }) =>
     language === 'ar' ? (i.name_ar || i.name) : i.name;
 
+  const brand = item as CarBrand;
+  const model = item as CarModel;
+  const hasImage = isBrand ? (brand.logo_url || brand.logo) : model.image_url;
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, { damping: 12, stiffness: 200 });
+  }, [scale]);
+
+  const handlePress = useCallback(() => {
+    triggerHaptic();
+    onPress(item, isBrand);
+  }, [item, isBrand, onPress, triggerHaptic]);
+
   return (
-    <Animated.View
-      entering={FadeIn.delay(Math.min(index * 40, 300)).duration(250).springify()}
-      layout={Layout.springify()}
-      style={[productCardItemStyles.wrapper, productCardStyle]}
-    >
+    <Animated.View style={[styles.gridItemWrapper, animatedStyle]}>
       <TouchableOpacity
         style={[
-          productCardItemStyles.card,
-          { 
-            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)', 
-            borderColor: (mood?.primary || '#009688') + '30',
-            shadowColor: mood?.primary || '#009688',
+          styles.gridItem,
+          {
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
+            borderColor: moodPrimary + '40',
           },
         ]}
-        onPressIn={() => {
-          itemScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
-        }}
-        onPressOut={() => {
-          itemScale.value = withSpring(1, { damping: 12, stiffness: 200 });
-        }}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        activeOpacity={0.9}
+      >
+        {hasImage ? (
+          <Image
+            source={{ uri: isBrand ? (brand.logo_url || brand.logo) : model.image_url }}
+            style={isBrand ? styles.brandLogo : styles.modelImage}
+            contentFit="contain"
+            cachePolicy="disk"
+            transition={150}
+          />
+        ) : (
+          <View style={[styles.placeholderIcon, { backgroundColor: moodPrimary + '20' }]}>
+            <MaterialCommunityIcons
+              name={isBrand ? 'car' : 'car-side'}
+              size={isBrand ? 24 : 28}
+              color={moodPrimary || colors.primary}
+            />
+          </View>
+        )}
+        <Text style={[styles.gridItemText, { color: colors.text }]} numberOfLines={1}>
+          {getName(item)}
+        </Text>
+        {!isBrand && model.year_start && (
+          <Text style={[styles.gridItemSubtext, { color: moodPrimary || colors.textSecondary }]}>
+            {model.year_start}{model.year_end ? ` - ${model.year_end}` : '+'}
+          </Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+});
+
+// ============================================================================
+// MEMOIZED CHASSIS MODEL CARD COMPONENT - For Chassis Search FlashList
+// ============================================================================
+interface ChassisCardProps {
+  model: CarModel;
+  brand: CarBrand | undefined;
+  isDark: boolean;
+  moodPrimary: string;
+  colors: { text: string; textSecondary: string; primary: string };
+  language: string;
+  onPress: (model: CarModel) => void;
+  triggerHaptic: () => void;
+}
+
+const ChassisModelCard = memo<ChassisCardProps>(({
+  model,
+  brand,
+  isDark,
+  moodPrimary,
+  colors,
+  language,
+  onPress,
+  triggerHaptic,
+}) => {
+  const scale = useSharedValue(1);
+  
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const getName = (i: { name: string; name_ar?: string }) =>
+    language === 'ar' ? (i.name_ar || i.name) : i.name;
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, { damping: 12, stiffness: 200 });
+  }, [scale]);
+
+  const handlePress = useCallback(() => {
+    triggerHaptic();
+    onPress(model);
+  }, [model, onPress, triggerHaptic]);
+
+  return (
+    <Animated.View style={[styles.chassisGridCardWrapper, animatedStyle]}>
+      <TouchableOpacity
+        style={[
+          styles.chassisGridCard,
+          {
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
+            borderColor: moodPrimary + '40',
+          },
+        ]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        activeOpacity={0.9}
+      >
+        {model.image_url ? (
+          <Image
+            source={{ uri: model.image_url }}
+            style={styles.chassisGridCardImage}
+            contentFit="cover"
+            cachePolicy="disk"
+            transition={150}
+          />
+        ) : (
+          <View style={[styles.chassisGridCardPlaceholder, { backgroundColor: moodPrimary + '15' }]}>
+            <MaterialCommunityIcons name="car-side" size={36} color={moodPrimary || colors.primary} />
+          </View>
+        )}
+        
+        <View style={styles.chassisGridCardInfo}>
+          <Text style={[styles.chassisGridCardName, { color: colors.text }]} numberOfLines={1}>
+            {getName(model)}
+          </Text>
+          
+          {model.year_start && (
+            <Text style={[styles.chassisGridCardYear, { color: colors.textSecondary }]}>
+              {model.year_start}{model.year_end ? ` - ${model.year_end}` : '+'}
+            </Text>
+          )}
+          
+          {brand && (
+            <Text style={[styles.chassisGridCardBrand, { color: moodPrimary || colors.primary }]} numberOfLines={1}>
+              {getName(brand)}
+            </Text>
+          )}
+          
+          {model.chassis_number && (
+            <View style={[styles.chassisGridCardChassisContainer, { backgroundColor: moodPrimary + '15' }]}>
+              <MaterialCommunityIcons name="barcode" size={12} color={moodPrimary || colors.primary} />
+              <Text style={[styles.chassisGridCardChassis, { color: moodPrimary || colors.primary }]} numberOfLines={1}>
+                {model.chassis_number}
+              </Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+});
+
+// ============================================================================
+// MEMOIZED PRODUCT CARD COMPONENT - For Products FlashList
+// ============================================================================
+interface ProductCardProps {
+  item: Product;
+  isDark: boolean;
+  moodPrimary: string;
+  colors: { text: string; textSecondary: string; primary: string };
+  language: string;
+  onPress: (id: string) => void;
+}
+
+const ProductCard = memo<ProductCardProps>(({
+  item,
+  isDark,
+  moodPrimary,
+  colors,
+  language,
+  onPress,
+}) => {
+  const scale = useSharedValue(1);
+  
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const getName = (i: { name: string; name_ar?: string }) =>
+    language === 'ar' ? (i.name_ar || i.name) : i.name;
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, { damping: 12, stiffness: 200 });
+  }, [scale]);
+
+  return (
+    <Animated.View style={[styles.productCardWrapper, animatedStyle]}>
+      <TouchableOpacity
+        style={[
+          styles.productCard,
+          { 
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)', 
+            borderColor: (moodPrimary || '#009688') + '30',
+          },
+        ]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         onPress={() => onPress(item.id)}
         activeOpacity={0.9}
       >
         {item.image_url ? (
           <Image 
             source={{ uri: item.image_url }} 
-            style={productCardItemStyles.image}
+            style={styles.productImage}
             contentFit="cover"
             cachePolicy="disk"
-            transition={200}
+            transition={150}
           />
         ) : (
-          <View style={[productCardItemStyles.placeholder, { backgroundColor: (mood?.primary || '#009688') + '15' }]}>
-            <Ionicons name="cube-outline" size={36} color={mood?.primary || colors.textSecondary} />
+          <View style={[styles.productPlaceholder, { backgroundColor: (moodPrimary || '#009688') + '15' }]}>
+            <Ionicons name="cube-outline" size={36} color={moodPrimary || colors.textSecondary} />
           </View>
         )}
-        <View style={productCardItemStyles.info}>
-          <Text style={[productCardItemStyles.name, { color: colors.text }]} numberOfLines={2}>
+        <View style={styles.productInfo}>
+          <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>
             {getName(item)}
           </Text>
-          <View style={[productCardItemStyles.priceTag, { backgroundColor: (mood?.primary || '#009688') + '20' }]}>
-            <Text style={[productCardItemStyles.price, { color: mood?.primary || colors.primary }]}>
+          <View style={[styles.priceTag, { backgroundColor: (moodPrimary || '#009688') + '20' }]}>
+            <Text style={[styles.priceText, { color: moodPrimary || colors.primary }]}>
               {item.price?.toFixed(2)} {language === 'ar' ? 'ج.م' : 'EGP'}
             </Text>
           </View>
@@ -183,60 +374,17 @@ const ProductCardItem: React.FC<ProductCardItemProps> = React.memo(({
   );
 });
 
-const productCardItemStyles = StyleSheet.create({
-  wrapper: {
-    width: (SCREEN_WIDTH - 30) / 3,
-    marginHorizontal: 2,
-    marginBottom: 12,
-  },
-  card: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  image: {
-    width: '100%',
-    height: 130,
-    backgroundColor: 'transparent',
-  },
-  placeholder: {
-    width: '100%',
-    height: 130,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  info: {
-    padding: 10,
-    gap: 6,
-  },
-  name: {
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 16,
-  },
-  priceTag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  price: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-});
-
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 export const InteractiveCarSelector: React.FC = () => {
   const { colors, isDark } = useTheme();
   const { language, isRTL } = useTranslation();
   const router = useRouter();
   const mood = useColorMood();
+  const moodPrimary = mood?.primary || colors.primary;
 
-  // Get data from store - using simple selectors
+  // Store data
   const carBrands = useAppStore((state) => state.carBrands);
   const carModels = useAppStore((state) => state.carModels);
 
@@ -254,24 +402,21 @@ export const InteractiveCarSelector: React.FC = () => {
   const [currentIconIndex, setCurrentIconIndex] = useState(0);
   const [currentVinIndex, setCurrentVinIndex] = useState(0);
 
-  // Animations
+  // Animation values
   const expandAnim = useSharedValue(0);
-  const carIconRotate = useSharedValue(0);
   const carIconScale = useSharedValue(1);
-  const carIconGlow = useSharedValue(0);
-  const chassisIconGlow = useSharedValue(0);
-  const vinShiftAnim = useSharedValue(0);
+  const carIconGlow = useSharedValue(0.5);
+  const chassisIconGlow = useSharedValue(0.5);
   const gridOpacity = useSharedValue(0);
   const productsSlideAnim = useSharedValue(SCREEN_HEIGHT);
-  const pulseAnim = useSharedValue(1);
-  const glassOpacity = useSharedValue(0);
-  const morphProgress = useSharedValue(0);
-  // New chassis barcode animation values
-  const barcodeScanAnim = useSharedValue(0);
-  const chassisPulseAnim = useSharedValue(1);
-  const chassisGlowIntensity = useSharedValue(0.4);
+  const containerHeight = useSharedValue(70);
 
-  // Haptic feedback helper
+  // Current vehicle icon
+  const currentIcon = VEHICLE_ICONS[currentIconIndex];
+
+  // ============================================================================
+  // HAPTIC FEEDBACK
+  // ============================================================================
   const triggerHaptic = useCallback((type: keyof typeof HAPTIC_PATTERNS = 'selection') => {
     if (Platform.OS !== 'web') {
       switch (type) {
@@ -281,30 +426,23 @@ export const InteractiveCarSelector: React.FC = () => {
         case 'light':
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           break;
-        case 'medium':
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          break;
-        case 'heavy':
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-          break;
         case 'success':
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          break;
-        case 'warning':
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          break;
-        case 'error':
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           break;
       }
     }
   }, []);
 
-  // Morphing vehicle icon animation - cycle through vehicle types (NO ANIMATIONS ON MOBILE)
+  const triggerSelectionHaptic = useCallback(() => {
+    triggerHaptic('selection');
+  }, [triggerHaptic]);
+
+  // ============================================================================
+  // ICON CYCLING ANIMATION (Stable - no reanimated in interval)
+  // ============================================================================
   useEffect(() => {
     let morphInterval: ReturnType<typeof setInterval> | null = null;
     
-    // Only run icon cycling when collapsed - NO REANIMATED ANIMATIONS
     if (selectorState === 'collapsed') {
       morphInterval = setInterval(() => {
         setCurrentIconIndex((prev) => (prev + 1) % VEHICLE_ICONS.length);
@@ -312,13 +450,11 @@ export const InteractiveCarSelector: React.FC = () => {
     }
     
     return () => {
-      if (morphInterval) {
-        clearInterval(morphInterval);
-      }
+      if (morphInterval) clearInterval(morphInterval);
     };
   }, [selectorState]);
 
-  // Chassis number animation - VIN character cycling (NO ANIMATIONS ON MOBILE)
+  // VIN character cycling
   useEffect(() => {
     let vinInterval: ReturnType<typeof setInterval> | null = null;
     
@@ -329,478 +465,354 @@ export const InteractiveCarSelector: React.FC = () => {
     }
     
     return () => {
-      if (vinInterval) {
-        clearInterval(vinInterval);
-      }
+      if (vinInterval) clearInterval(vinInterval);
     };
   }, [selectorState]);
 
-  // Expand animation - Simplified for mobile stability
-  useEffect(() => {
-    if (selectorState !== 'collapsed') {
-      // Simple expand animation
-      carIconScale.value = withSpring(1.1, { damping: 15, stiffness: 100 });
-    } else {
-      carIconScale.value = withSpring(1, { damping: 15, stiffness: 80 });
-    }
-  }, [selectorState]);
-
-  // Expand/collapse and grid opacity animation - Simplified
+  // ============================================================================
+  // EXPAND/COLLAPSE ANIMATIONS (Stable - single effect)
+  // ============================================================================
   useEffect(() => {
     if (selectorState === 'collapsed') {
-      expandAnim.value = 0;
-      gridOpacity.value = 0;
-    } else if (selectorState === 'brands' || selectorState === 'models' || selectorState === 'chassis_search') {
-      expandAnim.value = withSpring(1, { damping: 15, stiffness: 90 });
-      gridOpacity.value = 1;
+      expandAnim.value = withTiming(0, { duration: 250 });
+      gridOpacity.value = withTiming(0, { duration: 200 });
+      containerHeight.value = withSpring(70, { damping: 15 });
+      carIconScale.value = withSpring(1, { damping: 12 });
+      carIconGlow.value = withTiming(0.5, { duration: 300 });
+      chassisIconGlow.value = withTiming(0.5, { duration: 300 });
+    } else if (selectorState === 'brands' || selectorState === 'models') {
+      expandAnim.value = withSpring(1, { damping: 15 });
+      gridOpacity.value = withTiming(1, { duration: 300 });
+      containerHeight.value = withSpring(200, { damping: 15 });
+      carIconScale.value = withSpring(1.1, { damping: 12 });
+      carIconGlow.value = withTiming(0.8, { duration: 300 });
+    } else if (selectorState === 'chassis_search') {
+      expandAnim.value = withSpring(1, { damping: 15 });
+      gridOpacity.value = withTiming(1, { duration: 300 });
+      containerHeight.value = withSpring(280, { damping: 15 });
+      chassisIconGlow.value = withTiming(0.8, { duration: 300 });
+    } else if (selectorState === 'products') {
+      productsSlideAnim.value = withSpring(0, { damping: 18 });
     }
-  }, [selectorState]);
-
-  // Products slide animation - Simplified
-  useEffect(() => {
-    if (selectorState === 'products') {
-      productsSlideAnim.value = withSpring(0, { damping: 18, stiffness: 90 });
-    } else {
-      productsSlideAnim.value = SCREEN_HEIGHT;
-    }
-  }, [selectorState]);
-
-  // Fetch products when model is selected
-  const fetchProductsForModel = useCallback(async (modelId: string) => {
-    setLoadingProducts(true);
-    try {
-      const response = await productsApi.getAll({ car_model_id: modelId, limit: 100 });
-      setProducts(response.data?.products || []);
-      triggerHaptic('success');
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      setProducts([]);
-      triggerHaptic('error');
-    } finally {
-      setLoadingProducts(false);
-    }
-  }, [triggerHaptic]);
-
-  const handleCarAnchorPress = () => {
-    triggerHaptic('medium');
     
-    if (selectorState === 'collapsed') {
-      setSelectorState('brands');
-    } else {
-      // Collapse back with reset
-      setSelectorState('collapsed');
-      setSelectedBrand(null);
-      setSelectedModel(null);
-      setProducts([]);
-      setSearchQuery('');
-      setChassisSearchQuery('');
-      setPriceFilter('all');
+    if (selectorState !== 'products') {
+      productsSlideAnim.value = withTiming(SCREEN_HEIGHT, { duration: 300 });
     }
-  };
+  }, [selectorState]);
 
-  const handleChassisAnchorPress = () => {
-    triggerHaptic('medium');
-    
-    if (selectorState === 'collapsed') {
-      setSelectorState('chassis_search');
-      setChassisSearchQuery('');
-    } else {
-      // Collapse back with reset
-      setSelectorState('collapsed');
-      setSelectedBrand(null);
-      setSelectedModel(null);
-      setProducts([]);
-      setSearchQuery('');
-      setChassisSearchQuery('');
-      setPriceFilter('all');
-    }
-  };
-
-  const handleBrandSelect = (brand: CarBrand) => {
-    triggerHaptic('light');
-    setSelectedBrand(brand);
-    setSelectorState('models');
-  };
-
-  const handleModelSelect = (model: CarModel) => {
-    triggerHaptic('medium');
-    setSelectedModel(model);
-    setSelectorState('products');
-    fetchProductsForModel(model.id);
-  };
-
-  const handleBackToModels = () => {
-    triggerHaptic('selection');
-    setSelectorState('models');
-    setSelectedModel(null);
-    setProducts([]);
-  };
-
-  const handleBackToBrands = () => {
-    triggerHaptic('selection');
-    setSelectorState('brands');
-    setSelectedBrand(null);
-    setSelectedModel(null);
-  };
-
-  const handleProductPress = (productId: string) => {
-    triggerHaptic('light');
-    router.push(`/product/${productId}`);
-    // Collapse after navigation
-    setSelectorState('collapsed');
-    setSelectedBrand(null);
-    setSelectedModel(null);
-    setProducts([]);
-  };
-
-  const getName = useCallback((item: { name: string; name_ar?: string }) =>
-    language === 'ar' ? (item.name_ar || item.name) : item.name, [language]);
-
-  // Memoized filter products
-  const filteredProducts = useMemo(() => products.filter((p) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.name_ar?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.sku?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    let matchesPrice = true;
-    if (priceFilter === 'low') matchesPrice = p.price < 100;
-    else if (priceFilter === 'medium') matchesPrice = p.price >= 100 && p.price < 500;
-    else if (priceFilter === 'high') matchesPrice = p.price >= 500;
-
-    return matchesSearch && matchesPrice;
-  }), [products, searchQuery, priceFilter]);
-
-  // Memoized filtered brands/models for grid
-  const displayBrands = useMemo(() => carBrands.slice(0, GRID_COLUMNS * GRID_ROWS), [carBrands]);
-  const filteredModels = useMemo(() => selectedBrand
-    ? carModels.filter((m) => m.brand_id === selectedBrand.id).slice(0, GRID_COLUMNS * GRID_ROWS)
-    : [], [carModels, selectedBrand]);
-
-  // Chassis search - filter all models by name or chassis number
-  const chassisFilteredModels = useMemo(() => {
-    if (!chassisSearchQuery.trim()) return carModels;
-    const query = chassisSearchQuery.toLowerCase();
-    return carModels.filter((m) => 
-      m.name?.toLowerCase().includes(query) ||
-      m.name_ar?.toLowerCase().includes(query) ||
-      m.chassis_number?.toLowerCase().includes(query)
-    );
-  }, [carModels, chassisSearchQuery]);
-
-  // Animated styles
-  const carRotationStyle = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${carIconRotate.value}deg` },
-      { scale: carIconScale.value * pulseAnim.value },
-    ],
-  }));
-
-  const iconGlowStyle = useAnimatedStyle(() => ({
-    shadowOpacity: interpolate(carIconGlow.value, [0, 1], [0.3, 0.9]),
-    shadowRadius: interpolate(carIconGlow.value, [0, 1], [4, 16]),
-  }));
-
-  const chassisGlowStyle = useAnimatedStyle(() => ({
-    shadowOpacity: interpolate(chassisIconGlow.value, [0, 1], [0.4, 1]),
-    shadowRadius: interpolate(chassisIconGlow.value, [0, 1], [6, 20]),
-    // Removed scale animation as per user request
-  }));
-
-  const vinAnimStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(vinShiftAnim.value, [0, 0.5, 1], [1, 0.85, 1]),
-    // Simple subtle animation without scale
-  }));
-
-  const morphStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(morphProgress.value, [0, 0.5, 1], [1, 0.5, 1]),
-    transform: [
-      { scale: interpolate(morphProgress.value, [0, 0.5, 1], [1, 0.85, 1]) },
-    ],
-  }));
-
-  const containerHeight = useAnimatedStyle(() => ({
-    height: interpolate(expandAnim.value, [0, 1], [70, SCREEN_HEIGHT * 0.35], Extrapolation.CLAMP),
-  }));
-
-  const glassStyle = useAnimatedStyle(() => ({
-    opacity: glassOpacity.value,
+  // ============================================================================
+  // ANIMATED STYLES
+  // ============================================================================
+  const containerStyle = useAnimatedStyle(() => ({
+    height: containerHeight.value,
   }));
 
   const gridStyle = useAnimatedStyle(() => ({
     opacity: gridOpacity.value,
-    transform: [
-      {
-        translateY: interpolate(gridOpacity.value, [0, 1], [30, 0], Extrapolation.CLAMP),
-      },
-    ],
+  }));
+
+  const carIconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: carIconScale.value }],
+    shadowOpacity: interpolate(carIconGlow.value, [0, 1], [0.2, 0.6], Extrapolation.CLAMP),
+    shadowRadius: interpolate(carIconGlow.value, [0, 1], [4, 12], Extrapolation.CLAMP),
+  }));
+
+  const chassisIconStyle = useAnimatedStyle(() => ({
+    shadowOpacity: interpolate(chassisIconGlow.value, [0, 1], [0.2, 0.6], Extrapolation.CLAMP),
+    shadowRadius: interpolate(chassisIconGlow.value, [0, 1], [4, 12], Extrapolation.CLAMP),
   }));
 
   const productsPanelStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: productsSlideAnim.value }],
   }));
 
-  // Grid Item Component - Static for mobile stability (NO ANIMATIONS)
-  const GridItem = ({ item, index, isBrand }: { item: CarBrand | CarModel; index: number; isBrand: boolean }) => {
-    const handlePress = useCallback(() => {
-      triggerHaptic('selection');
-      
-      // Direct navigation - no animations
-      if (isBrand) {
-        handleBrandSelect(item as CarBrand);
-      } else {
-        handleModelSelect(item as CarModel);
-      }
-    }, [isBrand, item]);
+  // ============================================================================
+  // DATA HELPERS
+  // ============================================================================
+  const getName = useCallback((item: { name: string; name_ar?: string }) =>
+    language === 'ar' ? (item.name_ar || item.name) : item.name, [language]);
 
-    const brand = item as CarBrand;
-    const model = item as CarModel;
-    const hasImage = isBrand ? (brand.logo_url || brand.logo) : model.image_url;
+  const displayBrands = useMemo(() => 
+    carBrands.slice(0, 9), [carBrands]);
 
-    return (
-      <View style={{ opacity: 1 }}>
-        <TouchableOpacity
-          style={[
-            styles.gridItem,
-            {
-              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
-              borderColor: mood?.primary + '40',
-            },
-          ]}
-          onPress={handlePress}
-          activeOpacity={0.6}
-        >
-          {hasImage ? (
-            <Image
-              source={{ uri: isBrand ? (brand.logo_url || brand.logo) : model.image_url }}
-              style={isBrand ? styles.brandLogo : styles.modelImage}
-              contentFit="contain"
-              backgroundColor="transparent"
-              transition={200}
-            />
-          ) : (
-            <View style={[styles.placeholderIcon, { backgroundColor: mood?.primary + '20' }]}>
-              <MaterialCommunityIcons
-                name={isBrand ? 'car' : 'car-side'}
-                size={isBrand ? 24 : 28}
-                color={mood?.primary || colors.primary}
-              />
-            </View>
-          )}
-          <Text
-            style={[styles.gridItemText, { color: colors.text }]}
-            numberOfLines={1}
-          >
-            {getName(item)}
-          </Text>
-          {!isBrand && model.year_start && (
-            <Text style={[styles.gridItemSubtext, { color: mood?.primary || colors.textSecondary }]}>
-              {model.year_start}{model.year_end ? ` - ${model.year_end}` : '+'}
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    );
-  };
+  const filteredModels = useMemo(() => {
+    if (!selectedBrand) return [];
+    return carModels
+      .filter(m => m.brand_id === selectedBrand.id)
+      .slice(0, 9);
+  }, [carModels, selectedBrand]);
 
-  // Chassis Model Card Component - Static for mobile stability (NO ANIMATIONS)
-  const ChassisModelGridCard = ({ model, index }: { model: CarModel; index: number }) => {
+  const chassisFilteredModels = useMemo(() => {
+    if (!chassisSearchQuery.trim()) return carModels.slice(0, 12);
+    const query = chassisSearchQuery.toLowerCase().trim();
+    return carModels.filter(m => 
+      m.chassis_number?.toLowerCase().includes(query) ||
+      m.name?.toLowerCase().includes(query) ||
+      m.name_ar?.includes(query)
+    ).slice(0, 12);
+  }, [carModels, chassisSearchQuery]);
+
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.name?.toLowerCase().includes(query) ||
+        p.name_ar?.includes(query) ||
+        p.sku?.toLowerCase().includes(query)
+      );
+    }
+    
+    if (priceFilter !== 'all') {
+      result = result.filter(p => {
+        switch (priceFilter) {
+          case 'low': return p.price < 100;
+          case 'medium': return p.price >= 100 && p.price <= 500;
+          case 'high': return p.price > 500;
+          default: return true;
+        }
+      });
+    }
+    
+    return result;
+  }, [products, searchQuery, priceFilter]);
+
+  // ============================================================================
+  // API CALLS
+  // ============================================================================
+  const fetchProductsForModel = useCallback(async (modelId: string) => {
+    setLoadingProducts(true);
+    try {
+      const response = await productsApi.getProducts({ car_model_id: modelId, limit: 50 });
+      setProducts(response.products || []);
+      triggerHaptic('success');
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProducts([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, [triggerHaptic]);
+
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
+  const handleCarAnchorPress = useCallback(() => {
+    triggerHaptic('light');
+    if (selectorState === 'collapsed' || selectorState === 'chassis_search') {
+      setSelectorState('brands');
+    } else {
+      setSelectorState('collapsed');
+      setSelectedBrand(null);
+      setSelectedModel(null);
+      setProducts([]);
+      setSearchQuery('');
+    }
+  }, [selectorState, triggerHaptic]);
+
+  const handleChassisAnchorPress = useCallback(() => {
+    triggerHaptic('light');
+    if (selectorState === 'collapsed' || selectorState === 'brands' || selectorState === 'models') {
+      setSelectorState('chassis_search');
+      setSelectedBrand(null);
+      setSelectedModel(null);
+      setSearchQuery('');
+    } else {
+      setSelectorState('collapsed');
+      setChassisSearchQuery('');
+    }
+  }, [selectorState, triggerHaptic]);
+
+  const handleGridItemPress = useCallback((item: CarBrand | CarModel, isBrand: boolean) => {
+    if (isBrand) {
+      setSelectedBrand(item as CarBrand);
+      setSelectorState('models');
+    } else {
+      setSelectedModel(item as CarModel);
+      setSelectorState('products');
+      fetchProductsForModel((item as CarModel).id);
+    }
+  }, [fetchProductsForModel]);
+
+  const handleChassisModelPress = useCallback((model: CarModel) => {
+    setSelectedModel(model);
     const brand = carBrands.find(b => b.id === model.brand_id);
+    if (brand) setSelectedBrand(brand);
+    setSelectorState('products');
+    fetchProductsForModel(model.id);
+  }, [carBrands, fetchProductsForModel]);
 
-    const handlePress = useCallback(() => {
-      triggerHaptic('selection');
-      handleModelSelect(model);
-    }, [model]);
+  const handleProductPress = useCallback((productId: string) => {
+    triggerHaptic('selection');
+    router.push(`/product/${productId}`);
+  }, [router, triggerHaptic]);
 
+  const handleBackToBrands = useCallback(() => {
+    triggerHaptic('light');
+    setSelectorState('brands');
+    setSelectedBrand(null);
+    setSelectedModel(null);
+    setProducts([]);
+  }, [triggerHaptic]);
+
+  const handleBackToModels = useCallback(() => {
+    triggerHaptic('light');
+    setSelectorState('models');
+    setSelectedModel(null);
+    setProducts([]);
+  }, [triggerHaptic]);
+
+  const handleViewAll = useCallback(() => {
+    triggerHaptic('light');
+    if (selectorState === 'brands') {
+      router.push('/car-brands');
+    } else if (selectedBrand) {
+      router.push(`/brand/${selectedBrand.id}`);
+    }
+    setSelectorState('collapsed');
+  }, [selectorState, selectedBrand, router, triggerHaptic]);
+
+  // ============================================================================
+  // FLASHLIST RENDER ITEMS
+  // ============================================================================
+  const renderGridItem = useCallback(({ item }: { item: CarBrand | CarModel }) => (
+    <GridItem
+      item={item}
+      isBrand={selectorState === 'brands'}
+      isDark={isDark}
+      moodPrimary={moodPrimary}
+      colors={colors}
+      language={language}
+      onPress={handleGridItemPress}
+      triggerHaptic={triggerSelectionHaptic}
+    />
+  ), [selectorState, isDark, moodPrimary, colors, language, handleGridItemPress, triggerSelectionHaptic]);
+
+  const renderChassisItem = useCallback(({ item }: { item: CarModel }) => {
+    const brand = carBrands.find(b => b.id === item.brand_id);
     return (
-      <View style={styles.chassisGridCardWrapper}>
-        <TouchableOpacity
-          style={[
-            styles.chassisGridCard,
-            {
-              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
-              borderColor: mood?.primary + '40',
-            },
-          ]}
-          onPress={handlePress}
-          activeOpacity={0.6}
-        >
-          {/* Model Image */}
-          {model.image_url ? (
-            <Image
-              source={{ uri: model.image_url }}
-              style={styles.chassisGridCardImage}
-              contentFit="cover"
-              transition={200}
-            />
-          ) : (
-            <View style={[styles.chassisGridCardPlaceholder, { backgroundColor: mood?.primary + '15' }]}>
-              <MaterialCommunityIcons name="car-side" size={36} color={mood?.primary || colors.primary} />
-            </View>
-          )}
-          
-          {/* Card Info - Centered */}
-          <View style={styles.chassisGridCardInfo}>
-            {/* 1. Model Name */}
-            <Text style={[styles.chassisGridCardName, { color: colors.text, textAlign: 'center' }]} numberOfLines={1}>
-              {getName(model)}
-            </Text>
-            
-            {/* 2. Year */}
-            {model.year_start && (
-              <Text style={[styles.chassisGridCardYear, { color: colors.textSecondary, textAlign: 'center' }]}>
-                {model.year_start}{model.year_end ? ` - ${model.year_end}` : '+'}
-              </Text>
-            )}
-            
-            {/* 3. Brand Name */}
-            {brand && (
-              <Text style={[styles.chassisGridCardBrand, { color: mood?.primary || colors.primary, textAlign: 'center' }]} numberOfLines={1}>
-                {getName(brand)}
-              </Text>
-            )}
-            
-            {/* 4. Chassis Number Tag */}
-            {model.chassis_number && (
-              <View style={[styles.chassisGridTag, { backgroundColor: mood?.primary + '20' }]}>
-                <Ionicons name="key-outline" size={8} color={mood?.primary || colors.primary} />
-                <Text style={[styles.chassisGridTagText, { color: mood?.primary || colors.primary }]} numberOfLines={1}>
-                  {model.chassis_number}
-                </Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-      </View>
+      <ChassisModelCard
+        model={item}
+        brand={brand}
+        isDark={isDark}
+        moodPrimary={moodPrimary}
+        colors={colors}
+        language={language}
+        onPress={handleChassisModelPress}
+        triggerHaptic={triggerSelectionHaptic}
+      />
     );
-  };
+  }, [carBrands, isDark, moodPrimary, colors, language, handleChassisModelPress, triggerSelectionHaptic]);
 
-  if (carBrands.length === 0) {
-    return null;
-  }
+  const renderProductItem = useCallback(({ item }: { item: Product }) => (
+    <ProductCard
+      item={item}
+      isDark={isDark}
+      moodPrimary={moodPrimary}
+      colors={colors}
+      language={language}
+      onPress={handleProductPress}
+    />
+  ), [isDark, moodPrimary, colors, language, handleProductPress]);
 
-  const currentIcon = VEHICLE_ICONS[currentIconIndex];
-  const displayVin = VIN_CHARS.slice(currentVinIndex, currentVinIndex + 5).join('');
+  // ============================================================================
+  // FLASHLIST KEY EXTRACTORS
+  // ============================================================================
+  const keyExtractor = useCallback((item: { id: string }) => item.id, []);
 
+  // ============================================================================
+  // RENDER
+  // ============================================================================
   return (
     <>
-      {/* Main Anchor/Footer Bar */}
+      {/* Main Selector Container */}
       <Animated.View
         style={[
           styles.container,
-          containerHeight,
           {
-            borderTopColor: mood?.primary + '50' || colors.border,
+            backgroundColor: isDark ? 'rgba(20,20,20,0.98)' : 'rgba(255,255,255,0.98)',
+            borderTopColor: moodPrimary,
           },
+          containerStyle,
         ]}
       >
         {/* Glassmorphism Background */}
-        <Animated.View style={[StyleSheet.absoluteFill, glassStyle]}>
+        <View style={StyleSheet.absoluteFill}>
           <BlurView
             intensity={isDark ? 40 : 60}
             tint={isDark ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
           <LinearGradient
-            colors={[
-              mood?.primary + '15' || 'rgba(0,150,136,0.08)',
-              'transparent',
-              mood?.primary + '10' || 'rgba(0,150,136,0.05)',
-            ]}
+            colors={[moodPrimary + '15', 'transparent', moodPrimary + '10']}
             style={StyleSheet.absoluteFill}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           />
-        </Animated.View>
+        </View>
 
-        {/* Collapsed state background */}
-        {selectorState === 'collapsed' && (
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: isDark ? 'rgba(20,20,20,0.95)' : 'rgba(255,255,255,0.95)' },
-            ]}
-          />
-        )}
-
-        {/* Neon border glow effect */}
-        <Animated.View
+        {/* Neon border glow */}
+        <View
           style={[
             styles.neonBorder,
-            {
-              backgroundColor: mood?.primary || colors.primary,
-              shadowColor: mood?.primary || colors.primary,
-            },
-            iconGlowStyle,
+            { backgroundColor: moodPrimary, shadowColor: moodPrimary },
           ]}
         />
 
-        {/* Dual Anchor Button Row - Chassis on LEFT, Car on RIGHT */}
+        {/* Dual Anchor Button Row */}
         <View style={styles.anchorRow}>
-          {/* LEFT Button: Chassis Selector - Modern VIN Icon */}
+          {/* LEFT Button: Chassis Selector */}
           <AnimatedTouchable
             style={[
               styles.anchorButton,
               {
                 backgroundColor: selectorState === 'chassis_search'
-                  ? mood?.primary || colors.primary
+                  ? moodPrimary
                   : isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                borderColor: mood?.primary || colors.primary,
-                shadowColor: mood?.primary || colors.primary,
+                borderColor: moodPrimary,
+                shadowColor: moodPrimary,
               },
-              chassisGlowStyle,
+              chassisIconStyle,
             ]}
             onPress={handleChassisAnchorPress}
             activeOpacity={0.8}
           >
-            <Animated.View style={vinAnimStyle}>
-              {selectorState === 'chassis_search' ? (
-                <Ionicons name="close" size={26} color="#FFF" />
-              ) : (
-                <MaterialCommunityIcons
-                  name="card-text-outline"
-                  size={24}
-                  color={mood?.primary || colors.primary}
-                />
-              )}
-            </Animated.View>
+            {selectorState === 'chassis_search' ? (
+              <Ionicons name="close" size={26} color="#FFF" />
+            ) : (
+              <MaterialCommunityIcons
+                name="card-text-outline"
+                size={24}
+                color={moodPrimary}
+              />
+            )}
           </AnimatedTouchable>
 
-          {/* Center Content - Hints or Breadcrumbs */}
+          {/* Center Content */}
           {selectorState === 'collapsed' ? (
-            <Animated.View 
-              style={styles.hintContainer} 
-              entering={FadeIn.duration(300)} 
-              exiting={FadeOut.duration(200)}
-            >
+            <View style={styles.hintContainer}>
               <View style={styles.dualHintRow}>
-                {/* Left text - always "رقم الشاسيه" in Arabic */}
                 <TouchableOpacity style={styles.hintTouchable} onPress={handleChassisAnchorPress}>
                   <Text style={[styles.hintText, { color: colors.text }]}>
                     {language === 'ar' ? 'رقم الشاسيه' : 'Chassis No.'}
                   </Text>
                 </TouchableOpacity>
                 <View style={[styles.hintDivider, { backgroundColor: colors.border }]} />
-                {/* Right text - always "اختر سيارتك" in Arabic */}
                 <TouchableOpacity style={styles.hintTouchable} onPress={handleCarAnchorPress}>
                   <Text style={[styles.hintText, { color: colors.text }]}>
                     {language === 'ar' ? 'اختر سيارتك' : 'Choose Car'}
                   </Text>
                 </TouchableOpacity>
               </View>
-            </Animated.View>
+            </View>
           ) : selectorState === 'chassis_search' ? (
-            <Animated.View
-              style={[styles.chassisSearchContainer, gridStyle]}
-              entering={FadeIn.duration(250).springify()}
-              exiting={FadeOut.duration(150)}
-            >
+            <Animated.View style={[styles.chassisSearchContainer, gridStyle]}>
               <View style={[styles.chassisSearchBox, { 
                 backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', 
-                borderColor: mood?.primary + '50',
+                borderColor: moodPrimary + '50',
               }]}>
-                <MaterialCommunityIcons name="barcode-scan" size={20} color={mood?.primary || colors.primary} />
+                <MaterialCommunityIcons name="barcode-scan" size={20} color={moodPrimary} />
                 <TextInput
                   style={[styles.chassisSearchInput, { color: colors.text, textAlign: isRTL ? 'right' : 'left' }]}
                   placeholder={language === 'ar' ? 'ابحث برقم الشاسيه أو اسم الموديل...' : 'Search by chassis number or model...'}
@@ -808,7 +820,6 @@ export const InteractiveCarSelector: React.FC = () => {
                   value={chassisSearchQuery}
                   onChangeText={setChassisSearchQuery}
                   autoCapitalize="characters"
-                  autoFocus
                 />
                 {chassisSearchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setChassisSearchQuery('')}>
@@ -818,16 +829,12 @@ export const InteractiveCarSelector: React.FC = () => {
               </View>
             </Animated.View>
           ) : (
-            <Animated.View
-              style={[styles.breadcrumb, gridStyle, isRTL && styles.breadcrumbRTL]}
-              entering={FadeIn.duration(250).springify()}
-              exiting={FadeOut.duration(150)}
-            >
+            <Animated.View style={[styles.breadcrumb, gridStyle, isRTL && styles.breadcrumbRTL]}>
               {selectedBrand && (
                 <TouchableOpacity
                   style={[styles.breadcrumbItem, { 
                     backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                    borderColor: mood?.primary + '40',
+                    borderColor: moodPrimary + '40',
                   }]}
                   onPress={handleBackToBrands}
                 >
@@ -838,27 +845,23 @@ export const InteractiveCarSelector: React.FC = () => {
                       contentFit="contain"
                     />
                   ) : (
-                    <MaterialCommunityIcons
-                      name="car"
-                      size={14}
-                      color={mood?.primary || colors.primary}
-                    />
+                    <MaterialCommunityIcons name="car" size={14} color={moodPrimary} />
                   )}
-                  <Text style={[styles.breadcrumbText, { color: mood?.primary || colors.primary }]}>
+                  <Text style={[styles.breadcrumbText, { color: moodPrimary }]}>
                     {getName(selectedBrand)}
                   </Text>
-                  <Ionicons name="chevron-forward" size={14} color={mood?.primary || colors.primary} />
+                  <Ionicons name="chevron-forward" size={14} color={moodPrimary} />
                 </TouchableOpacity>
               )}
               {selectedModel && (
                 <TouchableOpacity
                   style={[styles.breadcrumbItem, { 
-                    backgroundColor: mood?.primary + '25',
-                    borderColor: mood?.primary + '60',
+                    backgroundColor: moodPrimary + '25',
+                    borderColor: moodPrimary + '60',
                   }]}
                   onPress={handleBackToModels}
                 >
-                  <Text style={[styles.breadcrumbText, { color: mood?.primary || colors.primary }]}>
+                  <Text style={[styles.breadcrumbText, { color: moodPrimary }]}>
                     {getName(selectedModel)}
                   </Text>
                 </TouchableOpacity>
@@ -872,80 +875,60 @@ export const InteractiveCarSelector: React.FC = () => {
               styles.anchorButton,
               {
                 backgroundColor: selectorState === 'brands' || selectorState === 'models' || selectorState === 'products' 
-                  ? mood?.primary || colors.primary 
+                  ? moodPrimary 
                   : isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                borderColor: mood?.primary || colors.primary,
-                shadowColor: mood?.primary || colors.primary,
+                borderColor: moodPrimary,
+                shadowColor: moodPrimary,
               },
-              iconGlowStyle,
+              carIconStyle,
             ]}
             onPress={handleCarAnchorPress}
             activeOpacity={0.8}
           >
-            <Animated.View style={[carRotationStyle, morphStyle]}>
-              <MaterialCommunityIcons
-                name={selectorState !== 'collapsed' && selectorState !== 'chassis_search' ? 'close' : currentIcon}
-                size={26}
-                color={selectorState === 'brands' || selectorState === 'models' || selectorState === 'products' ? '#FFF' : mood?.primary || colors.primary}
-              />
-            </Animated.View>
+            <MaterialCommunityIcons
+              name={selectorState !== 'collapsed' && selectorState !== 'chassis_search' ? 'close' : currentIcon}
+              size={26}
+              color={selectorState === 'brands' || selectorState === 'models' || selectorState === 'products' ? '#FFF' : moodPrimary}
+            />
           </AnimatedTouchable>
         </View>
 
-        {/* Grid Container for Brands/Models */}
+        {/* Brands/Models FlashList - Horizontal */}
         {(selectorState === 'brands' || selectorState === 'models') && (
           <Animated.View style={[styles.gridContainer, gridStyle]}>
-            <ScrollView
+            <FlashList
+              data={[...(selectorState === 'brands' ? displayBrands : filteredModels)]}
               horizontal
+              keyExtractor={keyExtractor}
+              renderItem={renderGridItem}
+              estimatedItemSize={85}
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.gridScroll}
-            >
-              <View style={styles.grid}>
-                {(selectorState === 'brands' ? displayBrands : filteredModels).map((item, index) => (
-                  <GridItem
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    isBrand={selectorState === 'brands'}
-                  />
-                ))}
-
-                {/* View All button */}
-                <Animated.View entering={FadeIn.delay(500).duration(300).springify()}>
-                  <TouchableOpacity
-                    style={[
-                      styles.gridItem,
-                      styles.viewAllItem,
-                      { 
-                        backgroundColor: mood?.primary + '15', 
-                        borderColor: mood?.primary,
-                        shadowColor: mood?.primary,
-                      },
-                    ]}
-                    onPress={() => {
-                      triggerHaptic('light');
-                      if (selectorState === 'brands') {
-                        router.push('/car-brands');
-                      } else if (selectedBrand) {
-                        router.push(`/brand/${selectedBrand.id}`);
-                      }
-                      setSelectorState('collapsed');
-                    }}
-                  >
-                    <View style={[styles.placeholderIcon, { backgroundColor: mood?.primary + '25' }]}>
-                      <Ionicons name="grid" size={22} color={mood?.primary || colors.primary} />
-                    </View>
-                    <Text style={[styles.gridItemText, { color: mood?.primary || colors.primary, fontWeight: '700' }]}>
-                      {language === 'ar' ? 'عرض الكل' : 'View All'}
-                    </Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
-            </ScrollView>
+              contentContainerStyle={styles.horizontalListContent}
+              ListFooterComponent={
+                <TouchableOpacity
+                  style={[
+                    styles.gridItem,
+                    styles.viewAllItem,
+                    { 
+                      backgroundColor: moodPrimary + '15', 
+                      borderColor: moodPrimary,
+                    },
+                  ]}
+                  onPress={handleViewAll}
+                >
+                  <View style={[styles.placeholderIcon, { backgroundColor: moodPrimary + '25' }]}>
+                    <Ionicons name="grid" size={22} color={moodPrimary} />
+                  </View>
+                  <Text style={[styles.gridItemText, { color: moodPrimary, fontWeight: '700' }]}>
+                    {language === 'ar' ? 'عرض الكل' : 'View All'}
+                  </Text>
+                </TouchableOpacity>
+              }
+            />
           </Animated.View>
         )}
 
-        {/* Chassis Search Results - Grid Layout with FlashList */}
+        {/* Chassis Search Results - Grid FlashList */}
         {selectorState === 'chassis_search' && (
           <Animated.View style={[styles.chassisResultsContainer, gridStyle]}>
             {chassisFilteredModels.length === 0 ? (
@@ -957,29 +940,21 @@ export const InteractiveCarSelector: React.FC = () => {
               </View>
             ) : (
               <FlashList
-                data={chassisFilteredModels.slice(0, 12)}
+                data={chassisFilteredModels}
                 numColumns={3}
-                keyExtractor={(item: CarModel) => item.id}
+                keyExtractor={keyExtractor}
+                renderItem={renderChassisItem}
                 estimatedItemSize={160}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.chassisGridContainer}
-                renderItem={({ item, index }: { item: CarModel; index: number }) => (
-                  <ChassisModelGridCard model={item} index={index} />
-                )}
+                contentContainerStyle={styles.chassisGridContent}
               />
             )}
           </Animated.View>
         )}
       </Animated.View>
 
-      {/* Products Floating Panel with Glassmorphism */}
-      <Animated.View
-        style={[
-          styles.productsPanel,
-          productsPanelStyle,
-        ]}
-      >
-        {/* Glassmorphism Background */}
+      {/* Products Floating Panel */}
+      <Animated.View style={[styles.productsPanel, productsPanelStyle]}>
         <BlurView
           intensity={isDark ? 50 : 70}
           tint={isDark ? 'dark' : 'light'}
@@ -987,38 +962,33 @@ export const InteractiveCarSelector: React.FC = () => {
         />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.85)' }]} />
 
-        {/* Header with gradient glow */}
+        {/* Header */}
         <LinearGradient
-          colors={[
-            mood?.primary + '30' || colors.primary + '20',
-            'transparent',
-          ]}
+          colors={[moodPrimary + '30', 'transparent']}
           style={styles.productsPanelHeaderGradient}
         >
-          <View style={[styles.productsPanelHeader, { borderBottomColor: mood?.primary + '30' }]}>
+          <View style={[styles.productsPanelHeader, { borderBottomColor: moodPrimary + '30' }]}>
             <TouchableOpacity
               style={[styles.backButton, { 
                 backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                borderColor: mood?.primary + '40',
+                borderColor: moodPrimary + '40',
               }]}
               onPress={handleBackToModels}
             >
               <Ionicons
                 name={isRTL ? 'chevron-forward' : 'chevron-back'}
                 size={24}
-                color={mood?.primary || colors.text}
+                color={moodPrimary}
               />
             </TouchableOpacity>
             <View style={styles.headerTitleContainer}>
               <Text style={[styles.headerTitle, { color: colors.text }]}>
                 {selectedModel ? getName(selectedModel) : ''}
               </Text>
-              <View style={styles.headerSubtitleRow}>
-                <View style={[styles.productCountBadge, { backgroundColor: mood?.primary + '25' }]}>
-                  <Text style={[styles.headerSubtitle, { color: mood?.primary || colors.primary }]}>
-                    {filteredProducts.length} {language === 'ar' ? 'منتج' : 'products'}
-                  </Text>
-                </View>
+              <View style={[styles.productCountBadge, { backgroundColor: moodPrimary + '25' }]}>
+                <Text style={[styles.headerSubtitle, { color: moodPrimary }]}>
+                  {filteredProducts.length} {language === 'ar' ? 'منتج' : 'products'}
+                </Text>
               </View>
             </View>
             <TouchableOpacity
@@ -1039,13 +1009,13 @@ export const InteractiveCarSelector: React.FC = () => {
         {/* Search & Filters */}
         <View style={[styles.filtersRow, { 
           backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-          borderBottomColor: mood?.primary + '20',
+          borderBottomColor: moodPrimary + '20',
         }]}>
           <View style={[styles.searchBox, { 
             backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', 
-            borderColor: mood?.primary + '50',
+            borderColor: moodPrimary + '50',
           }]}>
-            <Ionicons name="search" size={18} color={mood?.primary || colors.primary} />
+            <Ionicons name="search" size={18} color={moodPrimary} />
             <TextInput
               style={[styles.searchInput, { color: colors.text, textAlign: isRTL ? 'right' : 'left' }]}
               placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
@@ -1059,42 +1029,39 @@ export const InteractiveCarSelector: React.FC = () => {
               </TouchableOpacity>
             )}
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {(['all', 'low', 'medium', 'high'] as const).map((filter) => {
-              const isActive = priceFilter === filter;
-              return (
-                <TouchableOpacity
-                  key={filter}
-                  style={[
-                    styles.filterChip,
-                    {
-                      backgroundColor: isActive ? mood?.primary || colors.primary : 'transparent',
-                      borderColor: isActive ? mood?.primary || colors.primary : mood?.primary + '50',
-                    },
-                  ]}
-                  onPress={() => {
-                    triggerHaptic('selection');
-                    setPriceFilter(filter);
-                  }}
-                >
-                  <Text
+          <View style={styles.filterChipsContainer}>
+            <FlashList
+              data={['all', 'low', 'medium', 'high'] as PriceFilter[]}
+              horizontal
+              estimatedItemSize={60}
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item}
+              renderItem={({ item: filter }) => {
+                const isActive = priceFilter === filter;
+                return (
+                  <TouchableOpacity
                     style={[
-                      styles.filterChipText,
-                      { color: isActive ? '#FFF' : colors.text },
+                      styles.filterChip,
+                      {
+                        backgroundColor: isActive ? moodPrimary : 'transparent',
+                        borderColor: isActive ? moodPrimary : moodPrimary + '50',
+                      },
                     ]}
+                    onPress={() => {
+                      triggerHaptic('selection');
+                      setPriceFilter(filter);
+                    }}
                   >
-                    {filter === 'all'
-                      ? language === 'ar' ? 'الكل' : 'All'
-                      : filter === 'low'
-                      ? '<100'
-                      : filter === 'medium'
-                      ? '100-500'
-                      : '>500'}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                    <Text style={[styles.filterChipText, { color: isActive ? '#FFF' : colors.text }]}>
+                      {filter === 'all'
+                        ? language === 'ar' ? 'الكل' : 'All'
+                        : filter === 'low' ? '<100' : filter === 'medium' ? '100-500' : '>500'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
         </View>
 
         {/* Products Grid */}
@@ -1108,7 +1075,7 @@ export const InteractiveCarSelector: React.FC = () => {
           </View>
         ) : filteredProducts.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="cube-outline" size={56} color={mood?.primary + '60'} />
+            <Ionicons name="cube-outline" size={56} color={moodPrimary + '60'} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               {language === 'ar' ? 'لا توجد منتجات' : 'No products found'}
             </Text>
@@ -1118,20 +1085,11 @@ export const InteractiveCarSelector: React.FC = () => {
             <FlashList
               data={filteredProducts.slice(0, 9)}
               numColumns={3}
-              keyExtractor={(item: Product) => item.id}
+              keyExtractor={keyExtractor}
+              renderItem={renderProductItem}
               estimatedItemSize={190}
+              showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.productsGrid}
-              renderItem={({ item, index }: { item: Product; index: number }) => (
-                <ProductCardItem
-                  item={item}
-                  index={index}
-                  isDark={isDark}
-                  mood={mood}
-                  colors={colors}
-                  language={language}
-                  onPress={handleProductPress}
-                />
-              )}
             />
           </View>
         )}
@@ -1140,6 +1098,9 @@ export const InteractiveCarSelector: React.FC = () => {
   );
 };
 
+// ============================================================================
+// STYLES
+// ============================================================================
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
@@ -1157,6 +1118,9 @@ const styles = StyleSheet.create({
     right: 0,
     height: 2,
     shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 4,
   },
   anchorRow: {
     flexDirection: 'row',
@@ -1164,9 +1128,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 10,
-  },
-  anchorRowRTL: {
-    flexDirection: 'row-reverse',
   },
   anchorButton: {
     width: 50,
@@ -1190,9 +1151,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 11,
   },
-  dualHintRowRTL: {
-    flexDirection: 'row-reverse',
-  },
   hintTouchable: {
     paddingVertical: 5,
     paddingHorizontal: 7,
@@ -1206,9 +1164,6 @@ const styles = StyleSheet.create({
     width: 1,
     height: 20,
     opacity: 0.5,
-  },
-  hintChevron: {
-    shadowOffset: { width: 0, height: 0 },
   },
   breadcrumb: {
     flex: 1,
@@ -1237,6 +1192,60 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  // Grid Styles
+  gridContainer: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  horizontalListContent: {
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+  },
+  gridItemWrapper: {
+    marginHorizontal: 4,
+  },
+  gridItem: {
+    width: 80,
+    height: 100,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    padding: 8,
+  },
+  viewAllItem: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+  },
+  brandLogo: {
+    width: 40,
+    height: 40,
+    marginBottom: 4,
+  },
+  modelImage: {
+    width: 50,
+    height: 35,
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  placeholderIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  gridItemText: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  gridItemSubtext: {
+    fontSize: 9,
+    fontWeight: '500',
+    marginTop: 2,
+  },
   // Chassis Search Styles
   chassisSearchContainer: {
     flex: 1,
@@ -1258,198 +1267,72 @@ const styles = StyleSheet.create({
   },
   chassisResultsContainer: {
     flex: 1,
-    paddingHorizontal: 9,
+    paddingHorizontal: 4,
   },
-  chassisResultsScroll: {
-    paddingBottom: 7,
-  },
-  chassisModelCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 13,
-    borderRadius: 15,
-    borderWidth: 1.5,
-    marginBottom: 5,
-    gap: 11,
-  },
-  chassisModelImage: {
-    width: 70,
-    height: 50,
-    borderRadius: 7,
-  },
-  chassisModelPlaceholder: {
-    width: 70,
-    height: 50,
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chassisModelInfo: {
-    flex: 1,
-    gap: 1.5,
-  },
-  chassisModelName: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  chassisModelBrand: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  chassisTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 5,
-    paddingVertical: 3,
-    borderRadius: 5,
-    gap: 3,
-    marginTop: 1.5,
-  },
-  chassisTagText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  chassisModelYear: {
-    fontSize: 13,
-    marginTop: 1,
+  chassisGridContent: {
+    paddingVertical: 8,
   },
   chassisEmptyState: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 30,
-    gap: 10,
   },
   chassisEmptyText: {
-    fontSize: 15,
-  },
-  // New Grid Card Styles for Chassis Search
-  chassisGridContainer: {
-    padding: 6,
+    fontSize: 14,
+    marginTop: 8,
   },
   chassisGridCardWrapper: {
-    width: (SCREEN_WIDTH - 50) / 3.10,
-    padding: 1.5,
-    height: 190,
+    width: (SCREEN_WIDTH - 24) / 3,
+    padding: 4,
   },
   chassisGridCard: {
-    borderRadius: 15,
+    borderRadius: 12,
+    borderWidth: 1,
     overflow: 'hidden',
-    borderWidth: 1.5,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
-    elevation: 3,
-    height: '100%',
   },
   chassisGridCardImage: {
     width: '100%',
-    height: 100,
-    backgroundColor: 'transparent',
+    height: 70,
   },
   chassisGridCardPlaceholder: {
     width: '100%',
-    height: 100,
+    height: 70,
     alignItems: 'center',
     justifyContent: 'center',
   },
   chassisGridCardInfo: {
-    padding: 3,
-    paddingTop: 1,
-    gap: 0,
+    padding: 8,
     alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
   },
   chassisGridCardName: {
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 13,
-    textAlign: 'center',
-  },
-  chassisGridCardBrand: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'center',
   },
   chassisGridCardYear: {
-    fontSize: 11,
-    fontWeight: '500',
-    textAlign: 'center',
+    fontSize: 9,
+    marginTop: 2,
   },
-  chassisGridTag: {
+  chassisGridCardBrand: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  chassisGridCardChassisContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 3,
-    gap: 1,
-    marginTop: 1,
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginTop: 4,
   },
-  chassisGridTagText: {
-    fontSize: 7,
+  chassisGridCardChassis: {
+    fontSize: 8,
     fontWeight: '600',
   },
-  gridContainer: {
-    paddingBottom: 11,
-  },
-  gridScroll: {
-    paddingHorizontal: 11,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
-    gap: 10,
-    paddingHorizontal: 4,
-  },
-  gridItem: {
-    width: (SCREEN_WIDTH - 50) / 3.10,
-    minWidth: 130,
-    maxWidth: 150,
-    height: 190,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.3,
-    padding: 7,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  viewAllItem: {
-    borderWidth: 3,
-    borderStyle: 'dashed',
-  },
-  brandLogo: {
-    width: 95,
-    height: 95,
-    borderRadius: 15,
-  },
-  modelImage: {
-    width: 95,
-    height: 95,
-    borderRadius: 15,
-  },
-  placeholderIcon: {
-    width: 90,
-    height: 90,
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 1,
-  },
-  gridItemText: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginTop: 1,
-    textAlign: 'center',
-  },
-  gridItemSubtext: {
-    fontSize: 11,
-    marginTop: 3,
-    fontWeight: '500',
-  },
+  // Products Panel Styles
   productsPanel: {
     position: 'absolute',
     top: 0,
@@ -1464,9 +1347,10 @@ const styles = StyleSheet.create({
   productsPanelHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 17,
-    paddingVertical: 13,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
+    gap: 12,
   },
   backButton: {
     width: 44,
@@ -1476,27 +1360,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
-  headerTitleContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  headerSubtitleRow: {
-    marginTop: 4,
-  },
-  productCountBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
   closeButton: {
     width: 44,
     height: 44,
@@ -1505,105 +1368,126 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
+  headerTitleContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  productCountBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   filtersRow: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    gap: 10,
     borderBottomWidth: 1,
+    gap: 10,
   },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    gap: 10,
-    marginBottom: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     padding: 0,
   },
+  filterChipsContainer: {
+    height: 36,
+  },
   filterChip: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    marginRight: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginRight: 8,
   },
   filterChipText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
+  },
+  flashListContainer: {
+    flex: 1,
+  },
+  productsGrid: {
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+  },
+  productCardWrapper: {
+    width: (SCREEN_WIDTH - 30) / 3,
+    marginHorizontal: 2,
+    marginBottom: 12,
+  },
+  productCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  productImage: {
+    width: '100%',
+    height: 130,
+  },
+  productPlaceholder: {
+    width: '100%',
+    height: 130,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  productInfo: {
+    padding: 10,
+    gap: 6,
+  },
+  productName: {
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+  priceTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  priceText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   loadingContainer: {
     flex: 1,
-    padding: 12,
+    padding: 16,
   },
   loadingGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 8,
   },
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
+    padding: 40,
   },
   emptyText: {
     fontSize: 16,
-    fontWeight: '500',
-  },
-  flashListContainer: {
-    flex: 1,
-    minHeight: 300,
-  },
-  productsGrid: {
-    padding: 12,
-  },
-  productCardWrapper: {
-    width: '50%',
-    padding: 6,
-  },
-  productCard: {
-    borderRadius: 16,
-    borderWidth: 1.5,
-    overflow: 'hidden',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  productImage: {
-    width: '100%',
-    height: 115,
-  },
-  productImagePlaceholder: {
-    width: '100%',
-    height: 115,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  productInfo: {
-    padding: 12,
-  },
-  productName: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 8,
-    minHeight: 36,
-  },
-  priceTag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  productPrice: {
-    fontSize: 14,
-    fontWeight: '700',
+    marginTop: 12,
   },
 });
 
