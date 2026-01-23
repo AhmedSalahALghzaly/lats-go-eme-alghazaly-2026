@@ -54,6 +54,10 @@ export default function CarModelDetailScreen() {
   const subscriptionStatus = useAppStore((state) => state.subscriptionStatus);
   const userRole = useAppStore((state) => state.userRole);
 
+  // Cart mutations with duplicate prevention
+  const queryClient = useQueryClient();
+  const { checkBundleDuplicate } = useCartMutations();
+
   // Check if user can download catalog (subscriber, owner, or partner)
   const canDownloadCatalog = subscriptionStatus === 'subscriber' || userRole === 'owner' || userRole === 'partner';
   
