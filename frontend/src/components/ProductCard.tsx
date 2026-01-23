@@ -461,6 +461,29 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // Golden Gift Icon for Bundle Products - Premium Look
+  bundleIconContainer: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    zIndex: 10,
+  },
+  bundleIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#000000',
+    borderWidth: 1.5,
+    borderColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Shadow for premium effect
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
   brandBadge: {
     position: 'absolute',
     bottom: 6,
