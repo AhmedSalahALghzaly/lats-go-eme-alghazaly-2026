@@ -70,6 +70,10 @@ export default function ProductDetailScreen() {
   const subscriptionStatus = useAppStore((state) => state.subscriptionStatus);
   const userRole = useAppStore((state) => state.userRole);
 
+  // Check if this product is in any active bundle
+  const { isProductInBundle } = useBundleProducts();
+  const isInBundle = id ? isProductInBundle(id) : false;
+
   // Check if user should see subscribe button (not a subscriber and no pending request)
   const showSubscribeButton = subscriptionStatus === 'none';
   
