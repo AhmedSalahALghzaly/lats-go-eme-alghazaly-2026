@@ -100,6 +100,11 @@ export const queryKeys = {
     all: ['customers'] as const,
     detail: (id: string) => ['customers', 'detail', id] as const,
   },
+  // Bundle Offers
+  bundleOffers: {
+    all: ['bundleOffers'] as const,
+    active: ['bundleOffers', 'active'] as const,
+  },
   // Delta Sync
   deltaSync: {
     products: (lastSync?: string) => ['deltaSync', 'products', lastSync] as const,
