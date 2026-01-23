@@ -633,10 +633,15 @@ export default function DistributorsScreen() {
               {isRTL ? 'معلومات التواصل' : 'Contact Information'}
             </Text>
             
-            {selectedDistributor.phone && (
+            {/* Render all phone numbers from the array */}
+            {(selectedDistributor.phone_numbers && selectedDistributor.phone_numbers.length > 0 ? 
+              selectedDistributor.phone_numbers : 
+              (selectedDistributor.phone ? [selectedDistributor.phone] : [])
+            ).map((phone, index) => (
               <TouchableOpacity
+                key={`phone-${index}`}
                 style={[styles.contactCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => Linking.openURL(`tel:${selectedDistributor.phone}`)}
+                onPress={() => Linking.openURL(`tel:${phone}`)}
                 activeOpacity={0.7}
               >
                 <View style={[styles.contactIconContainer, { backgroundColor: LUMINOUS_BLUE + '20' }]}>
@@ -644,15 +649,15 @@ export default function DistributorsScreen() {
                 </View>
                 <View style={styles.contactTextContainer}>
                   <Text style={[styles.contactLabel, { color: colors.textSecondary }]}>
-                    {isRTL ? 'الهاتف' : 'Phone'}
+                    {isRTL ? `الهاتف ${selectedDistributor.phone_numbers && selectedDistributor.phone_numbers.length > 1 ? index + 1 : ''}` : `Phone ${selectedDistributor.phone_numbers && selectedDistributor.phone_numbers.length > 1 ? index + 1 : ''}`}
                   </Text>
                   <Text style={[styles.contactValue, { color: LUMINOUS_BLUE }]}>
-                    {selectedDistributor.phone}
+                    {phone}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={LUMINOUS_BLUE} />
               </TouchableOpacity>
-            )}
+            ))}
 
             {selectedDistributor.contact_email && (
               <TouchableOpacity
@@ -675,10 +680,14 @@ export default function DistributorsScreen() {
               </TouchableOpacity>
             )}
 
-            {selectedDistributor.website && (
+            {/* Handle both website_url (backend) and website (legacy) */}
+            {(selectedDistributor.website_url || selectedDistributor.website) && (
               <TouchableOpacity
                 style={[styles.contactCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => Linking.openURL(selectedDistributor.website!.startsWith('http') ? selectedDistributor.website! : `https://${selectedDistributor.website}`)}
+                onPress={() => {
+                  const url = selectedDistributor.website_url || selectedDistributor.website || '';
+                  Linking.openURL(url.startsWith('http') ? url : `https://${url}`);
+                }}
                 activeOpacity={0.7}
               >
                 <View style={[styles.contactIconContainer, { backgroundColor: LUMINOUS_BLUE + '20' }]}>
@@ -689,7 +698,7 @@ export default function DistributorsScreen() {
                     {isRTL ? 'الموقع الإلكتروني' : 'Website'}
                   </Text>
                   <Text style={[styles.contactValue, { color: LUMINOUS_BLUE }]} numberOfLines={1}>
-                    {selectedDistributor.website}
+                    {selectedDistributor.website_url || selectedDistributor.website}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={LUMINOUS_BLUE} />
