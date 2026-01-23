@@ -295,6 +295,9 @@ export default function OfferDetailsScreen() {
   /**
    * Bug Fix #1: استخدام addBundleToCart لإضافة كل منتجات العرض المجمع
    * هذا يضمن ربط جميع المنتجات بنفس bundleGroupId وحساب الخصومات الصحيحة
+   * 
+   * ENHANCED: Check if any product from the bundle is already in cart
+   * If so, show "تم إضافة العرض" (Offer Added) alert
    */
   const handleAddAllToCart = async () => {
     if (!user) {
@@ -303,6 +306,23 @@ export default function OfferDetailsScreen() {
     }
 
     if (!offer || products.length === 0) return;
+
+    // Check if ANY product from this bundle is already in cart
+    const anyProductInCart = products.some((product: any) => checkBundleDuplicate(product.id));
+    
+    if (anyProductInCart) {
+      // Haptic feedback for warning
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
+      Alert.alert(
+        language === 'ar' ? 'تنبيه' : 'Notice',
+        language === 'ar' ? 'تم إضافة العرض' : 'Offer Already Added',
+        [{ text: language === 'ar' ? 'حسناً' : 'OK', style: 'default' }],
+        { cancelable: true }
+      );
+      return;
+    }
 
     setAddingToCart(true);
     try {
@@ -319,7 +339,15 @@ export default function OfferDetailsScreen() {
         products
       );
       
+      // Invalidate cart query for real-time sync
+      queryClient.invalidateQueries({ queryKey: shoppingHubKeys.cart });
+      
       setAddedProducts(new Set(products.map(p => p.id)));
+      
+      // Success feedback
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     } catch (error) {
       console.error('Error adding bundle to cart:', error);
     } finally {
