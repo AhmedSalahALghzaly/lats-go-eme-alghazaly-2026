@@ -307,14 +307,17 @@ export const InteractiveCarSelector: React.FC = () => {
   // Morphing vehicle icon animation - cycle through vehicle types
   useEffect(() => {
     let morphInterval: ReturnType<typeof setInterval> | null = null;
+    isMountedRef.current = true;
     
     if (selectorState === 'collapsed') {
       morphInterval = setInterval(() => {
-        setCurrentIconIndex((prev) => (prev + 1) % VEHICLE_ICONS.length);
-        morphProgress.value = withSequence(
-          withTiming(1, { duration: 150 }),
-          withTiming(0, { duration: 150 })
-        );
+        if (isMountedRef.current) {
+          setCurrentIconIndex((prev) => (prev + 1) % VEHICLE_ICONS.length);
+          morphProgress.value = withSequence(
+            withTiming(1, { duration: 150 }),
+            withTiming(0, { duration: 150 })
+          );
+        }
       }, 2000);
       
       carIconGlow.value = withRepeat(
@@ -331,9 +334,10 @@ export const InteractiveCarSelector: React.FC = () => {
     }
     
     return () => {
+      isMountedRef.current = false;
       if (morphInterval) clearInterval(morphInterval);
     };
-  }, [selectorState, morphProgress, carIconGlow]);
+  }, [selectorState]);
 
   // Chassis number animation - shifting VIN characters with electric blue glow
   useEffect(() => {
