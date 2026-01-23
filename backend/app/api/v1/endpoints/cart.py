@@ -218,6 +218,22 @@ async def clear_cart(request: Request):
     )
     return {"message": "Cleared"}
 
+@router.delete("/remove/{product_id}")
+async def remove_from_cart(product_id: str, request: Request):
+    """Remove a specific item from the cart"""
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    result = await db.carts.update_one(
+        {"user_id": user["id"]},
+        {
+            "$pull": {"items": {"product_id": product_id}},
+            "$set": {"updated_at": datetime.now(timezone.utc)}
+        }
+    )
+    return {"message": "Removed", "product_id": product_id}
+
 @router.delete("/void-bundle/{bundle_group_id}")
 async def void_bundle_discount(bundle_group_id: str, request: Request):
     """Remove bundle discount from all items in a bundle group"""
