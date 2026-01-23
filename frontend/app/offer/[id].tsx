@@ -624,23 +624,16 @@ export default function OfferDetailsScreen() {
                   </View>
                 </View>
 
-                <TouchableOpacity
-                  style={[
-                    styles.addButton,
-                    { backgroundColor: addedProducts.has(product.id) ? '#4CAF50' : palette.accent }
-                  ]}
+                {/* AnimatedCartButton with ref for shake animation */}
+                <AnimatedCartButton
+                  ref={(ref) => setCartButtonRef(product.id, ref)}
+                  isInCart={addedProducts.has(product.id)}
+                  isLoading={addingToCart}
                   onPress={() => handleAddToCart(product)}
-                  disabled={addingToCart || addedProducts.has(product.id)}
-                  activeOpacity={0.7}
-                >
-                  <Animated.View style={{ transform: [{ scale: cartIconAnim }] }}>
-                    {addedProducts.has(product.id) ? (
-                      <Ionicons name="checkmark" size={24} color="#FFF" />
-                    ) : (
-                      <Ionicons name="cart" size={22} color="#FFF" />
-                    )}
-                  </Animated.View>
-                </TouchableOpacity>
+                  size={22}
+                  primaryColor={palette.accent}
+                  style={styles.addButton}
+                />
               </Animated.View>
             ))
           )}
