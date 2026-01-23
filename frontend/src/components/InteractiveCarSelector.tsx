@@ -711,44 +711,33 @@ export const InteractiveCarSelector: React.FC = () => {
     );
   };
 
-  // Chassis Model Card Component - Grid Style matching car models grid
+  // Chassis Model Card Component - Simplified for mobile stability
   const ChassisModelGridCard = ({ model, index }: { model: CarModel; index: number }) => {
     const itemScale = useSharedValue(1);
-    const glowAnim = useSharedValue(0);
     
     const itemAnimatedStyle = useAnimatedStyle(() => ({
       transform: [{ scale: itemScale.value }],
     }));
 
-    const itemGlowStyle = useAnimatedStyle(() => ({
-      shadowOpacity: interpolate(glowAnim.value, [0, 1], [0, 0.6]),
-      shadowRadius: interpolate(glowAnim.value, [0, 1], [0, 12]),
-    }));
-
     const brand = carBrands.find(b => b.id === model.brand_id);
 
-    const handlePress = () => {
+    const handlePress = useCallback(() => {
       triggerHaptic('selection');
       itemScale.value = withSequence(
-        withSpring(0.92, { damping: 10, stiffness: 400 }),
-        withSpring(1.02, { damping: 8, stiffness: 300 }),
+        withSpring(0.95, { damping: 15, stiffness: 300 }),
         withSpring(1, { damping: 12, stiffness: 200 })
       );
-      glowAnim.value = withSequence(
-        withTiming(1, { duration: 150 }),
-        withTiming(0, { duration: 300 })
-      );
       
-      setTimeout(() => {
+      // Use requestAnimationFrame for smoother navigation
+      requestAnimationFrame(() => {
         handleModelSelect(model);
-      }, 100);
-    };
+      });
+    }, [model, itemScale, triggerHaptic]);
 
     return (
       <Animated.View
-        entering={FadeIn.delay(Math.min(index * 50, 250)).duration(250).springify()}
-        layout={Layout.springify()}
-        style={[styles.chassisGridCardWrapper, itemAnimatedStyle, itemGlowStyle]}
+        entering={FadeIn.delay(Math.min(index * 40, 200)).duration(200)}
+        style={[styles.chassisGridCardWrapper, itemAnimatedStyle]}
       >
         <TouchableOpacity
           style={[
@@ -756,11 +745,11 @@ export const InteractiveCarSelector: React.FC = () => {
             {
               backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
               borderColor: mood?.primary + '40',
-              shadowColor: mood?.primary || colors.primary,
             },
           ]}
           onPress={handlePress}
-          activeOpacity={0.85}
+          activeOpacity={0.7}
+          delayPressIn={0}
         >
           {/* Model Image */}
           {model.image_url ? (
