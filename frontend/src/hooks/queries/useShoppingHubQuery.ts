@@ -3,11 +3,14 @@
  * Provides data fetching for cart, favorites, and orders
  * Uses centralized query keys for cache management
  * 
+ * ENHANCED: Bundle duplicate prevention with professional Arabic alerts
  * FIXED: Enhanced cache invalidation for real-time state synchronization
  * FIXED: Removed Zustand updates from queryFn to prevent infinite re-renders
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { Alert, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../../store/appStore';
 import { cartApi, favoriteApi, orderApi } from '../../services/api';
 import api from '../../services/api';
