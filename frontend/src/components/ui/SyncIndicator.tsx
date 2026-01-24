@@ -82,6 +82,7 @@ export const SyncIndicator: React.FC<SyncIndicatorProps> = ({
   // Pop animation for success/error states
   useEffect(() => {
     if (syncStatus === 'success' || syncStatus === 'error') {
+      scaleAnim.setValue(0); // Reset before animating
       Animated.sequence([
         Animated.timing(scaleAnim, {
           toValue: 1.3,
