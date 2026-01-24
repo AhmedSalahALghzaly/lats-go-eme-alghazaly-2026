@@ -503,7 +503,10 @@ export const InteractiveCarSelector: React.FC = () => {
   }), []);
 
   const carIconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: carIconScale.value }],
+    transform: [
+      { scale: carIconScale.value },
+      { rotate: `${carIconRotation.value}deg` }
+    ],
     shadowOpacity: interpolate(carIconGlow.value, [0, 1], [0.2, 0.6], Extrapolation.CLAMP),
     shadowRadius: interpolate(carIconGlow.value, [0, 1], [4, 12], Extrapolation.CLAMP),
   }), []);
