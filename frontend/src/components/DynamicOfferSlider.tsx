@@ -140,7 +140,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
     );
     animation.start();
     return () => animation.stop();
-  }, [hideIcon, pulseAnim]);
+  }, [hideIcon]);
 
   // Glow animation
   useEffect(() => {
@@ -153,7 +153,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
     );
     animation.start();
     return () => animation.stop();
-  }, [hideIcon, glowAnim]);
+  }, [hideIcon]);
 
   // Rotation animation for icon
   useEffect(() => {
@@ -166,7 +166,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
     );
     animation.start();
     return () => animation.stop();
-  }, [hideIcon, rotateAnim]);
+  }, [hideIcon]);
 
   const handleScroll = (event: any) => {
     const x = event.nativeEvent.contentOffset.x;
