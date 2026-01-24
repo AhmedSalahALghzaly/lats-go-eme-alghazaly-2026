@@ -2,7 +2,7 @@
  * Interactive Car Selector - Rebuilt with FlashList & React Query
  * Features: Morphing vehicle icons, Glassmorphism UI, haptic feedback,
  * Image-based selection, stable cross-platform animations
- * Architecture: FlashList for lists, React Query for data, stable animations
+ * Architecture: FlashList for lists, stable animations (no FadeIn)
  */
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
@@ -28,14 +28,12 @@ import Animated, {
   withTiming,
   interpolate,
   Extrapolation,
-  cancelAnimation,
 } from 'react-native-reanimated';
 
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore, useColorMood } from '../store/appStore';
-import { productsApi } from '../services/api';
-import { HAPTIC_PATTERNS } from '../constants/animations';
+import { productApi } from '../services/api';
 import { ProductCardSkeleton } from './ui/Skeleton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -101,10 +99,11 @@ interface GridItemProps {
   isBrand: boolean;
   isDark: boolean;
   moodPrimary: string;
-  colors: { text: string; textSecondary: string; primary: string };
+  colorsText: string;
+  colorsPrimary: string;
+  colorsTextSecondary: string;
   language: string;
   onPress: (item: CarBrand | CarModel, isBrand: boolean) => void;
-  triggerHaptic: () => void;
 }
 
 const GridItem = memo<GridItemProps>(({
@@ -112,16 +111,17 @@ const GridItem = memo<GridItemProps>(({
   isBrand,
   isDark,
   moodPrimary,
-  colors,
+  colorsText,
+  colorsPrimary,
+  colorsTextSecondary,
   language,
   onPress,
-  triggerHaptic,
 }) => {
   const scale = useSharedValue(1);
   
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-  }));
+  }), []);
 
   const getName = (i: { name: string; name_ar?: string }) =>
     language === 'ar' ? (i.name_ar || i.name) : i.name;
@@ -130,18 +130,20 @@ const GridItem = memo<GridItemProps>(({
   const model = item as CarModel;
   const hasImage = isBrand ? (brand.logo_url || brand.logo) : model.image_url;
 
-  const handlePressIn = useCallback(() => {
+  const handlePressIn = () => {
     scale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
-  }, [scale]);
+  };
 
-  const handlePressOut = useCallback(() => {
+  const handlePressOut = () => {
     scale.value = withSpring(1, { damping: 12, stiffness: 200 });
-  }, [scale]);
+  };
 
-  const handlePress = useCallback(() => {
-    triggerHaptic();
+  const handlePress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
     onPress(item, isBrand);
-  }, [item, isBrand, onPress, triggerHaptic]);
+  };
 
   return (
     <Animated.View style={[styles.gridItemWrapper, animatedStyle]}>
@@ -171,15 +173,15 @@ const GridItem = memo<GridItemProps>(({
             <MaterialCommunityIcons
               name={isBrand ? 'car' : 'car-side'}
               size={isBrand ? 24 : 28}
-              color={moodPrimary || colors.primary}
+              color={moodPrimary || colorsPrimary}
             />
           </View>
         )}
-        <Text style={[styles.gridItemText, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[styles.gridItemText, { color: colorsText }]} numberOfLines={1}>
           {getName(item)}
         </Text>
         {!isBrand && model.year_start && (
-          <Text style={[styles.gridItemSubtext, { color: moodPrimary || colors.textSecondary }]}>
+          <Text style={[styles.gridItemSubtext, { color: moodPrimary || colorsTextSecondary }]}>
             {model.year_start}{model.year_end ? ` - ${model.year_end}` : '+'}
           </Text>
         )}
@@ -193,46 +195,50 @@ const GridItem = memo<GridItemProps>(({
 // ============================================================================
 interface ChassisCardProps {
   model: CarModel;
-  brand: CarBrand | undefined;
+  brandName: string;
   isDark: boolean;
   moodPrimary: string;
-  colors: { text: string; textSecondary: string; primary: string };
+  colorsText: string;
+  colorsPrimary: string;
+  colorsTextSecondary: string;
   language: string;
   onPress: (model: CarModel) => void;
-  triggerHaptic: () => void;
 }
 
 const ChassisModelCard = memo<ChassisCardProps>(({
   model,
-  brand,
+  brandName,
   isDark,
   moodPrimary,
-  colors,
+  colorsText,
+  colorsPrimary,
+  colorsTextSecondary,
   language,
   onPress,
-  triggerHaptic,
 }) => {
   const scale = useSharedValue(1);
   
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-  }));
+  }), []);
 
   const getName = (i: { name: string; name_ar?: string }) =>
     language === 'ar' ? (i.name_ar || i.name) : i.name;
 
-  const handlePressIn = useCallback(() => {
+  const handlePressIn = () => {
     scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
-  }, [scale]);
+  };
 
-  const handlePressOut = useCallback(() => {
+  const handlePressOut = () => {
     scale.value = withSpring(1, { damping: 12, stiffness: 200 });
-  }, [scale]);
+  };
 
-  const handlePress = useCallback(() => {
-    triggerHaptic();
+  const handlePress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
     onPress(model);
-  }, [model, onPress, triggerHaptic]);
+  };
 
   return (
     <Animated.View style={[styles.chassisGridCardWrapper, animatedStyle]}>
@@ -259,31 +265,31 @@ const ChassisModelCard = memo<ChassisCardProps>(({
           />
         ) : (
           <View style={[styles.chassisGridCardPlaceholder, { backgroundColor: moodPrimary + '15' }]}>
-            <MaterialCommunityIcons name="car-side" size={36} color={moodPrimary || colors.primary} />
+            <MaterialCommunityIcons name="car-side" size={36} color={moodPrimary || colorsPrimary} />
           </View>
         )}
         
         <View style={styles.chassisGridCardInfo}>
-          <Text style={[styles.chassisGridCardName, { color: colors.text }]} numberOfLines={1}>
+          <Text style={[styles.chassisGridCardName, { color: colorsText }]} numberOfLines={1}>
             {getName(model)}
           </Text>
           
           {model.year_start && (
-            <Text style={[styles.chassisGridCardYear, { color: colors.textSecondary }]}>
+            <Text style={[styles.chassisGridCardYear, { color: colorsTextSecondary }]}>
               {model.year_start}{model.year_end ? ` - ${model.year_end}` : '+'}
             </Text>
           )}
           
-          {brand && (
-            <Text style={[styles.chassisGridCardBrand, { color: moodPrimary || colors.primary }]} numberOfLines={1}>
-              {getName(brand)}
+          {brandName && (
+            <Text style={[styles.chassisGridCardBrand, { color: moodPrimary || colorsPrimary }]} numberOfLines={1}>
+              {brandName}
             </Text>
           )}
           
           {model.chassis_number && (
             <View style={[styles.chassisGridCardChassisContainer, { backgroundColor: moodPrimary + '15' }]}>
-              <MaterialCommunityIcons name="barcode" size={12} color={moodPrimary || colors.primary} />
-              <Text style={[styles.chassisGridCardChassis, { color: moodPrimary || colors.primary }]} numberOfLines={1}>
+              <MaterialCommunityIcons name="barcode" size={12} color={moodPrimary || colorsPrimary} />
+              <Text style={[styles.chassisGridCardChassis, { color: moodPrimary || colorsPrimary }]} numberOfLines={1}>
                 {model.chassis_number}
               </Text>
             </View>
@@ -301,7 +307,9 @@ interface ProductCardProps {
   item: Product;
   isDark: boolean;
   moodPrimary: string;
-  colors: { text: string; textSecondary: string; primary: string };
+  colorsText: string;
+  colorsPrimary: string;
+  colorsTextSecondary: string;
   language: string;
   onPress: (id: string) => void;
 }
@@ -310,7 +318,9 @@ const ProductCard = memo<ProductCardProps>(({
   item,
   isDark,
   moodPrimary,
-  colors,
+  colorsText,
+  colorsPrimary,
+  colorsTextSecondary,
   language,
   onPress,
 }) => {
@@ -318,18 +328,18 @@ const ProductCard = memo<ProductCardProps>(({
   
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-  }));
+  }), []);
 
   const getName = (i: { name: string; name_ar?: string }) =>
     language === 'ar' ? (i.name_ar || i.name) : i.name;
 
-  const handlePressIn = useCallback(() => {
+  const handlePressIn = () => {
     scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
-  }, [scale]);
+  };
 
-  const handlePressOut = useCallback(() => {
+  const handlePressOut = () => {
     scale.value = withSpring(1, { damping: 12, stiffness: 200 });
-  }, [scale]);
+  };
 
   return (
     <Animated.View style={[styles.productCardWrapper, animatedStyle]}>
@@ -356,15 +366,15 @@ const ProductCard = memo<ProductCardProps>(({
           />
         ) : (
           <View style={[styles.productPlaceholder, { backgroundColor: (moodPrimary || '#009688') + '15' }]}>
-            <Ionicons name="cube-outline" size={36} color={moodPrimary || colors.textSecondary} />
+            <Ionicons name="cube-outline" size={36} color={moodPrimary || colorsTextSecondary} />
           </View>
         )}
         <View style={styles.productInfo}>
-          <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>
+          <Text style={[styles.productName, { color: colorsText }]} numberOfLines={2}>
             {getName(item)}
           </Text>
           <View style={[styles.priceTag, { backgroundColor: (moodPrimary || '#009688') + '20' }]}>
-            <Text style={[styles.priceText, { color: moodPrimary || colors.primary }]}>
+            <Text style={[styles.priceText, { color: moodPrimary || colorsPrimary }]}>
               {item.price?.toFixed(2)} {language === 'ar' ? 'ج.م' : 'EGP'}
             </Text>
           </View>
@@ -402,40 +412,16 @@ export const InteractiveCarSelector: React.FC = () => {
   const [currentIconIndex, setCurrentIconIndex] = useState(0);
   const [currentVinIndex, setCurrentVinIndex] = useState(0);
 
-  // Animation values
-  const expandAnim = useSharedValue(0);
+  // Animation values - defined once, never recreated
+  const containerHeight = useSharedValue(70);
+  const gridOpacity = useSharedValue(0);
+  const productsSlideAnim = useSharedValue(SCREEN_HEIGHT);
   const carIconScale = useSharedValue(1);
   const carIconGlow = useSharedValue(0.5);
   const chassisIconGlow = useSharedValue(0.5);
-  const gridOpacity = useSharedValue(0);
-  const productsSlideAnim = useSharedValue(SCREEN_HEIGHT);
-  const containerHeight = useSharedValue(70);
 
   // Current vehicle icon
   const currentIcon = VEHICLE_ICONS[currentIconIndex];
-
-  // ============================================================================
-  // HAPTIC FEEDBACK
-  // ============================================================================
-  const triggerHaptic = useCallback((type: keyof typeof HAPTIC_PATTERNS = 'selection') => {
-    if (Platform.OS !== 'web') {
-      switch (type) {
-        case 'selection':
-          Haptics.selectionAsync();
-          break;
-        case 'light':
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          break;
-        case 'success':
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          break;
-      }
-    }
-  }, []);
-
-  const triggerSelectionHaptic = useCallback(() => {
-    triggerHaptic('selection');
-  }, [triggerHaptic]);
 
   // ============================================================================
   // ICON CYCLING ANIMATION (Stable - no reanimated in interval)
@@ -470,33 +456,35 @@ export const InteractiveCarSelector: React.FC = () => {
   }, [selectorState]);
 
   // ============================================================================
-  // EXPAND/COLLAPSE ANIMATIONS (Stable - single effect)
+  // EXPAND/COLLAPSE ANIMATIONS (Single consolidated effect)
   // ============================================================================
   useEffect(() => {
-    if (selectorState === 'collapsed') {
-      expandAnim.value = withTiming(0, { duration: 250 });
-      gridOpacity.value = withTiming(0, { duration: 200 });
-      containerHeight.value = withSpring(70, { damping: 15 });
-      carIconScale.value = withSpring(1, { damping: 12 });
-      carIconGlow.value = withTiming(0.5, { duration: 300 });
-      chassisIconGlow.value = withTiming(0.5, { duration: 300 });
-    } else if (selectorState === 'brands' || selectorState === 'models') {
-      expandAnim.value = withSpring(1, { damping: 15 });
-      gridOpacity.value = withTiming(1, { duration: 300 });
-      containerHeight.value = withSpring(200, { damping: 15 });
-      carIconScale.value = withSpring(1.1, { damping: 12 });
-      carIconGlow.value = withTiming(0.8, { duration: 300 });
-    } else if (selectorState === 'chassis_search') {
-      expandAnim.value = withSpring(1, { damping: 15 });
-      gridOpacity.value = withTiming(1, { duration: 300 });
-      containerHeight.value = withSpring(280, { damping: 15 });
-      chassisIconGlow.value = withTiming(0.8, { duration: 300 });
-    } else if (selectorState === 'products') {
-      productsSlideAnim.value = withSpring(0, { damping: 18 });
-    }
-    
-    if (selectorState !== 'products') {
-      productsSlideAnim.value = withTiming(SCREEN_HEIGHT, { duration: 300 });
+    switch (selectorState) {
+      case 'collapsed':
+        containerHeight.value = withTiming(70, { duration: 250 });
+        gridOpacity.value = withTiming(0, { duration: 200 });
+        carIconScale.value = withSpring(1, { damping: 12 });
+        carIconGlow.value = withTiming(0.5, { duration: 300 });
+        chassisIconGlow.value = withTiming(0.5, { duration: 300 });
+        productsSlideAnim.value = withTiming(SCREEN_HEIGHT, { duration: 300 });
+        break;
+      case 'brands':
+      case 'models':
+        containerHeight.value = withSpring(200, { damping: 15 });
+        gridOpacity.value = withTiming(1, { duration: 300 });
+        carIconScale.value = withSpring(1.1, { damping: 12 });
+        carIconGlow.value = withTiming(0.8, { duration: 300 });
+        productsSlideAnim.value = withTiming(SCREEN_HEIGHT, { duration: 300 });
+        break;
+      case 'chassis_search':
+        containerHeight.value = withSpring(280, { damping: 15 });
+        gridOpacity.value = withTiming(1, { duration: 300 });
+        chassisIconGlow.value = withTiming(0.8, { duration: 300 });
+        productsSlideAnim.value = withTiming(SCREEN_HEIGHT, { duration: 300 });
+        break;
+      case 'products':
+        productsSlideAnim.value = withSpring(0, { damping: 18 });
+        break;
     }
   }, [selectorState]);
 
@@ -505,26 +493,26 @@ export const InteractiveCarSelector: React.FC = () => {
   // ============================================================================
   const containerStyle = useAnimatedStyle(() => ({
     height: containerHeight.value,
-  }));
+  }), []);
 
   const gridStyle = useAnimatedStyle(() => ({
     opacity: gridOpacity.value,
-  }));
+  }), []);
 
   const carIconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: carIconScale.value }],
     shadowOpacity: interpolate(carIconGlow.value, [0, 1], [0.2, 0.6], Extrapolation.CLAMP),
     shadowRadius: interpolate(carIconGlow.value, [0, 1], [4, 12], Extrapolation.CLAMP),
-  }));
+  }), []);
 
   const chassisIconStyle = useAnimatedStyle(() => ({
     shadowOpacity: interpolate(chassisIconGlow.value, [0, 1], [0.2, 0.6], Extrapolation.CLAMP),
     shadowRadius: interpolate(chassisIconGlow.value, [0, 1], [4, 12], Extrapolation.CLAMP),
-  }));
+  }), []);
 
   const productsPanelStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: productsSlideAnim.value }],
-  }));
+  }), []);
 
   // ============================================================================
   // DATA HELPERS
@@ -578,28 +566,46 @@ export const InteractiveCarSelector: React.FC = () => {
     return result;
   }, [products, searchQuery, priceFilter]);
 
+  // Brand lookup map for chassis cards
+  const brandMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    carBrands.forEach(b => {
+      map[b.id] = language === 'ar' ? (b.name_ar || b.name) : b.name;
+    });
+    return map;
+  }, [carBrands, language]);
+
   // ============================================================================
-  // API CALLS
+  // API CALLS - Fixed to use productApi.getAll with car_model_id
   // ============================================================================
   const fetchProductsForModel = useCallback(async (modelId: string) => {
     setLoadingProducts(true);
     try {
-      const response = await productsApi.getProducts({ car_model_id: modelId, limit: 50 });
-      setProducts(response.products || []);
-      triggerHaptic('success');
+      // Use productApi.getAll with car_model_id parameter
+      const response = await productApi.getAll({ car_model_id: modelId, limit: 50 });
+      // Extract products from axios response - response.data contains the API response
+      const productsData = response.data?.products || [];
+      setProducts(productsData);
+      
+      // Trigger success haptic only after successful fetch
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
       setProducts([]);
     } finally {
       setLoadingProducts(false);
     }
-  }, [triggerHaptic]);
+  }, []);
 
   // ============================================================================
   // EVENT HANDLERS
   // ============================================================================
   const handleCarAnchorPress = useCallback(() => {
-    triggerHaptic('light');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     if (selectorState === 'collapsed' || selectorState === 'chassis_search') {
       setSelectorState('brands');
     } else {
@@ -609,10 +615,12 @@ export const InteractiveCarSelector: React.FC = () => {
       setProducts([]);
       setSearchQuery('');
     }
-  }, [selectorState, triggerHaptic]);
+  }, [selectorState]);
 
   const handleChassisAnchorPress = useCallback(() => {
-    triggerHaptic('light');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     if (selectorState === 'collapsed' || selectorState === 'brands' || selectorState === 'models') {
       setSelectorState('chassis_search');
       setSelectedBrand(null);
@@ -622,7 +630,7 @@ export const InteractiveCarSelector: React.FC = () => {
       setSelectorState('collapsed');
       setChassisSearchQuery('');
     }
-  }, [selectorState, triggerHaptic]);
+  }, [selectorState]);
 
   const handleGridItemPress = useCallback((item: CarBrand | CarModel, isBrand: boolean) => {
     if (isBrand) {
@@ -644,37 +652,52 @@ export const InteractiveCarSelector: React.FC = () => {
   }, [carBrands, fetchProductsForModel]);
 
   const handleProductPress = useCallback((productId: string) => {
-    triggerHaptic('selection');
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
     router.push(`/product/${productId}`);
-  }, [router, triggerHaptic]);
+  }, [router]);
 
   const handleBackToBrands = useCallback(() => {
-    triggerHaptic('light');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     setSelectorState('brands');
     setSelectedBrand(null);
     setSelectedModel(null);
     setProducts([]);
-  }, [triggerHaptic]);
+  }, []);
 
   const handleBackToModels = useCallback(() => {
-    triggerHaptic('light');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     setSelectorState('models');
     setSelectedModel(null);
     setProducts([]);
-  }, [triggerHaptic]);
+  }, []);
 
   const handleViewAll = useCallback(() => {
-    triggerHaptic('light');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     if (selectorState === 'brands') {
       router.push('/car-brands');
     } else if (selectedBrand) {
       router.push(`/brand/${selectedBrand.id}`);
     }
     setSelectorState('collapsed');
-  }, [selectorState, selectedBrand, router, triggerHaptic]);
+  }, [selectorState, selectedBrand, router]);
+
+  const handleCloseProducts = useCallback(() => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectorState('collapsed');
+  }, []);
 
   // ============================================================================
-  // FLASHLIST RENDER ITEMS
+  // FLASHLIST RENDER ITEMS - Stable references
   // ============================================================================
   const renderGridItem = useCallback(({ item }: { item: CarBrand | CarModel }) => (
     <GridItem
@@ -682,44 +705,46 @@ export const InteractiveCarSelector: React.FC = () => {
       isBrand={selectorState === 'brands'}
       isDark={isDark}
       moodPrimary={moodPrimary}
-      colors={colors}
+      colorsText={colors.text}
+      colorsPrimary={colors.primary}
+      colorsTextSecondary={colors.textSecondary}
       language={language}
       onPress={handleGridItemPress}
-      triggerHaptic={triggerSelectionHaptic}
     />
-  ), [selectorState, isDark, moodPrimary, colors, language, handleGridItemPress, triggerSelectionHaptic]);
+  ), [selectorState, isDark, moodPrimary, colors.text, colors.primary, colors.textSecondary, language, handleGridItemPress]);
 
-  const renderChassisItem = useCallback(({ item }: { item: CarModel }) => {
-    const brand = carBrands.find(b => b.id === item.brand_id);
-    return (
-      <ChassisModelCard
-        model={item}
-        brand={brand}
-        isDark={isDark}
-        moodPrimary={moodPrimary}
-        colors={colors}
-        language={language}
-        onPress={handleChassisModelPress}
-        triggerHaptic={triggerSelectionHaptic}
-      />
-    );
-  }, [carBrands, isDark, moodPrimary, colors, language, handleChassisModelPress, triggerSelectionHaptic]);
+  const renderChassisItem = useCallback(({ item }: { item: CarModel }) => (
+    <ChassisModelCard
+      model={item}
+      brandName={brandMap[item.brand_id] || ''}
+      isDark={isDark}
+      moodPrimary={moodPrimary}
+      colorsText={colors.text}
+      colorsPrimary={colors.primary}
+      colorsTextSecondary={colors.textSecondary}
+      language={language}
+      onPress={handleChassisModelPress}
+    />
+  ), [brandMap, isDark, moodPrimary, colors.text, colors.primary, colors.textSecondary, language, handleChassisModelPress]);
 
   const renderProductItem = useCallback(({ item }: { item: Product }) => (
     <ProductCard
       item={item}
       isDark={isDark}
       moodPrimary={moodPrimary}
-      colors={colors}
+      colorsText={colors.text}
+      colorsPrimary={colors.primary}
+      colorsTextSecondary={colors.textSecondary}
       language={language}
       onPress={handleProductPress}
     />
-  ), [isDark, moodPrimary, colors, language, handleProductPress]);
+  ), [isDark, moodPrimary, colors.text, colors.primary, colors.textSecondary, language, handleProductPress]);
 
   // ============================================================================
   // FLASHLIST KEY EXTRACTORS
   // ============================================================================
   const keyExtractor = useCallback((item: { id: string }) => item.id, []);
+  const filterKeyExtractor = useCallback((item: PriceFilter) => item, []);
 
   // ============================================================================
   // RENDER
@@ -897,7 +922,7 @@ export const InteractiveCarSelector: React.FC = () => {
         {(selectorState === 'brands' || selectorState === 'models') && (
           <Animated.View style={[styles.gridContainer, gridStyle]}>
             <FlashList
-              data={[...(selectorState === 'brands' ? displayBrands : filteredModels)]}
+              data={selectorState === 'brands' ? displayBrands : filteredModels}
               horizontal
               keyExtractor={keyExtractor}
               renderItem={renderGridItem}
@@ -996,10 +1021,7 @@ export const InteractiveCarSelector: React.FC = () => {
                 backgroundColor: colors.error + '20',
                 borderColor: colors.error + '40',
               }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setSelectorState('collapsed');
-              }}
+              onPress={handleCloseProducts}
             >
               <Ionicons name="close" size={24} color={colors.error} />
             </TouchableOpacity>
@@ -1035,7 +1057,7 @@ export const InteractiveCarSelector: React.FC = () => {
               horizontal
               estimatedItemSize={60}
               showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item}
+              keyExtractor={filterKeyExtractor}
               renderItem={({ item: filter }) => {
                 const isActive = priceFilter === filter;
                 return (
@@ -1048,7 +1070,9 @@ export const InteractiveCarSelector: React.FC = () => {
                       },
                     ]}
                     onPress={() => {
-                      triggerHaptic('selection');
+                      if (Platform.OS !== 'web') {
+                        Haptics.selectionAsync();
+                      }
                       setPriceFilter(filter);
                     }}
                   >
