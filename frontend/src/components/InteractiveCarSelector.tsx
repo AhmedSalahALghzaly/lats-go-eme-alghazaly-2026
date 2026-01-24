@@ -173,7 +173,7 @@ const GridItem = memo<GridItemProps>(({
           <View style={[styles.placeholderIcon, { backgroundColor: moodPrimary + '20' }]}>
             <MaterialCommunityIcons
               name={isBrand ? 'car' : 'car-side'}
-              size={isBrand ? 24 : 28}
+              size={isBrand ? 42 : 49} // Scaled by 1.75: 24*1.75=42, 28*1.75=49
               color={moodPrimary || colorsPrimary}
             />
           </View>
