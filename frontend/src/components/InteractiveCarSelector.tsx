@@ -1249,7 +1249,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  // Grid Styles
+  // Grid Styles - Scaled by 75% (1.75x original dimensions)
   gridContainer: {
     flex: 1,
     paddingHorizontal: 8,
@@ -1259,49 +1259,49 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   gridItemWrapper: {
-    marginHorizontal: 4,
+    marginHorizontal: 6, // Increased from 4
   },
   gridItem: {
-    width: 80,
-    height: 100,
-    borderRadius: 12,
+    width: 140,  // 80 * 1.75 = 140
+    height: 175, // 100 * 1.75 = 175
+    borderRadius: 16, // Slightly larger radius
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    padding: 8,
+    borderWidth: 1.5,
+    padding: 14, // 8 * 1.75 = 14
   },
   viewAllItem: {
     borderWidth: 2,
     borderStyle: 'dashed',
   },
   brandLogo: {
-    width: 40,
-    height: 40,
-    marginBottom: 4,
+    width: 70,  // 40 * 1.75 = 70
+    height: 70, // 40 * 1.75 = 70
+    marginBottom: 7, // 4 * 1.75 = 7
   },
   modelImage: {
-    width: 50,
-    height: 35,
-    borderRadius: 4,
-    marginBottom: 4,
+    width: 88,  // 50 * 1.75 = 87.5 ≈ 88
+    height: 61, // 35 * 1.75 = 61.25 ≈ 61
+    borderRadius: 7, // 4 * 1.75 = 7
+    marginBottom: 7, // 4 * 1.75 = 7
   },
   placeholderIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 70,  // 40 * 1.75 = 70
+    height: 70, // 40 * 1.75 = 70
+    borderRadius: 35, // Half of width/height
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 7,
   },
   gridItemText: {
-    fontSize: 11,
+    fontSize: 19, // 11 * 1.75 ≈ 19
     fontWeight: '600',
     textAlign: 'center',
   },
   gridItemSubtext: {
-    fontSize: 9,
+    fontSize: 16, // 9 * 1.75 ≈ 16
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: 4, // 2 * 1.75 ≈ 4
   },
   // Chassis Search Styles
   chassisSearchContainer: {
