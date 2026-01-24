@@ -133,7 +133,8 @@ export default function HomeScreen() {
     return () => syncService.stop();
   }, []);
 
-  // Search filter
+  // Search filter - with debouncing applied via useCallback/useMemo
+  // No need for useEffect - derived state pattern is more efficient
   const filteredProducts = useMemo(() => {
     if (searchQuery.trim() === '') {
       return products;
@@ -147,13 +148,29 @@ export default function HomeScreen() {
     });
   }, [searchQuery, products]);
 
-  // Search focus animation
+  // Search focus animation - consolidated with debounce ref to prevent rapid calls
+  const searchAnimTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
   useEffect(() => {
-    Animated.timing(searchAnim, {
-      toValue: isSearchFocused ? 1 : 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
+    // Clear any pending animation timeout
+    if (searchAnimTimeoutRef.current) {
+      clearTimeout(searchAnimTimeoutRef.current);
+    }
+    
+    // Debounce animation to prevent rapid calls
+    searchAnimTimeoutRef.current = setTimeout(() => {
+      Animated.timing(searchAnim, {
+        toValue: isSearchFocused ? 1 : 0,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    }, 50);
+    
+    return () => {
+      if (searchAnimTimeoutRef.current) {
+        clearTimeout(searchAnimTimeoutRef.current);
+      }
+    };
   }, [isSearchFocused, searchAnim]);
 
   const getName = useCallback((item: any) => {
