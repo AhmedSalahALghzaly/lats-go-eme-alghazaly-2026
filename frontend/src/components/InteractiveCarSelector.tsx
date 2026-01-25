@@ -1324,7 +1324,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
   },
   hintText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
@@ -1372,12 +1372,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   gridItem: {
-    width: 130,
-    height: 175,
+    width: 137,
+    height: 170,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.2)',
     padding: 3,
   },
   viewAllItem: {
@@ -1385,13 +1386,13 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   brandLogo: {
-    width: 119,
-    height: 135,
+    width: 130,
+    height: 130,
     marginBottom: 3,
   },
   modelImage: {
-    width: 119,
-    height: 135,
+    width: 135,
+    height: 130,
     borderRadius: 7,
     marginBottom: 1,
   },
@@ -1404,14 +1405,14 @@ const styles = StyleSheet.create({
     marginBottom: 7,
   },
   gridItemText: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
   },
   gridItemSubtext: {
     fontSize: 13,
     fontWeight: '500',
-    marginTop: 5,
+    marginTop: 3,
   },
   chassisSearchContainer: {
     flex: 1,
@@ -1436,7 +1437,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   chassisGridContent: {
-    paddingVertical: 7,
+    paddingVertical: 5,
   },
   chassisEmptyState: {
     flex: 1,
@@ -1454,16 +1455,17 @@ const styles = StyleSheet.create({
   },
   chassisGridCard: {
     borderRadius: 16,
-    borderWidth: 1.5,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.2)',
     overflow: 'hidden',
   },
   chassisGridCardImage: {
     width: '100%',
-    height: 135,
+    height: 130,
   },
   chassisGridCardPlaceholder: {
     width: '100%',
-    height: 135,
+    height: 130,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1472,7 +1474,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chassisGridCardName: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -1483,7 +1485,7 @@ const styles = StyleSheet.create({
   chassisGridCardBrand: {
     fontSize: 15,
     fontWeight: '500',
-    marginTop: 5,
+    marginTop: 3,
   },
   chassisGridCardChassisContainer: {
     flexDirection: 'row',
@@ -1513,21 +1515,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 5,
+    paddingVertical: 3,
     borderBottomWidth: 1,
     gap: 12,
   },
   backButton: {
-    width: 37,
-    height: 37,
+    width: 39,
+    height: 39,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
   },
   closeButton: {
-    width: 37,
-    height: 37,
+    width: 39,
+    height: 39,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1537,7 +1539,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: '700',
   },
   productCountBadge: {
@@ -1546,6 +1548,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     borderRadius: 8,
     marginTop: 4,
+    opacity: 0.35,
   },
   headerSubtitle: {
     fontSize: 12,
@@ -1553,8 +1556,9 @@ const styles = StyleSheet.create({
   },
   filtersRow: {
     paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingVertical: 9,
     borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.35)',
     gap: 10,
   },
   searchBox: {
@@ -1621,9 +1625,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   productName: {
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 15,
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 17,
   },
   priceTag: {
     alignSelf: 'flex-start',
