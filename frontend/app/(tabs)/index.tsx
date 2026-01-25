@@ -171,7 +171,7 @@ export default function HomeScreen() {
         clearTimeout(searchAnimTimeoutRef.current);
       }
     };
-  }, [isSearchFocused, searchAnim]);
+  }, [isSearchFocused]); // Remove searchAnim from dependencies - it's a ref and stable
 
   const getName = useCallback((item: any) => {
     return language === 'ar' && item.name_ar ? item.name_ar : item.name;
