@@ -944,7 +944,7 @@ export const InteractiveCarSelector: React.FC = () => {
         {/* Glassmorphism Background */}
         <View style={StyleSheet.absoluteFill}>
           <BlurView
-            intensity={isDark ? 85 : 90}
+            intensity={isDark ? 50 : 70}
             tint={isDark ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
