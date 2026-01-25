@@ -1621,9 +1621,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   productName: {
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 16,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 15,
   },
   priceTag: {
     alignSelf: 'flex-start',
