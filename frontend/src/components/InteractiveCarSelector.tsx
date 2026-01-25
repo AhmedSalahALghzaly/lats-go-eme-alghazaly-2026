@@ -1385,15 +1385,15 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   brandLogo: {
-    width: 70,
-    height: 70,
-    marginBottom: 7,
+    width: 119,
+    height: 135,
+    marginBottom: 3,
   },
   modelImage: {
-    width: 88,
-    height: 61,
+    width: 119,
+    height: 135,
     borderRadius: 7,
-    marginBottom: 7,
+    marginBottom: 1,
   },
   placeholderIcon: {
     width: 70,
