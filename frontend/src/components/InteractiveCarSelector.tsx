@@ -639,7 +639,7 @@ export const InteractiveCarSelector: React.FC = () => {
       setProducts([]);
       setSearchQuery('');
     }
-  }, [selectorState, carIconRotation]);
+  }, [selectorState]);
 
   const handleChassisAnchorPress = useCallback(() => {
     if (Platform.OS !== 'web') {
