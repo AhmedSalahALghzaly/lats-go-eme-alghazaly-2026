@@ -1449,8 +1449,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   chassisGridCardWrapper: {
-    width: (SCREEN_WIDTH - 24) / 3,
-    padding: 6,
+    width: (SCREEN_WIDTH / 2) - 12,
+    padding: 3,
   },
   chassisGridCard: {
     borderRadius: 16,
