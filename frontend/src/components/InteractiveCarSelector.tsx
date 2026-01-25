@@ -1199,7 +1199,7 @@ export const InteractiveCarSelector: React.FC = () => {
         {/* Search & Filters */}
         <View style={[styles.filtersRow, { 
           backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-          borderBottomColor: moodPrimary + '20',
+          borderBottomColor: moodPrimary + '4D',
         }]}>
           <View style={[styles.searchBox, { 
             backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', 
