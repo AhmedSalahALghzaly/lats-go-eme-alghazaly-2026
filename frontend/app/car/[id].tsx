@@ -711,6 +711,16 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  imageGallery: {
+    width: '100%',
+    height: '100%',
+  },
+  galleryImageWrapper: {
+    width: 400,
+    height: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   infoContainer: {
     padding: 20,
   },
