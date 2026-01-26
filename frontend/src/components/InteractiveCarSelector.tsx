@@ -393,6 +393,7 @@ interface ProductCardProps {
   language: string;
   onPress: (id: string) => void;
   onAddToCart: (productId: string) => Promise<void>;
+  checkDuplicate: (productId: string) => boolean;
 }
 
 const ProductCard = memo<ProductCardProps>(({
