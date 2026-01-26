@@ -23,7 +23,7 @@ import { useAppStore } from '../../src/store/appStore';
 import { useCartStore } from '../../src/store/useCartStore';
 import { cartApi, bundleOfferApi, carModelApi } from '../../src/services/api';
 import { Header } from '../../src/components/Header';
-import { useCartMutations, shoppingHubKeys } from '../../src/hooks/queries/useShoppingHubQuery';
+import { useCartMutations, useCartQuery, shoppingHubKeys } from '../../src/hooks/queries/useShoppingHubQuery';
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatedCartButton, AnimatedCartButtonRef } from '../../src/components/AnimatedIconButton';
 
