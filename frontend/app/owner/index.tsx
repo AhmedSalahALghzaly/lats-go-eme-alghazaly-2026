@@ -601,6 +601,23 @@ export default function OwnerDashboard() {
         {/* Footer with Navigation */}
         <View style={styles.footer}>
           <View style={styles.footerNav}>
+            {/* Advanced Search */}
+            <TouchableOpacity
+              style={styles.footerNavItem}
+              onPress={() => {
+                haptic.tap();
+                router.push('/owner/advanced-search' as any);
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.footerNavIcon, { backgroundColor: 'rgba(20, 184, 166, 0.2)' }]}>
+                <Ionicons name="options" size={22} color="#2DD4BF" />
+              </View>
+              <Text style={styles.footerNavText}>
+                {language === 'ar' ? 'بحث متقدم' : 'Adv. Search'}
+              </Text>
+            </TouchableOpacity>
+
             {/* Home */}
             <TouchableOpacity
               style={styles.footerNavItem}
