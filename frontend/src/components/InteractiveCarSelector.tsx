@@ -528,10 +528,22 @@ const ProductCard = memo<ProductCardProps>(({
           <Text style={[styles.productName, { color: colorsText }]} numberOfLines={2}>
             {displayName}
           </Text>
-          <View style={[styles.priceTag, { backgroundColor: (moodPrimary || '#009688') + '20' }]}>
-            <Text style={[styles.priceText, { color: moodPrimary || colorsPrimary }]}>
-              {priceLabel}
-            </Text>
+          <View style={styles.priceCartRow}>
+            <View style={[styles.priceTag, { backgroundColor: (moodPrimary || '#009688') + '20' }]}>
+              <Text style={[styles.priceText, { color: moodPrimary || colorsPrimary }]}>
+                {priceLabel}
+              </Text>
+            </View>
+            {/* Add to Cart Button - 19x19 circular */}
+            <AnimatedCartButton
+              ref={cartButtonRef}
+              isInCart={addedToCart}
+              isLoading={cartLoading}
+              onPress={handleAddToCart}
+              size={19}
+              primaryColor={moodPrimary || colorsPrimary}
+              style={styles.cartButtonOverlay}
+            />
           </View>
         </View>
       </TouchableOpacity>
