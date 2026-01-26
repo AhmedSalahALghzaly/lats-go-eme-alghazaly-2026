@@ -688,8 +688,8 @@ export const InteractiveCarSelector: React.FC = () => {
     return map;
   }, [carBrands, language]);
 
-  // Sliced products for display
-  const displayProducts = useMemo(() => filteredProducts.slice(0, 9), [filteredProducts]);
+  // Display all products without limit
+  const displayProducts = useMemo(() => filteredProducts, [filteredProducts]);
 
   // ============================================================================
   // API CALLS
@@ -697,7 +697,7 @@ export const InteractiveCarSelector: React.FC = () => {
   const fetchProductsForModel = useCallback(async (modelId: string) => {
     setLoadingProducts(true);
     try {
-      const response = await productApi.getAll({ car_model_id: modelId, limit: 50 });
+      const response = await productApi.getAll({ car_model_id: modelId, limit: 1000 });
       const productsData = response.data?.products || [];
       setProducts(productsData);
       
