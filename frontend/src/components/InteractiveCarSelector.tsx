@@ -1275,7 +1275,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 2,
+    borderTopWidth: 3,
     zIndex: 1000,
     overflow: 'hidden',
   },
@@ -1284,7 +1284,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 2,
+    height: 3,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 8,
@@ -1461,11 +1461,11 @@ const styles = StyleSheet.create({
   },
   chassisGridCardImage: {
     width: '100%',
-    height: 115,
+    height: 113,
   },
   chassisGridCardPlaceholder: {
     width: '100%',
-    height: 115,
+    height: 113,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1480,12 +1480,12 @@ const styles = StyleSheet.create({
   },
   chassisGridCardYear: {
     fontSize: 13.5,
-    marginTop: 3,
+    marginTop: 1.9,
   },
   chassisGridCardBrand: {
     fontSize: 13.5,
     fontWeight: '500',
-    marginTop: 3,
+    marginTop: 1.9,
   },
   chassisGridCardChassisContainer: {
     flexDirection: 'row',
@@ -1544,11 +1544,11 @@ const styles = StyleSheet.create({
   },
   productCountBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 3,
-    paddingVertical: 1,
+    paddingHorizontal: 1.9,
+    paddingVertical: 1.5,
     borderRadius: 8,
     marginTop: 4,
-    opacity: 0.19,
+    opacity: 0.39,
   },
   headerSubtitle: {
     fontSize: 12,
@@ -1556,7 +1556,7 @@ const styles = StyleSheet.create({
   },
   filtersRow: {
     paddingHorizontal: 16,
-    paddingVertical: 7,
+    paddingVertical: 5,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.35)',
     gap: 10,
@@ -1625,8 +1625,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   productName: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 13.5,
+    fontWeight: '500',
     lineHeight: 15,
   },
   priceTag: {
@@ -1634,7 +1634,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    opacity: 0.19,
+    opacity: 0.39,
   },
   priceText: {
     fontSize: 13,
