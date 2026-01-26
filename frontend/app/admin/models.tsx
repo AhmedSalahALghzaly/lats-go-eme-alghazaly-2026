@@ -558,28 +558,6 @@ export default function ModelsAdmin() {
     setToastVisible(true);
   }, []);
 
-  const pickImage = useCallback(async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [16, 9],
-        quality: 1,
-        base64: true,
-      });
-
-      if (!result.canceled && result.assets[0].base64) {
-        const mimeType = result.assets[0].mimeType || 'image/jpeg';
-        const isPng = mimeType.includes('png') || result.assets[0].uri?.toLowerCase().endsWith('.png');
-        const format = isPng ? 'image/png' : 'image/jpeg';
-        setModelImage(`data:${format};base64,${result.assets[0].base64}`);
-        setImageUrl('');
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-    }
-  }, []);
-
   const pickCatalogPdf = useCallback(async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
