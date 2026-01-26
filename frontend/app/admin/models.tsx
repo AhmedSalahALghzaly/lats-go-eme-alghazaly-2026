@@ -56,8 +56,7 @@ interface FormState {
   yearFrom: string;
   yearTo: string;
   chassisNumber: string;
-  modelImage: string | null;
-  imageUrl: string;
+  images: string[];
   catalogPdf: string | null;
   catalogPdfName: string;
   isEditMode: boolean;
@@ -72,14 +71,12 @@ interface FormHandlers {
   setYearFrom: (v: string) => void;
   setYearTo: (v: string) => void;
   setChassisNumber: (v: string) => void;
-  setModelImage: (v: string | null) => void;
-  setImageUrl: (v: string) => void;
+  setImages: (v: string[]) => void;
   setCatalogPdf: (v: string | null) => void;
   setCatalogPdfName: (v: string) => void;
   handleSave: () => void;
   resetForm: () => void;
   setSearchQuery: (v: string) => void;
-  pickImage: () => void;
   pickCatalogPdf: () => void;
 }
 
