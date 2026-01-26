@@ -1324,9 +1324,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
   },
   hintText: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   hintDivider: {
     width: 1,
@@ -1369,30 +1369,30 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   gridItemWrapper: {
-    marginHorizontal: 5,
+    marginHorizontal: 3,
   },
   gridItem: {
     width: 137,
-    height: 170,
+    height: 159,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 0.5,
     borderColor: 'rgba(255,255,255,0.2)',
-    padding: 3,
+    padding: 1,
   },
   viewAllItem: {
     borderWidth: 2,
     borderStyle: 'dashed',
   },
   brandLogo: {
-    width: 130,
-    height: 130,
+    width: 135,
+    height: 119,
     marginBottom: 3,
   },
   modelImage: {
     width: 135,
-    height: 130,
+    height: 115,
     borderRadius: 7,
     marginBottom: 1,
   },
@@ -1405,12 +1405,12 @@ const styles = StyleSheet.create({
     marginBottom: 7,
   },
   gridItemText: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 13.5,
+    fontWeight: '700',
     textAlign: 'center',
   },
   gridItemSubtext: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '500',
     marginTop: 3,
   },
@@ -1437,7 +1437,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   chassisGridContent: {
-    paddingVertical: 5,
+    paddingVertical: 3,
   },
   chassisEmptyState: {
     flex: 1,
@@ -1450,8 +1450,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   chassisGridCardWrapper: {
-    width: (SCREEN_WIDTH / 2) - 12,
-    padding: 3,
+    width: (SCREEN_WIDTH / 2) - 13,
+    padding: 1.5,
   },
   chassisGridCard: {
     borderRadius: 16,
@@ -1461,29 +1461,29 @@ const styles = StyleSheet.create({
   },
   chassisGridCardImage: {
     width: '100%',
-    height: 130,
+    height: 119,
   },
   chassisGridCardPlaceholder: {
     width: '100%',
-    height: 130,
+    height: 119,
     alignItems: 'center',
     justifyContent: 'center',
   },
   chassisGridCardInfo: {
-    padding: 3,
+    padding: 1.5,
     alignItems: 'center',
   },
   chassisGridCardName: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 13.5,
+    fontWeight: '700',
     textAlign: 'center',
   },
   chassisGridCardYear: {
-    fontSize: 13,
+    fontSize: 13.5,
     marginTop: 4,
   },
   chassisGridCardBrand: {
-    fontSize: 15,
+    fontSize: 13.5,
     fontWeight: '500',
     marginTop: 3,
   },
@@ -1627,7 +1627,7 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 15,
     fontWeight: '700',
-    lineHeight: 17,
+    lineHeight: 15,
   },
   priceTag: {
     alignSelf: 'flex-start',
