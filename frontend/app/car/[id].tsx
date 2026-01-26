@@ -720,7 +720,8 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   imageContainer: {
-    height: 220,
+    width: SCREEN_WIDTH,
+    aspectRatio: 16 / 9,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -732,11 +733,37 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  imageGalleryContent: {
+    alignItems: 'center',
+  },
   galleryImageWrapper: {
     width: SCREEN_WIDTH,
-    height: 220,
+    aspectRatio: 16 / 9,
+    position: 'relative',
+  },
+  galleryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  noImageContainer: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  imageIndicatorContainer: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  imageIndicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   infoContainer: {
     padding: 20,
