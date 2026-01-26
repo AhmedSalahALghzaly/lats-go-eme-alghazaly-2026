@@ -404,8 +404,17 @@ const ProductCard = memo<ProductCardProps>(({
   colorsTextSecondary,
   language,
   onPress,
+  onAddToCart,
 }) => {
   const scale = useSharedValue(1);
+  
+  // Cart button state and refs
+  const cartButtonRef = useRef<AnimatedCartButtonRef>(null);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+  
+  // Get cart mutation helpers
+  const { checkDuplicate } = useCartMutations();
   
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -432,6 +441,43 @@ const ProductCard = memo<ProductCardProps>(({
   const handlePress = useCallback(() => {
     onPress(item.id);
   }, [item.id, onPress]);
+
+  // Handle add to cart with duplicate checking
+  const handleAddToCart = useCallback(async () => {
+    // Check for duplicate
+    if (checkDuplicate(item.id)) {
+      if (cartButtonRef.current) {
+        cartButtonRef.current.triggerShake();
+      }
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
+      Alert.alert(
+        language === 'ar' ? 'تنبيه' : 'Notice',
+        'عرض المنتج تم اضافته بالفعل',
+        [{ text: language === 'ar' ? 'حسناً' : 'OK', style: 'default' }],
+        { cancelable: true }
+      );
+      return;
+    }
+
+    // Success path
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    
+    setCartLoading(true);
+    try {
+      await onAddToCart(item.id);
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 1500);
+    } catch (error) {
+      console.error('Error adding to cart from CarSelector:', error);
+      setAddedToCart(false);
+    } finally {
+      setCartLoading(false);
+    }
+  }, [onAddToCart, checkDuplicate, item.id, language]);
 
   return (
     <Animated.View style={[styles.productCardWrapper, animatedStyle]}>
