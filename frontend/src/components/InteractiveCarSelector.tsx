@@ -437,6 +437,7 @@ const ProductCard = memo<ProductCardProps>(({
           { 
             backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)', 
             borderColor: (moodPrimary || '#009688') + '30',
+            opacity: isDark ? 1.3795 : 1,
           },
         ]}
         onPressIn={handlePressIn}
