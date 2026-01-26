@@ -1461,7 +1461,7 @@ const styles = StyleSheet.create({
   },
   chassisGridCardImage: {
     width: '100%',
-    height: 113,
+    height: 111.5,
   },
   chassisGridCardPlaceholder: {
     width: '100%',
@@ -1480,12 +1480,12 @@ const styles = StyleSheet.create({
   },
   chassisGridCardYear: {
     fontSize: 13.5,
-    marginTop: 1.9,
+    marginTop: 1.7,
   },
   chassisGridCardBrand: {
     fontSize: 13.5,
     fontWeight: '500',
-    marginTop: 1.9,
+    marginTop: 1.7,
   },
   chassisGridCardChassisContainer: {
     flexDirection: 'row',
@@ -1544,8 +1544,8 @@ const styles = StyleSheet.create({
   },
   productCountBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 1.9,
-    paddingVertical: 1.5,
+    paddingHorizontal: 3,
+    paddingVertical: 1.9,
     borderRadius: 8,
     marginTop: 4,
     opacity: 0.39,
@@ -1556,7 +1556,7 @@ const styles = StyleSheet.create({
   },
   filtersRow: {
     paddingHorizontal: 16,
-    paddingVertical: 5,
+    paddingVertical: 3.7,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.35)',
     gap: 10,
