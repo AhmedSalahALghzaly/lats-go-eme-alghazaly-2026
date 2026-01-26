@@ -935,7 +935,7 @@ export const InteractiveCarSelector: React.FC = () => {
         style={[
           styles.container,
           {
-            backgroundColor: isDark ? 'rgba(20,20,20,0.98)' : 'rgba(255,255,255,0.98)',
+            backgroundColor: 'transparent',
             borderTopColor: moodPrimary,
           },
           containerStyle,
@@ -960,7 +960,7 @@ export const InteractiveCarSelector: React.FC = () => {
           />
           <View style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.05)' }
+            { backgroundColor: isDark ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255, 255, 255, 0.65)' }
           ]} />
         </View>
 
