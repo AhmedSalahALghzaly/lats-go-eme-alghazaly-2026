@@ -10,6 +10,7 @@ import {
   Linking,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +19,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
