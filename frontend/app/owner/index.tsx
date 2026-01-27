@@ -670,6 +670,23 @@ export default function OwnerDashboard() {
                 {language === 'ar' ? 'لوحة التحكم' : 'Admin'}
               </Text>
             </TouchableOpacity>
+
+            {/* Product Search */}
+            <TouchableOpacity
+              style={styles.footerNavItem}
+              onPress={() => {
+                haptic.tap();
+                router.push('/search');
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.footerNavIcon, { backgroundColor: 'rgba(249, 115, 22, 0.2)' }]}>
+                <Ionicons name="search-circle" size={22} color="#FB923C" />
+              </View>
+              <Text style={styles.footerNavText}>
+                {language === 'ar' ? 'بحث المنتجات' : 'Products'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.footerBrand}>
