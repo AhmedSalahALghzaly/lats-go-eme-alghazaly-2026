@@ -597,4 +597,81 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
   },
+  // Image Filter Card Styles
+  imageFilterCard: {
+    width: 120,
+    marginRight: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    padding: 8,
+  },
+  imageFilterCardLarge: {
+    width: 180,
+    marginRight: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    padding: 8,
+  },
+  imageFilterCardSmall: {
+    width: 100,
+    marginRight: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    overflow: 'hidden',
+    padding: 6,
+  },
+  imageFilterLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  imageFilterLabelSmall: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  imageFilterImageContainer: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  imageFilterImageContainerLarge: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  imageFilterImageContainerSmall: {
+    width: '100%',
+    height: 75,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  carBrandImage: {
+    width: 100,
+    height: 100,
+  },
+  carModelImage: {
+    width: '100%',
+    height: '100%',
+  },
+  productBrandImage: {
+    width: 100,
+    height: 100,
+  },
+  categoryImage: {
+    width: 75,
+    height: 75,
+  },
 });
