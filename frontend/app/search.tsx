@@ -265,36 +265,40 @@ export default function SearchScreen() {
               {language === 'ar' ? 'فلتر حسب موديل السيارة' : 'Filter by Car Model'}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {filteredCarModels.map((model) => (
-                <TouchableOpacity
-                  key={model.id}
-                  style={[
-                    styles.imageFilterCardLarge,
-                    { borderColor: colors.border, backgroundColor: colors.surface },
-                    selectedCarModel === model.id && { borderColor: colors.secondary, borderWidth: 2 },
-                  ]}
-                  onPress={() => setSelectedCarModel(selectedCarModel === model.id ? null : model.id)}
-                >
-                  <Text style={[
-                    styles.imageFilterLabel,
-                    { color: selectedCarModel === model.id ? colors.secondary : colors.text },
-                  ]} numberOfLines={1}>
-                    {getName(model)}{model.year_start && model.year_end ? ` ${model.year_start}-${model.year_end}` : ''}
-                  </Text>
-                  <View style={[styles.imageFilterImageContainerLarge, { backgroundColor: colors.background }]}>
-                    {model.image ? (
-                      <Image
-                        source={{ uri: model.image }}
-                        style={styles.carModelImage}
-                        contentFit="cover"
-                        transition={200}
-                      />
-                    ) : (
-                      <Ionicons name="car" size={60} color={colors.textSecondary} />
-                    )}
-                  </View>
-                </TouchableOpacity>
-              ))}
+              {filteredCarModels.map((model) => {
+                // Car models use 'image_url' field for images (base64 format from admin panel)
+                const modelImage = model.image_url;
+                return (
+                  <TouchableOpacity
+                    key={model.id}
+                    style={[
+                      styles.imageFilterCardLarge,
+                      { borderColor: colors.border, backgroundColor: colors.surface },
+                      selectedCarModel === model.id && { borderColor: colors.secondary, borderWidth: 2 },
+                    ]}
+                    onPress={() => setSelectedCarModel(selectedCarModel === model.id ? null : model.id)}
+                  >
+                    <View style={[styles.imageFilterImageContainerLarge, { backgroundColor: colors.background }]}>
+                      {modelImage ? (
+                        <Image
+                          source={{ uri: modelImage }}
+                          style={styles.carModelImage}
+                          contentFit="cover"
+                          transition={200}
+                        />
+                      ) : (
+                        <Ionicons name="car" size={50} color={colors.textSecondary} />
+                      )}
+                    </View>
+                    <Text style={[
+                      styles.imageFilterLabel,
+                      { color: selectedCarModel === model.id ? colors.secondary : colors.text },
+                    ]} numberOfLines={1}>
+                      {getName(model)}{model.year_start && model.year_end ? ` ${model.year_start}-${model.year_end}` : ''}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
             {filteredCarModels.length === 0 && (
               <Text style={[styles.noModelsText, { color: colors.textSecondary }]}>
