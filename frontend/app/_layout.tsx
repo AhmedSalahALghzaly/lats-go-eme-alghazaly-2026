@@ -33,12 +33,28 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const currentMood = useAppStore((state) => state.currentMood);
   
   // Refs for preventing duplicate operations
-  const servicesInitialized = useRef(false);
+36|  const servicesInitialized = useRef(false);
   const adminsLoaded = useRef(false);
   const lastActivityRecorded = useRef(0);
+  const minSplashTimeElapsed = useRef(false);
   
   // Single consolidated UI state
   const [appReady, setAppReady] = useState(false);
+
+  /**
+   * Minimum splash screen display time - ensures DriftLoader is visible
+   */
+  useEffect(() => {
+    const minDisplayTime = setTimeout(() => {
+      minSplashTimeElapsed.current = true;
+      // Check if hydration already completed
+      if (hasHydrated) {
+        setAppReady(true);
+      }
+    }, 2000); // Show DriftLoader for at least 2 seconds
+    
+    return () => clearTimeout(minDisplayTime);
+  }, []);
 
   /**
    * Initialize core services - runs ONCE on mount
