@@ -44,9 +44,9 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Golden Grid Formula: 4 columns x 2 rows layout
 // ITEM_WIDTH = (SCREEN_WIDTH - (sidePadding * 2) - (gap * (columns - 1))) / columns
-const SIDE_PADDING = 13;
-const GRID_GAP = 7.5;
-const ITEM_WIDTH = Math.max(70, (SCREEN_WIDTH - (SIDE_PADDING * 2) - (GRID_GAP * 3)) / 4);
+const SIDE_PADDING = 11;
+const GRID_GAP = 5;
+const ITEM_WIDTH = Math.max(70, (SCREEN_WIDTH - (SIDE_PADDING * 2) - (7 * 3)) / 4);
 
 // Constants for height calculation
 const MIN_HEIGHT = 180; // Minimum height for search bar + quick actions
@@ -478,14 +478,14 @@ export const AdvancedSearchBottomSheet: React.FC<AdvancedSearchBottomSheetProps>
                   </TouchableOpacity>
                   {/* New B2B Entities - Distributors */}
                   <TouchableOpacity
-                    style={[styles.quickAction, { backgroundColor: 'rgba(130, 157, 191, 0.15)' }]}
+                    style={[styles.quickAction, { backgroundColor: 'rgba(55, 103, 135, 0.15)' }]}
                     onPress={() => {
                       onClose();
                       router.push('/owner/distributors');
                     }}
                   >
-                    <MaterialCommunityIcons name="truck-delivery" size={22} color="#25435c" />
-                    <Text style={[styles.quickActionText, { color: '#25435c' }]} numberOfLines={1}>
+                    <MaterialCommunityIcons name="truck-delivery" size={22} color="#a1cced" />
+                    <Text style={[styles.quickActionText, { color: '#a1cced' }]} numberOfLines={1}>
                       {language === 'ar' ? 'الموزعون' : 'Distributors'}
                     </Text>
                   </TouchableOpacity>
