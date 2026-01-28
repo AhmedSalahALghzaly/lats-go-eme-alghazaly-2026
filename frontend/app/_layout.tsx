@@ -108,13 +108,13 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    // Extended fallback timeout for slow hydration (30 seconds)
+    // Extended fallback timeout for slow hydration (37 seconds)
     const timeout = setTimeout(() => {
-      console.log('[AuthGuard] Force ready (hydration timeout - 30s)');
+      console.log('[AuthGuard] Force ready (hydration timeout - 37s)');
       const { setHasHydrated } = useAppStore.getState();
       setHasHydrated(true);
       setAppReady(true);
-    }, 30000);
+    }, 37000);
     
     return () => clearTimeout(timeout);
   }, [hasHydrated]);
