@@ -1,3 +1,12 @@
+/**
+ * Root Layout - High-Performance Startup Architecture
+ * 
+ * Optimizations:
+ * - Integrated asset loading with graceful degradation
+ * - Reduced hydration timeout (16s max)
+ * - Pre-fetching during native splash phase
+ * - Mobile loop prevention maintained via refs
+ */
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -12,60 +21,116 @@ import { networkService } from '../src/services/networkService';
 import { screenshotProtectionService } from '../src/services/screenshotProtectionService';
 import { autoLogoutService } from '../src/services/autoLogoutService';
 import { offlineDatabaseService } from '../src/services/offlineDatabaseService';
+import assetLoader from '../src/services/fontLoader';
 import { DriftLoader } from '../src/components/ui/DriftLoader';
 
+// Configuration Constants
+const MIN_SPLASH_DISPLAY_MS = 2000;   // DriftLoader visible for at least 2s
+const HYDRATION_TIMEOUT_MS = 16000;   // 16 second fallback (reduced from 37s)
+
 /**
- * Auth Guard Component - Fully Stabilized for Mobile
+ * Auth Guard Component - Optimized Startup Lifecycle
  * 
- * ROOT CAUSE FIX:
- * - REMOVED pathname from all useEffect dependencies (causes infinite loop on mobile)
- * - Expo Router's usePathname() triggers more frequently on mobile vs web
- * - All screen-specific logic now uses refs instead of reactive dependencies
+ * Architecture:
+ * 1. Asset prefetch during native splash
+ * 2. Hydration with 16s timeout
+ * 3. Minimum 2s DriftLoader display
+ * 4. Graceful degradation for fonts
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
   
-  // Zustand state
+  // Zustand state - minimal selectors for performance
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const hasHydrated = useHasHydrated();
   const user = useAppStore((state) => state.user);
   const currentMood = useAppStore((state) => state.currentMood);
   
-  // Refs for preventing duplicate operations
+  // Refs for preventing duplicate operations & mobile loop prevention
   const servicesInitialized = useRef(false);
   const adminsLoaded = useRef(false);
   const lastActivityRecorded = useRef(0);
-  const minSplashTimeElapsed = useRef(false);
+  const assetsPreloaded = useRef(false);
   
-  // Single consolidated UI state
+  // App ready state
   const [appReady, setAppReady] = useState(false);
+  const [minSplashElapsed, setMinSplashElapsed] = useState(false);
+  const [hydrationComplete, setHydrationComplete] = useState(false);
 
   /**
-   * Minimum splash screen display time - ensures DriftLoader is visible
+   * Phase 1: Asset Prefetch - runs once on mount
+   * Prefetches fonts/assets during native splash
    */
   useEffect(() => {
-    const minDisplayTime = setTimeout(() => {
-      minSplashTimeElapsed.current = true;
-      // Check if hydration already completed
-      if (hasHydrated) {
-        setAppReady(true);
+    if (assetsPreloaded.current) return;
+    assetsPreloaded.current = true;
+
+    const prefetchAssets = async () => {
+      try {
+        await assetLoader.prefetchCriticalAssets();
+        // Load custom fonts with graceful degradation (13.5s timeout)
+        await assetLoader.loadFontsWithGracefulDegradation();
+      } catch (error) {
+        // Non-blocking - app proceeds with system fonts
       }
-    }, 2000); // Show DriftLoader for at least 2 seconds
-    
-    return () => clearTimeout(minDisplayTime);
+    };
+
+    prefetchAssets();
   }, []);
 
   /**
-   * Initialize core services - runs ONCE on mount
+   * Minimum splash display timer
+   * Ensures DriftLoader animation is visible
    */
   useEffect(() => {
-    if (servicesInitialized.current) return;
+    const timer = setTimeout(() => {
+      setMinSplashElapsed(true);
+    }, MIN_SPLASH_DISPLAY_MS);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  /**
+   * Hydration handler - optimized timeout (16s)
+   * NO pathname dependency - prevents mobile infinite loop
+   */
+  useEffect(() => {
+    if (hasHydrated) {
+      setHydrationComplete(true);
+      return;
+    }
+    
+    // Fallback timeout - 16 seconds max
+    const timeout = setTimeout(() => {
+      const { setHasHydrated } = useAppStore.getState();
+      setHasHydrated(true);
+      setHydrationComplete(true);
+    }, HYDRATION_TIMEOUT_MS);
+    
+    return () => clearTimeout(timeout);
+  }, [hasHydrated]);
+
+  /**
+   * App ready determination
+   * Ready when both: hydration complete AND minimum splash elapsed
+   */
+  useEffect(() => {
+    if (hydrationComplete && minSplashElapsed && !appReady) {
+      // Hide native splash and show app
+      assetLoader.hideSplashScreen();
+      setAppReady(true);
+    }
+  }, [hydrationComplete, minSplashElapsed, appReady]);
+
+  /**
+   * Initialize core services - runs ONCE when app is ready
+   */
+  useEffect(() => {
+    if (!appReady || servicesInitialized.current) return;
     servicesInitialized.current = true;
 
     const initializeServices = async () => {
-      console.log('[App] Initializing services...');
-
       try {
         await offlineDatabaseService.initialize();
         await networkService.initialize();
@@ -73,15 +138,13 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
         
         const { logout } = useAppStore.getState();
         await autoLogoutService.initialize(() => {
-          console.log('[App] Auto-logout triggered');
           logout();
           router.replace('/login');
         });
 
         syncService.start();
-        console.log('[App] All services initialized');
       } catch (error) {
-        console.error('[App] Service initialization error:', error);
+        // Services will retry on next app open
       }
     };
 
@@ -94,42 +157,17 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       syncService.stop();
       offlineDatabaseService.close();
     };
-  }, []);
+  }, [appReady]);
 
   /**
-   * Hydration handler - sets app ready state
-   * NO pathname dependency - prevents mobile infinite loop
-   * Extended timeout to 30 seconds for slow networks
-   * Respects minimum splash display time
-   */
-  useEffect(() => {
-    if (hasHydrated && minSplashTimeElapsed.current) {
-      setAppReady(true);
-      return;
-    }
-    
-    // Extended fallback timeout for slow hydration (37 seconds)
-    const timeout = setTimeout(() => {
-      console.log('[AuthGuard] Force ready (hydration timeout - 37s)');
-      const { setHasHydrated } = useAppStore.getState();
-      setHasHydrated(true);
-      setAppReady(true);
-    }, 37000);
-    
-    return () => clearTimeout(timeout);
-  }, [hasHydrated]);
-
-  /**
-   * User activity tracking - DEBOUNCED to prevent rapid calls
-   * NO pathname dependency - uses interval instead
+   * User activity tracking - debounced interval-based
+   * NO pathname dependency
    */
   useEffect(() => {
     if (!appReady || !isAuthenticated || !user) return;
 
-    // Record initial activity
     const recordActivity = () => {
       const now = Date.now();
-      // Only record if 5 seconds have passed since last record
       if (now - lastActivityRecorded.current > 5000) {
         lastActivityRecorded.current = now;
         autoLogoutService.recordUserActivity();
@@ -138,9 +176,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     };
 
     recordActivity();
-
-    // Set up interval for periodic activity tracking instead of pathname-based
-    const interval = setInterval(recordActivity, 60000); // Every minute
+    const interval = setInterval(recordActivity, 60000);
 
     return () => clearInterval(interval);
   }, [appReady, isAuthenticated, user?.id]);
@@ -160,7 +196,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
           adminsLoaded.current = true;
         }
       } catch (error) {
-        console.log('[AuthGuard] Could not fetch admins');
+        // Non-blocking
       }
     };
 
@@ -168,13 +204,12 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [appReady, isAuthenticated]);
 
   /**
-   * Navigation guard - handles auth-based routing
-   * Uses segments only (stable), NOT pathname (unstable on mobile)
+   * Navigation guard - auth-based routing
+   * Uses segments only (stable on mobile)
    */
   useEffect(() => {
     if (!appReady) return;
 
-    // Debounce navigation to prevent rapid-fire calls
     const timeout = setTimeout(() => {
       const inAuthGroup = segments[0] === 'login';
       const inProtectedRoute = 
@@ -185,10 +220,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
         segments[0] === 'favorites';
 
       if (isAuthenticated && inAuthGroup) {
-        console.log('[AuthGuard] Redirecting to home');
         router.replace('/(tabs)');
       } else if (!isAuthenticated && inProtectedRoute) {
-        console.log('[AuthGuard] Redirecting to login');
         router.replace('/login');
       }
     }, 150);
@@ -196,7 +229,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timeout);
   }, [appReady, isAuthenticated, segments]);
 
-  // Loading state
+  // Loading state - DriftLoader animation
   if (!appReady) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: currentMood?.background || '#0F172A' }]}>
@@ -209,14 +242,14 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Root Layout - Minimal wrapper
+ * Root Layout - Minimal wrapper with providers
  */
 export default function RootLayout() {
   const theme = useAppStore((state) => state.theme);
 
   return (
     <QueryProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={styles.root}>
         <SafeAreaProvider>
           <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
           <AuthGuard>
@@ -241,6 +274,9 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
