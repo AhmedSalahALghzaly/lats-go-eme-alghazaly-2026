@@ -42,6 +42,12 @@ import { Skeleton } from './Skeleton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Golden Grid Formula: 4 columns x 2 rows layout
+// ITEM_WIDTH = (SCREEN_WIDTH - (sidePadding * 2) - (gap * (columns - 1))) / columns
+const SIDE_PADDING = 15;
+const GRID_GAP = 10;
+const ITEM_WIDTH = Math.max(70, (SCREEN_WIDTH - (SIDE_PADDING * 2) - (GRID_GAP * 3)) / 4);
+
 // Constants for height calculation
 const MIN_HEIGHT = 180; // Minimum height for search bar + quick actions
 const MAX_HEIGHT = SCREEN_HEIGHT * 0.85; // Maximum 85% of screen
