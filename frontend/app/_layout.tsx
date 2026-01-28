@@ -83,6 +83,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   /**
    * Hydration handler - sets app ready state
    * NO pathname dependency - prevents mobile infinite loop
+   * Extended timeout to 30 seconds for slow networks
    */
   useEffect(() => {
     if (hasHydrated) {
@@ -90,13 +91,13 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    // Fallback timeout for slow hydration
+    // Extended fallback timeout for slow hydration (30 seconds)
     const timeout = setTimeout(() => {
-      console.log('[AuthGuard] Force ready (hydration timeout)');
+      console.log('[AuthGuard] Force ready (hydration timeout - 30s)');
       const { setHasHydrated } = useAppStore.getState();
       setHasHydrated(true);
       setAppReady(true);
-    }, 1500);
+    }, 30000);
     
     return () => clearTimeout(timeout);
   }, [hasHydrated]);
