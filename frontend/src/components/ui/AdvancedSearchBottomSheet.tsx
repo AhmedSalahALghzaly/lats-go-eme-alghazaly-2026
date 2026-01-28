@@ -44,9 +44,9 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Golden Grid Formula: 4 columns x 2 rows layout
 // ITEM_WIDTH = (SCREEN_WIDTH - (sidePadding * 2) - (gap * (columns - 1))) / columns
-const SIDE_PADDING = 11;
+const SIDE_PADDING = 10;
 const GRID_GAP = 5;
-const ITEM_WIDTH = Math.max(70, (SCREEN_WIDTH - (SIDE_PADDING * 2) - (7 * 3)) / 4);
+const ITEM_WIDTH = Math.max(70, (SCREEN_WIDTH - (SIDE_PADDING * 2) - (5 * 3)) / 4);
 
 // Constants for height calculation
 const MIN_HEIGHT = 180; // Minimum height for search bar + quick actions
