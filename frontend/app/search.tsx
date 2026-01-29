@@ -493,12 +493,16 @@ export default function SearchScreen() {
           <DriftLoader size="large" color={colors.primary} />
         </View>
       ) : (
-        <View style={styles.flashListContainer}>
+        <View style={[
+          styles.flashListContainer, 
+          // On web, explicitly set width to ensure FlashList calculates columns correctly
+          Platform.OS === 'web' && { width: screenWidth }
+        ]}>
           <FlashList
             data={products}
             keyExtractor={(item) => item.id}
             numColumns={numColumns}
-            key={numColumns} // Force re-render when columns change
+            key={`${numColumns}-${screenWidth}`} // Force re-render when columns or width change
             estimatedItemSize={250}
             contentContainerStyle={styles.listContent}
             onEndReached={handleEndReached}
