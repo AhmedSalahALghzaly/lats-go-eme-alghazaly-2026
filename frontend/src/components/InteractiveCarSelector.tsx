@@ -18,6 +18,7 @@ import {
   TextInput,
   Platform,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
@@ -43,7 +44,8 @@ import { ProductCardSkeleton } from './ui/Skeleton';
 import { AnimatedCartButton, AnimatedCartButtonRef } from './AnimatedIconButton';
 import { useCartMutations, useCartQuery } from '../hooks/queries/useShoppingHubQuery';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Note: SCREEN_WIDTH is now obtained via useWindowDimensions() for responsiveness
 
 // Vehicle icon sequence for morphing animation
 const VEHICLE_ICONS: Array<keyof typeof MaterialCommunityIcons.glyphMap> = [
@@ -614,6 +616,9 @@ const FilterChip = memo<FilterChipProps>(({ filter, isActive, moodPrimary, color
 export const InteractiveCarSelector: React.FC = () => {
   const router = useRouter();
   
+  // Use reactive window dimensions for responsive layout
+  const { width: windowWidth } = useWindowDimensions();
+  
   // Extract primitives from store to avoid object recreation
   const theme = useAppStore((state) => state.theme);
   const language = useAppStore((state) => state.language);
@@ -727,14 +732,14 @@ export const InteractiveCarSelector: React.FC = () => {
     transform: [{ translateY: productsSlideAnim.value }],
   }));
   
-  // Calculate responsive columns for web desktop
+  // Calculate responsive columns for web desktop using dynamic window width
   const { productNumColumns, productCardWidth } = useMemo(() => {
     const MIN_CARD_WIDTH = 180;
     const GRID_PADDING = 30;
     
     // Only apply responsive logic for web on larger screens
-    if (Platform.OS === 'web' && SCREEN_WIDTH > 768) {
-      const availableWidth = SCREEN_WIDTH - GRID_PADDING;
+    if (Platform.OS === 'web' && windowWidth > 768) {
+      const availableWidth = windowWidth - GRID_PADDING;
       const calculatedColumns = Math.floor(availableWidth / MIN_CARD_WIDTH);
       const numCols = Math.max(3, Math.min(calculatedColumns, 10)); // 3-10 columns
       const cardWidth = Math.floor((availableWidth - (numCols * 4)) / numCols); // 4px margin per card
@@ -744,9 +749,14 @@ export const InteractiveCarSelector: React.FC = () => {
     // Default mobile layout - 3 columns
     return { 
       productNumColumns: 3, 
-      productCardWidth: Math.floor((SCREEN_WIDTH - 30) / 3) 
+      productCardWidth: Math.floor((windowWidth - 30) / 3) 
     };
-  }, [SCREEN_WIDTH]);
+  }, [windowWidth]);
+  
+  // Calculate chassis card width for horizontal layout
+  const chassisCardWidth = useMemo(() => {
+    return (windowWidth / 2) - 13;
+  }, [windowWidth]);
 
   // ============================================================================
   // DATA HELPERS - Memoized
