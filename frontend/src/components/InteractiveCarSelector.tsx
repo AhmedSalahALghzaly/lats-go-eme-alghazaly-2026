@@ -540,13 +540,13 @@ const ProductCard = memo<ProductCardProps>(({
                 {priceLabel}
               </Text>
             </View>
-            {/* Add to Cart Button - 15x15 circular miniature */}
+            {/* Add to Cart Button - 17x17 circular miniature */}
             <AnimatedCartButton
               ref={cartButtonRef}
               isInCart={addedToCart}
               isLoading={cartLoading}
               onPress={handleAddToCart}
-              size={11}
+              size={13}
               primaryColor={moodPrimary || colorsPrimary}
               style={styles.cartButtonOverlay}
             />
@@ -1292,7 +1292,7 @@ export const InteractiveCarSelector: React.FC = () => {
           </Animated.View>
         )}
 
-        {/* Chassis Search Results */}
+        {/* Chassis Search Results - Horizontal Layout */}
         {selectorState === 'chassis_search' && (
           <Animated.View style={[styles.chassisResultsContainer, gridStyle]}>
             {chassisFilteredModels.length === 0 ? (
@@ -1305,12 +1305,12 @@ export const InteractiveCarSelector: React.FC = () => {
             ) : (
               <FlashList
                 data={chassisFilteredModels}
-                numColumns={2}
+                horizontal
                 keyExtractor={keyExtractor}
                 renderItem={renderChassisItem}
-                estimatedItemSize={190}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.chassisGridContent}
+                estimatedItemSize={chassisCardWidth}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalListContent}
               />
             )}
           </Animated.View>
@@ -1831,9 +1831,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cartButtonOverlay: {
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
+    width: 17,
+    height: 17,
+    borderRadius: 9,
   },
   loadingContainer: {
     flex: 1,
