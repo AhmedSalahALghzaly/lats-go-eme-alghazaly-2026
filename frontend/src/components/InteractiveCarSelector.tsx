@@ -764,8 +764,8 @@ export const InteractiveCarSelector: React.FC = () => {
     }
     
     // Mobile layout - 3 columns with optimized spacing
-    // Available width = windowWidth - 7
-    const mobileAvailableWidth = windowWidth - 7;
+    // Available width = windowWidth - 3 - 5
+    const mobileAvailableWidth = windowWidth - 3 - 5;
     const mobileCardWidth = Math.floor(mobileAvailableWidth / 3);
     
     return { 
