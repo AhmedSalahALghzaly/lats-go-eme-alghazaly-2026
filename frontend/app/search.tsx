@@ -622,8 +622,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   cardWrapper: {
-    // Uniform 7px gap for both platforms (3.5px margin each side)
-    marginHorizontal: 3.5,
+    // Uniform 6px gap for both platforms (3px margin each side)
+    marginHorizontal: 3,
     alignItems: 'center',
     marginBottom: 12,
   },
