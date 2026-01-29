@@ -1775,6 +1775,8 @@ const styles = StyleSheet.create({
   },
   flashListContainer: {
     flex: 1,
+    // Ensure full width on web for proper FlashList grid calculation
+    ...(Platform.OS === 'web' ? { width: '100%' } : {}),
   },
   productsGrid: {
     paddingHorizontal: 8,
