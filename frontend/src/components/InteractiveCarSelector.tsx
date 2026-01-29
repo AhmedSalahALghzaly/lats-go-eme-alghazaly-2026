@@ -1781,13 +1781,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   productCardWrapper: {
-    // Dynamic width calculated in component for web responsiveness
-    // Default mobile: 3 columns, Desktop web: up to 10 columns
-    width: Platform.OS === 'web' && SCREEN_WIDTH > 768
-      ? Math.floor((SCREEN_WIDTH - 30 - (Math.min(Math.floor((SCREEN_WIDTH - 30) / 180), 10) * 4)) / Math.min(Math.floor((SCREEN_WIDTH - 30) / 180), 10))
-      : Math.floor((SCREEN_WIDTH - 30) / 3),
+    // Width is now calculated dynamically via productCardWidth in useMemo
+    // This style only provides layout properties, not fixed width
     marginHorizontal: 2,
     marginBottom: 12,
+    alignItems: 'center',
   },
   productCard: {
     borderRadius: 16,
