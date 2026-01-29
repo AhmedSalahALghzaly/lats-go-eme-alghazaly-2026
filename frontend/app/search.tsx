@@ -55,10 +55,10 @@ export default function SearchScreen() {
       console.log('[Search Grid Debug] screenWidth:', screenWidth, 'availableWidth:', availableWidth);
     }
     
-    // Desktop web (>768px): Fixed card width of 200px, 7px horizontal gap
+    // Desktop web (>768px): Fixed card width of 193px, 5px horizontal gap
     if (Platform.OS === 'web' && screenWidth > 768) {
-      const FIXED_CARD_WIDTH = 200;
-      const WEB_GAP = 7;
+      const FIXED_CARD_WIDTH = 193;
+      const WEB_GAP = 5;
       
       // Calculate how many columns can fit
       const calculatedCols = Math.floor(availableWidth / (FIXED_CARD_WIDTH + WEB_GAP));
