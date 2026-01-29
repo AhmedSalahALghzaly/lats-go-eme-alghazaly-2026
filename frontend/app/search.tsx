@@ -623,9 +623,9 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     // Platform-specific margins for precision grid alignment:
-    // Mobile: 1.5px each side = 3px total gap between adjacent cards
-    // Web: 2.5px each side = 5px total gap between adjacent cards
-    marginHorizontal: Platform.OS === 'web' ? 2.5 : 1.5,
+    // Mobile: 2.5px each side = 5px total gap between adjacent cards
+    // Web: 3.5px each side = 7px total gap between adjacent cards
+    marginHorizontal: Platform.OS === 'web' ? 3.5 : 2.5,
     alignItems: 'center',
     marginBottom: 12,
   },
