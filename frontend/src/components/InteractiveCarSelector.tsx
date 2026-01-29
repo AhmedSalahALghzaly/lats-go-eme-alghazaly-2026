@@ -738,34 +738,35 @@ export const InteractiveCarSelector: React.FC = () => {
   // Calculate responsive columns for web desktop using dynamic window width
   const { productNumColumns, productCardWidth } = useMemo(() => {
     // Precision grid alignment with fixed horizontal gaps
-    const GRID_PADDING = 10; // Total grid padding (5px each side)
+    // GRID_PADDING = 14 (7px each side)
+    const GRID_PADDING = 14;
+    const _CARD_WIDTH = 119; // Fixed card width for uniform layout
+    const CARD_MARGIN = 3.5; // 3.5px horizontal gap between cards
     
     // Debug logging for development
     if (__DEV__ && Platform.OS === 'web') {
       console.log('[InteractiveCarSelector Grid Debug] windowWidth:', windowWidth);
     }
     
-    // Desktop web (>768px): Fixed card width of 199px, 5px horizontal gap
+    // Desktop web (>768px): Fixed card width of 119px, 3.5px horizontal gap
     if (Platform.OS === 'web' && windowWidth > 768) {
-      const FIXED_CARD_WIDTH = 199;
-      const CARD_MARGIN = 5; // Total horizontal gap between cards
       const availableWidth = windowWidth - GRID_PADDING;
       
       // Calculate how many columns can fit
-      const calculatedCols = Math.floor(availableWidth / (FIXED_CARD_WIDTH + CARD_MARGIN));
+      const calculatedCols = Math.floor(availableWidth / (_CARD_WIDTH + CARD_MARGIN));
       const numCols = Math.max(3, calculatedCols); // Minimum 3 columns, unlimited maximum
       
       if (__DEV__) {
-        console.log('[InteractiveCarSelector Grid Debug] Desktop: cols:', numCols, 'cardWidth:', FIXED_CARD_WIDTH, 'availableWidth:', availableWidth);
+        console.log('[InteractiveCarSelector Grid Debug] Desktop: cols:', numCols, 'cardWidth:', _CARD_WIDTH, 'availableWidth:', availableWidth);
       }
       
-      return { productNumColumns: numCols, productCardWidth: FIXED_CARD_WIDTH };
+      return { productNumColumns: numCols, productCardWidth: _CARD_WIDTH };
     }
     
-    // Mobile layout - 3 columns with 3px horizontal gap
-    // (2 * 3) accounts for the two 3px gaps between the three cards
-    const MOBILE_CARD_MARGIN = 3;
-    const mobileCardWidth = Math.floor((windowWidth - (GRID_PADDING + (2 * MOBILE_CARD_MARGIN))) / 3);
+    // Mobile layout - Fixed 3 columns with 3.5px horizontal gap
+    // Card width: (windowWidth - (GRID_PADDING + (2 * 3.5))) / 3
+    // Accounts for two 3.5px gaps between three cards
+    const mobileCardWidth = Math.floor((windowWidth - (GRID_PADDING + (2 * CARD_MARGIN))) / 3);
     
     return { 
       productNumColumns: 3, 
@@ -1800,15 +1801,14 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? { width: '100%' } : {}),
   },
   productsGrid: {
-    paddingHorizontal: 5, // Half of GRID_PADDING (10/2 = 5px each side)
+    paddingHorizontal: 7, // Half of GRID_PADDING (14/2 = 7px each side)
     paddingVertical: 12,
   },
   productCardWrapper: {
     // Width is calculated dynamically via productCardWidth in useMemo
-    // Platform-specific margins for precision grid alignment:
-    // Mobile: 1.5px each side = 3px total gap between adjacent cards
-    // Web: 2.5px each side = 5px total gap between adjacent cards
-    marginHorizontal: Platform.OS === 'web' ? 2.5 : 1.5,
+    // Uniform margin for both platforms:
+    // Mobile & Web: 3.5px × 2 = 7px total gap between adjacent cards
+    marginHorizontal: 3.5,
     marginBottom: 12,
     alignItems: 'center',
   },
