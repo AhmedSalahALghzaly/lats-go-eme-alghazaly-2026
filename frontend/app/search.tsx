@@ -47,14 +47,19 @@ export default function SearchScreen() {
   // Calculate responsive card width and number of columns based on screen width
   // Enhanced for desktop web with dynamic column calculation
   const { cardWidth, numColumns } = useMemo(() => {
+    // For web, use inner width minus padding
     const availableWidth = screenWidth - HORIZONTAL_PADDING;
     
     // Desktop web (>768px): Fixed card width of exactly 200px, dynamic unlimited columns
     if (Platform.OS === 'web' && screenWidth > 768) {
       const FIXED_CARD_WIDTH = 200;
-      // Calculate columns based on available width, minimum 2, no maximum limit
-      const calculatedCols = Math.floor(availableWidth / (FIXED_CARD_WIDTH + CARD_MARGIN * 2));
+      const TOTAL_CARD_SPACE = FIXED_CARD_WIDTH + CARD_MARGIN * 2; // 212px per card slot
+      
+      // Calculate how many columns can fit
+      const calculatedCols = Math.floor(availableWidth / TOTAL_CARD_SPACE);
       const cols = Math.max(2, calculatedCols); // Minimum 2 columns, unlimited maximum
+      
+      // Return fixed card width - FlashList will distribute evenly
       return { cardWidth: FIXED_CARD_WIDTH, numColumns: cols };
     }
     
