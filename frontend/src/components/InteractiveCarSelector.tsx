@@ -1802,12 +1802,12 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? { width: '100%' } : {}),
   },
   productsGrid: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 8, // 8px total padding (matches GRID_PADDING / 2)
     paddingVertical: 12,
   },
   productCardWrapper: {
     // Width is now calculated dynamically via productCardWidth in useMemo
-    // This style only provides layout properties, not fixed width
+    // Optimized spacing: 2px margin on each side = 4px total gap between cards
     marginHorizontal: 2,
     marginBottom: 12,
     alignItems: 'center',
