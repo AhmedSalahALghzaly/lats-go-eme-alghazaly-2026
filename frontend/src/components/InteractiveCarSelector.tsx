@@ -737,16 +737,14 @@ export const InteractiveCarSelector: React.FC = () => {
   
   // Calculate responsive columns for web desktop using dynamic window width
   const { productNumColumns, productCardWidth } = useMemo(() => {
-    const MIN_CARD_WIDTH = 180;
     const GRID_PADDING = 30;
     
-    // Only apply responsive logic for web on larger screens
+    // Desktop web: Fixed card width of 200px, dynamic column count
     if (Platform.OS === 'web' && windowWidth > 768) {
+      const FIXED_CARD_WIDTH = 200;
       const availableWidth = windowWidth - GRID_PADDING;
-      const calculatedColumns = Math.floor(availableWidth / MIN_CARD_WIDTH);
-      const numCols = Math.max(3, Math.min(calculatedColumns, 10)); // 3-10 columns
-      const cardWidth = Math.floor((availableWidth - (numCols * 4)) / numCols); // 4px margin per card
-      return { productNumColumns: numCols, productCardWidth: cardWidth };
+      const numCols = Math.max(2, Math.floor(availableWidth / (FIXED_CARD_WIDTH + 4))); // 4px margin per card
+      return { productNumColumns: numCols, productCardWidth: FIXED_CARD_WIDTH };
     }
     
     // Default mobile layout - 3 columns
