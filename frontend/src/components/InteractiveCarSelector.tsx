@@ -740,6 +740,11 @@ export const InteractiveCarSelector: React.FC = () => {
     const GRID_PADDING = 30;
     const CARD_MARGIN = 4; // Margin per card (2px each side)
     
+    // Debug logging for development
+    if (__DEV__ && Platform.OS === 'web') {
+      console.log('[InteractiveCarSelector Grid Debug] windowWidth:', windowWidth);
+    }
+    
     // Desktop web (>768px): Fixed card width of exactly 200px, dynamic unlimited columns
     if (Platform.OS === 'web' && windowWidth > 768) {
       const FIXED_CARD_WIDTH = 200;
@@ -749,6 +754,10 @@ export const InteractiveCarSelector: React.FC = () => {
       // Calculate how many columns can fit
       const calculatedCols = Math.floor(availableWidth / TOTAL_CARD_SPACE);
       const numCols = Math.max(3, calculatedCols); // Minimum 3 columns, unlimited maximum
+      
+      if (__DEV__) {
+        console.log('[InteractiveCarSelector Grid Debug] Desktop: cols:', numCols, 'cardWidth:', FIXED_CARD_WIDTH, 'availableWidth:', availableWidth);
+      }
       
       return { productNumColumns: numCols, productCardWidth: FIXED_CARD_WIDTH };
     }
