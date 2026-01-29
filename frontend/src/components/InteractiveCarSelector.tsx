@@ -1436,11 +1436,15 @@ export const InteractiveCarSelector: React.FC = () => {
             </Text>
           </View>
         ) : (
-          <View style={styles.flashListContainer}>
+          <View style={[
+            styles.flashListContainer,
+            // On web, explicitly set width to ensure FlashList calculates columns correctly
+            Platform.OS === 'web' && { width: windowWidth }
+          ]}>
             <FlashList
               data={displayProducts}
               numColumns={productNumColumns}
-              key={productNumColumns} // Force re-render when columns change
+              key={`${productNumColumns}-${windowWidth}`} // Force re-render when columns or width change
               keyExtractor={keyExtractor}
               renderItem={renderProductItem}
               estimatedItemSize={190}
