@@ -538,13 +538,13 @@ const ProductCard = memo<ProductCardProps>(({
                 {priceLabel}
               </Text>
             </View>
-            {/* Add to Cart Button - 19x19 circular */}
+            {/* Add to Cart Button - 15x15 circular miniature */}
             <AnimatedCartButton
               ref={cartButtonRef}
               isInCart={addedToCart}
               isLoading={cartLoading}
               onPress={handleAddToCart}
-              size={19}
+              size={11}
               primaryColor={moodPrimary || colorsPrimary}
               style={styles.cartButtonOverlay}
             />
@@ -707,9 +707,46 @@ export const InteractiveCarSelector: React.FC = () => {
     shadowRadius: interpolate(chassisIconGlow.value, [0, 1], [4, 12], Extrapolation.CLAMP),
   }));
 
+  // Products panel visibility state for web platform fix
+  const [isPanelVisible, setIsPanelVisible] = useState(false);
+  
+  // Track panel visibility based on selectorState
+  useEffect(() => {
+    if (selectorState === 'products') {
+      setIsPanelVisible(true);
+    } else {
+      // Delay hiding to allow animation to complete
+      const timer = setTimeout(() => {
+        setIsPanelVisible(false);
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [selectorState]);
+
   const productsPanelStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: productsSlideAnim.value }],
   }));
+  
+  // Calculate responsive columns for web desktop
+  const { productNumColumns, productCardWidth } = useMemo(() => {
+    const MIN_CARD_WIDTH = 180;
+    const GRID_PADDING = 30;
+    
+    // Only apply responsive logic for web on larger screens
+    if (Platform.OS === 'web' && SCREEN_WIDTH > 768) {
+      const availableWidth = SCREEN_WIDTH - GRID_PADDING;
+      const calculatedColumns = Math.floor(availableWidth / MIN_CARD_WIDTH);
+      const numCols = Math.max(3, Math.min(calculatedColumns, 10)); // 3-10 columns
+      const cardWidth = Math.floor((availableWidth - (numCols * 4)) / numCols); // 4px margin per card
+      return { productNumColumns: numCols, productCardWidth: cardWidth };
+    }
+    
+    // Default mobile layout - 3 columns
+    return { 
+      productNumColumns: 3, 
+      productCardWidth: Math.floor((SCREEN_WIDTH - 30) / 3) 
+    };
+  }, [SCREEN_WIDTH]);
 
   // ============================================================================
   // DATA HELPERS - Memoized
@@ -1271,7 +1308,15 @@ export const InteractiveCarSelector: React.FC = () => {
       </Animated.View>
 
       {/* Products Floating Panel */}
-      <Animated.View style={[styles.productsPanel, productsPanelStyle]}>
+      <Animated.View style={[
+        styles.productsPanel, 
+        productsPanelStyle,
+        // Web platform fix: Hide panel completely when not in products state
+        Platform.OS === 'web' && !isPanelVisible && {
+          display: 'none',
+          pointerEvents: 'none',
+        },
+      ]}>
         <BlurView
           intensity={isDark ? 50 : 55}
           tint={isDark ? 'dark' : 'light'}
@@ -1376,7 +1421,8 @@ export const InteractiveCarSelector: React.FC = () => {
           <View style={styles.flashListContainer}>
             <FlashList
               data={displayProducts}
-              numColumns={3}
+              numColumns={productNumColumns}
+              key={productNumColumns} // Force re-render when columns change
               keyExtractor={keyExtractor}
               renderItem={renderProductItem}
               estimatedItemSize={190}
@@ -1721,7 +1767,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   productCardWrapper: {
-    width: (SCREEN_WIDTH - 30) / 3,
+    // Dynamic width calculated in component for web responsiveness
+    // Default mobile: 3 columns, Desktop web: up to 10 columns
+    width: Platform.OS === 'web' && SCREEN_WIDTH > 768
+      ? Math.floor((SCREEN_WIDTH - 30 - (Math.min(Math.floor((SCREEN_WIDTH - 30) / 180), 10) * 4)) / Math.min(Math.floor((SCREEN_WIDTH - 30) / 180), 10))
+      : Math.floor((SCREEN_WIDTH - 30) / 3),
     marginHorizontal: 2,
     marginBottom: 12,
   },
@@ -1750,9 +1800,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   productName: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '500',
-    lineHeight: 15,
+    lineHeight: 13,
   },
   priceCartRow: {
     flexDirection: 'row',
@@ -1767,13 +1817,13 @@ const styles = StyleSheet.create({
     opacity: 1.7777,
   },
   priceText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
   },
   cartButtonOverlay: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 15,
+    height: 15,
+    borderRadius: 7.5,
   },
   loadingContainer: {
     flex: 1,
