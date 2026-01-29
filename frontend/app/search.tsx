@@ -45,7 +45,7 @@ export default function SearchScreen() {
   const [categories, setCategories] = useState<any[]>([]);
 
   // Calculate responsive card width and number of columns based on screen width
-  // Enhanced for desktop web with dynamic column calculation
+  // Precision grid alignment with fixed horizontal gaps
   const { cardWidth, numColumns } = useMemo(() => {
     // For web, use inner width minus padding
     const availableWidth = screenWidth - HORIZONTAL_PADDING;
@@ -55,37 +55,27 @@ export default function SearchScreen() {
       console.log('[Search Grid Debug] screenWidth:', screenWidth, 'availableWidth:', availableWidth);
     }
     
-    // Desktop web (>768px): Fixed card width of exactly 200px, dynamic unlimited columns
+    // Desktop web (>768px): Fixed card width of 215px, 5px horizontal gap
     if (Platform.OS === 'web' && screenWidth > 768) {
-      const FIXED_CARD_WIDTH = 200;
-      const TOTAL_CARD_SPACE = FIXED_CARD_WIDTH + CARD_MARGIN * 2; // 212px per card slot
+      const FIXED_CARD_WIDTH = 215;
+      const WEB_GAP = 5;
       
       // Calculate how many columns can fit
-      const calculatedCols = Math.floor(availableWidth / TOTAL_CARD_SPACE);
+      const calculatedCols = Math.floor(availableWidth / (FIXED_CARD_WIDTH + WEB_GAP));
       const cols = Math.max(2, calculatedCols); // Minimum 2 columns, unlimited maximum
       
       if (__DEV__) {
-        console.log('[Search Grid Debug] Desktop: cols:', cols, 'cardWidth:', FIXED_CARD_WIDTH, 'totalSpace:', TOTAL_CARD_SPACE);
+        console.log('[Search Grid Debug] Desktop: cols:', cols, 'cardWidth:', FIXED_CARD_WIDTH, 'gap:', WEB_GAP);
       }
       
-      // Return fixed card width - FlashList will distribute evenly
       return { cardWidth: FIXED_CARD_WIDTH, numColumns: cols };
     }
     
-    // Mobile/Tablet: Original calculation
-    // Calculate how many cards can fit with max width
-    let cols = Math.floor(availableWidth / (MAX_CARD_WIDTH + CARD_MARGIN * 2));
-    cols = Math.max(cols, 2); // Minimum 2 columns
+    // Mobile: Fixed 2-column layout with 3px horizontal gap
+    const MOBILE_GAP = 3;
+    const mobileCardWidth = Math.floor((availableWidth - MOBILE_GAP) / 2);
     
-    // Calculate actual card width to fill available space evenly
-    const totalMargin = cols * CARD_MARGIN * 2;
-    let width = Math.floor((availableWidth - totalMargin) / cols);
-    
-    // Ensure width is within bounds
-    width = Math.min(width, MAX_CARD_WIDTH);
-    width = Math.max(width, MIN_CARD_WIDTH);
-    
-    return { cardWidth: width, numColumns: cols };
+    return { cardWidth: mobileCardWidth, numColumns: 2 };
   }, [screenWidth]);
 
   // Filters
