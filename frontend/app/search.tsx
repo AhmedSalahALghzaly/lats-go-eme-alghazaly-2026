@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
@@ -44,8 +45,21 @@ export default function SearchScreen() {
   const [categories, setCategories] = useState<any[]>([]);
 
   // Calculate responsive card width and number of columns based on screen width
+  // Enhanced for desktop web with dynamic column calculation
   const { cardWidth, numColumns } = useMemo(() => {
     const availableWidth = screenWidth - HORIZONTAL_PADDING;
+    
+    // Desktop web: Dynamic columns based on screen width (min card width ~180px)
+    if (Platform.OS === 'web' && screenWidth > 768) {
+      const MIN_DESKTOP_CARD_WIDTH = 180;
+      const calculatedColumns = Math.floor(availableWidth / (MIN_DESKTOP_CARD_WIDTH + CARD_MARGIN * 2));
+      const cols = Math.max(3, Math.min(calculatedColumns, 10)); // 3-10 columns
+      const totalMargin = cols * CARD_MARGIN * 2;
+      const width = Math.floor((availableWidth - totalMargin) / cols);
+      return { cardWidth: width, numColumns: cols };
+    }
+    
+    // Mobile/Tablet: Original calculation
     // Calculate how many cards can fit with max width
     let cols = Math.floor(availableWidth / (MAX_CARD_WIDTH + CARD_MARGIN * 2));
     cols = Math.max(cols, 2); // Minimum 2 columns
