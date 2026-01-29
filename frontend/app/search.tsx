@@ -506,7 +506,7 @@ export default function SearchScreen() {
             }
             ListFooterComponent={renderFooter}
             renderItem={({ item }) => (
-              <View style={[styles.cardWrapper, { width: cardWidth + 7 }]}>
+              <View style={[styles.cardWrapper, { width: cardWidth + 6 }]}>
                 <ProductCard
                   product={item}
                   cardWidth={cardWidth}
@@ -622,8 +622,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   cardWrapper: {
-    // Uniform 7px gap for both platforms (3.5px margin each side)
-    marginHorizontal: 3.5,
+    // Uniform 6px gap for both platforms (3px margin each side)
+    marginHorizontal: 3,
     alignItems: 'center',
     marginBottom: 12,
   },
