@@ -43,41 +43,36 @@ export default function SearchScreen() {
   const [productBrands, setProductBrands] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
 
-    // Calculate responsive card width and number of columns based on screen width
-  // Precision grid alignment with fixed horizontal gaps (5px-5px-5px)
+  // Calculate responsive card width and number of columns based on screen width
+  // Precision grid alignment with fixed horizontal gaps
   const { cardWidth, numColumns } = useMemo(() => {
-    // For web, use inner width minus padding (5px on each side)
-    const GAP = 5; 
-    const availableWidth = screenWidth - 10; // 5px left + 5px right
+    // For web, use inner width minus padding
+    const availableWidth = screenWidth - HORIZONTAL_PADDING;
+    const GAP = 6; // 3px on each side
     
     // Debug logging for development
     if (__DEV__ && Platform.OS === 'web') {
       console.log('[Search Grid Debug] screenWidth:', screenWidth, 'availableWidth:', availableWidth);
     }
     
-    // Desktop web (>768px): Dynamic columns based on MAX_CARD_WIDTH (199.5px)
+    // Desktop web (>768px): Dynamic 179px card width, 6px horizontal gap (3px/side)
     if (Platform.OS === 'web' && screenWidth > 768) {
-      const WEB_CARD_WIDTH = 199.5; // Updated to your new maximum
+      const WEB_CARD_WIDTH = 179;
       
       // Calculate how many columns can fit
-      const calculatedCols = Math.floor((availableWidth + GAP) / (WEB_CARD_WIDTH + GAP));
+      const calculatedCols = Math.floor(availableWidth / (WEB_CARD_WIDTH + GAP));
       const cols = Math.max(2, calculatedCols); // Minimum 2 columns, unlimited maximum
       
-      // Calculate the exact card width to fill the space perfectly
-      const finalWebCardWidth = (availableWidth - (cols - 1) * GAP) / cols;
-      
       if (__DEV__) {
-        console.log('[Search Grid Debug] Desktop: cols:', cols, 'cardWidth:', finalWebCardWidth, 'gap:', GAP);
+        console.log('[Search Grid Debug] Desktop: cols:', cols, 'cardWidth:', WEB_CARD_WIDTH, 'gap:', GAP);
       }
       
-      return { cardWidth: finalWebCardWidth, numColumns: cols };
+      return { cardWidth: WEB_CARD_WIDTH, numColumns: cols };
     }
     
-    // Mobile: Fixed 2-column layout with dynamic width (Min 175px, Max 199.5px)
-    const calculatedMobileWidth = (screenWidth - 15) / 2;
-    const finalMobileWidth = Math.min(199.5, Math.max(155, calculatedMobileWidth));
-    
-    return { cardWidth: finalMobileWidth, numColumns: 2 };
+    // Mobile: Fixed 2-column layout with dynamic 175px card width, 6px horizontal gap (3px/side)
+    const MOBILE_CARD_WIDTH = 175;
+    return { cardWidth: MOBILE_CARD_WIDTH, numColumns: 2 };
   }, [screenWidth]);
 
   // Filters
