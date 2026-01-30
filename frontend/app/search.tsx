@@ -24,10 +24,9 @@ import { useInfiniteProducts } from '../src/hooks/useInfiniteProducts';
 import { carBrandsApi, carModelsApi, productBrandsApi, categoriesApi, cartApi } from '../src/services/api';
 
 // Constants for responsive grid layout
-const HORIZONTAL_PADDING = 5; // Total horizontal padding (2.5px left + 2.5px right)
-const CARD_MARGIN = 5; // Legacy - kept for compatibility
-const MAX_CARD_WIDTH = 179; // Maximum card width
-const MIN_CARD_WIDTH = 175; // Minimum card width for readability
+const GAP_TOTAL = 15; // 5px left + 5px middle + 5px right
+const MIN_CARD_WIDTH = 155;
+const MAX_CARD_WIDTH = 199.5;
 
 export default function SearchScreen() {
   const params = useLocalSearchParams();
@@ -45,35 +44,31 @@ export default function SearchScreen() {
   const [categories, setCategories] = useState<any[]>([]);
 
   // Calculate responsive card width and number of columns based on screen width
-  // Precision grid alignment with fixed horizontal gaps
+  // Precision grid alignment with fixed horizontal gaps (5px-5px-5px)
   const { cardWidth, numColumns } = useMemo(() => {
-    // For web, use inner width minus padding
-    const availableWidth = screenWidth - HORIZONTAL_PADDING;
-    const GAP = 5; // 2.5px on each side
+    const GAP = 5; // Fixed gap between cards and screen edges
     
-    // Debug logging for development
-    if (__DEV__ && Platform.OS === 'web') {
-      console.log('[Search Grid Debug] screenWidth:', screenWidth, 'availableWidth:', availableWidth);
-    }
-    
-    // Desktop web (>768px): Dynamic 179px card width, 5px horizontal gap (2.5px/side)
+    // Desktop web (>768px): Dynamic columns based on MAX_CARD_WIDTH (199.5px)
     if (Platform.OS === 'web' && screenWidth > 768) {
-      const WEB_CARD_WIDTH = 179;
+      // Calculate how many columns can fit with 199.5px width and 5px gaps
+      // Formula: (AvailableWidth + Gap) / (CardWidth + Gap)
+      const calculatedCols = Math.floor((screenWidth - 5) / (199.5 + GAP));
+      const cols = Math.max(2, calculatedCols); 
       
-      // Calculate how many columns can fit
-      const calculatedCols = Math.floor(availableWidth / (WEB_CARD_WIDTH + GAP));
-      const cols = Math.max(2, calculatedCols); // Minimum 2 columns, unlimited maximum
+      // Calculate the exact card width to fill the screen perfectly with 5px gaps
+      const webCardWidth = (screenWidth - (cols + 1) * GAP) / cols;
       
-      if (__DEV__) {
-        console.log('[Search Grid Debug] Desktop: cols:', cols, 'cardWidth:', WEB_CARD_WIDTH, 'gap:', GAP);
-      }
-      
-      return { cardWidth: WEB_CARD_WIDTH, numColumns: cols };
+      return { cardWidth: webCardWidth, numColumns: cols };
     }
     
-    // Mobile: Fixed 2-column layout with dynamic 175px card width, 5px horizontal gap (2.5px/side)
-    const MOBILE_CARD_WIDTH = 175;
-    return { cardWidth: MOBILE_CARD_WIDTH, numColumns: 2 };
+    // Mobile: Fixed 2-column layout with dynamic width between 155px and 199.5px
+    // Formula: (ScreenWidth - (Left + Middle + Right gaps)) / 2
+    const calculatedMobileWidth = (screenWidth - 15) / 2;
+    
+    // Apply the constraints: Min 155px, Max 199.5px
+    const finalMobileWidth = Math.min(199.5, Math.max(155, calculatedMobileWidth));
+    
+    return { cardWidth: finalMobileWidth, numColumns: 2 };
   }, [screenWidth]);
 
   // Filters
@@ -504,7 +499,7 @@ export default function SearchScreen() {
             }
             ListFooterComponent={renderFooter}
             renderItem={({ item }) => (
-              <View style={[styles.cardWrapper, { width: cardWidth + 6 }]}>
+              <View style={styles.cardWrapper}>
                 <ProductCard
                   product={item}
                   cardWidth={cardWidth}
@@ -616,14 +611,12 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? { width: '100%' } : {}),
   },
   listContent: {
-    paddingHorizontal: 3, // 3px each side = 6px total padding
-    paddingVertical: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 7,
   },
   cardWrapper: {
-    // Uniform 6px gap for both platforms (3px margin each side)
-    marginHorizontal: 3,
     alignItems: 'center',
-    marginBottom: 7,
+    marginBottom: 5,
   },
   row: {
     justifyContent: 'flex-start',
