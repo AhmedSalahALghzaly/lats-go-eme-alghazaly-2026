@@ -23,11 +23,6 @@ import { useAppStore } from '../src/store/appStore';
 import { useInfiniteProducts } from '../src/hooks/useInfiniteProducts';
 import { carBrandsApi, carModelsApi, productBrandsApi, categoriesApi, cartApi } from '../src/services/api';
 
-// Constants for responsive grid layout
-// Gap system: 5px on edges and between columns
-const GAP = 5;
-const MAX_WEB_CARD_WIDTH = 310;
-
 export default function SearchScreen() {
   const params = useLocalSearchParams();
   const { colors } = useTheme();
@@ -43,55 +38,48 @@ export default function SearchScreen() {
   const [productBrands, setProductBrands] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
 
-  // Calculate responsive card width and number of columns based on screen width
-  // Precision grid alignment with fixed horizontal gaps (5px-5px-5px)
+  // Calculate responsive card width and number of columns based on screen width.
+  // This logic is fully dynamic, ensures fixed gaps, and respects a maximum card width.
   const { cardWidth, numColumns } = useMemo(() => {
-    // For web, use inner width minus padding (5px on each side)
-    const GAP = 5; 
-    const availableWidth = screenWidth - 10; // 5px left + 5px right
-    
-    // Debug logging for development
-    if (__DEV__ && Platform.OS === 'web') {
-      console.log('[Search Grid Debug] screenWidth:', screenWidth, 'availableWidth:', availableWidth);
-    }
-    
-    // Desktop/Web (>768px): Dynamic columns, mas card width 249px
-    if (Platform.OS === 'web' && screenWidth > 768) {
-      //Calculate minimum columns needed to keep card width <= 249px
-      // Formula derived from: (screenillidth GAP (cols 1)) / cols <= 249
-      // Simplifies to: cols (screenWidth - GAP) / (249 + GAP)
-      const minCols = Math.ceil((screenWidth GAP) / (MAX_WEB_CARD_WIDTH + GAP));
-      const cols Math.max(2, minCols); // Minimum 2 columns
+    // --- Base Layout Constants ---
+    const GAP = 5;
+    const PADDING_HORIZONTAL = GAP * 2; // 10px total for left and right screen padding
+    const MAX_CARD_WIDTH = 279; // The absolute maximum width a card can have.
 
-      // Calculate exact card width to fill space with 5px gaps
-      // Total gaps = GAP * (cols + 5)
-      const totalGaps = GAP * (cols + 5);
-      const availableWidth = screenWidth totalGaps;
-      const calculatedWidth = availableWidth / cols;
+    // The available width for cards and their internal gaps.
+    const availableWidth = screenWidth - PADDING_HORIZONTAL;
 
-      // Ensure card doesn't exceed max width
-      const finalWidth = Math.min(calculatedWidth, MAX_WEB_CARD_WIDTH);
-      
-      if (__DEV__) {
-        console.log('[Search Grid] Web: screenWidth:', screenWidth, 'cols:', cols, 'cardWidth:', finalWidth, 'totalGaps:', totalGaps);
-      }
-      
-      return { cardWidth: finalWidth, numColumns: cols };
-    }
-    
-    // Mobile: Fixed 2 columns with 5px gaps
-    // Layout: 5px | card | 5px card 5px
-    const minCols = 2;
-    const mobileCols = Math.max(2, minCols);  // Minimum 2 columns
-    const totalGaps = GAP (mobileCols + 5);
-    const availableWidth = screenWidth totalGaps;
-    const mobileCardWidth = availableWidth / mobileCols;
+    // --- Universal Logic for All Platforms (Web, Mobile, Tablet) ---
 
-    if (_DEV__) {
-    console.log('[Search Grid] Mobile: screenWidth:', screenWidth, 'cardWidth:', mobileCardWidth, totalGaps:', totalGaps);
+    // 1. Calculate the ideal number of columns.
+    // This is the most important step: we calculate how many columns are needed
+    // to ensure the card width does NOT exceed MAX_CARD_WIDTH.
+    // We use Math.ceil to "force" a new column as soon as the limit is about to be breached.
+    const idealCols = Math.ceil(availableWidth / (MAX_CARD_WIDTH + GAP));
+
+    // 2. Apply platform-specific minimums.
+    let finalNumColumns;
+    if (Platform.OS === 'web') {
+      // On web, allow as few as 1 column on very narrow browser windows.
+      finalNumColumns = Math.max(1, idealCols);
+    } else {
+      // On mobile/tablet, enforce a minimum of 2 columns for a better layout.
+      finalNumColumns = Math.max(2, idealCols);
     }
-    
-    return cardWidth: mobileCardWidth, numColumns: mobileCols;
+
+    // 3. Calculate the final, exact card width to create a perfect grid.
+    // This width will now always be less than or equal to MAX_CARD_WIDTH because of the
+    // logic in step 1.
+    const totalInternalGaps = GAP * (finalNumColumns - 1);
+    const finalCardWidth = (availableWidth - totalInternalGaps) / finalNumColumns;
+
+    if (__DEV__) {
+      console.log(
+        `[Grid Debug] Platform: ${Platform.OS}, Screen: ${screenWidth}px, Cols: ${finalNumColumns}, CardWidth: ${finalCardWidth.toFixed(2)}px`
+      );
+    }
+
+    return { cardWidth: finalCardWidth, numColumns: finalNumColumns };
   }, [screenWidth]);
 
   // Filters
@@ -634,12 +622,12 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? { width: '100%' } : {}),
   },
   listContent: {
-    paddingHorizontal: 5,
     paddingVertical: 3,
   },
   cardWrapper: {
+    // Horizontal spacing is now perfectly managed by the `useMemo` logic.
+    // No extra padding is needed here.
     alignItems: 'center',
-    paddingHorizontal: 2.5, // Half of 5px gap (Flashlist adds this to both sides 5px total between cards)
     marginBottom: 5,
   },
   row: {
