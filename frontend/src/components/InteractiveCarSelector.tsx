@@ -735,43 +735,38 @@ export const InteractiveCarSelector: React.FC = () => {
     transform: [{ translateY: productsSlideAnim.value }],
   }));
   
-  // Calculate responsive columns for web desktop using dynamic window width
+  // --- Dynamic Grid Calculation for Products in Bottom Sheet ---
+  // This logic creates a pixel-perfect, responsive grid for the products list.
   const { productNumColumns, productCardWidth } = useMemo(() => {
-    // Precision grid alignment with fixed horizontal gaps
-    // GRID_PADDING = 14 (7px each side)
-    const GRID_PADDING = 14;
-    const _CARD_WIDTH = 119; // Fixed card width for uniform layout
-    const CARD_MARGIN = 3.5; // 3.5px horizontal gap between cards
-    
-    // Debug logging for development
-    if (__DEV__ && Platform.OS === 'web') {
-      console.log('[InteractiveCarSelector Grid Debug] windowWidth:', windowWidth);
+    // 1. Define the specific layout constants for this grid.
+    const GAP = 3.5; // As requested, we keep 3.5px
+    const MAX_CARD_WIDTH = 119; // The absolute maximum width a card can have.
+    const MIN_COLUMNS = 3; // The required minimum number of columns.
+
+    // 2. Calculate the available width for content.
+    // The padding is now managed by this logic, not by StyleSheet.
+    const PADDING_HORIZONTAL = GAP * 2;
+    const availableWidth = windowWidth - PADDING_HORIZONTAL;
+
+    // 3. Calculate the ideal number of columns needed to NOT exceed MAX_CARD_WIDTH.
+    // This is the core of the responsive logic.
+    const idealCols = Math.ceil(availableWidth / (MAX_CARD_WIDTH + GAP));
+
+    // 4. Enforce the minimum number of columns required for this specific design.
+    const finalNumColumns = Math.max(MIN_COLUMNS, idealCols);
+
+    // 5. Calculate the final, exact card width to perfectly fill the space.
+    // This value will now always be <= MAX_CARD_WIDTH.
+    const totalInternalGaps = GAP * (finalNumColumns - 1);
+    const finalCardWidth = (availableWidth - totalInternalGaps) / finalNumColumns;
+
+    if (__DEV__) {
+      console.log(
+        `[Product Grid (Sheet) Debug] Screen: ${windowWidth}px, Cols: ${finalNumColumns}, CardWidth: ${finalCardWidth.toFixed(2)}px`
+      );
     }
-    
-    // Desktop web (>768px): Fixed card width of 119px, 3.5px horizontal gap
-    if (Platform.OS === 'web' && windowWidth > 768) {
-      const availableWidth = windowWidth - GRID_PADDING;
-      
-      // Calculate how many columns can fit
-      const calculatedCols = Math.floor(availableWidth / (_CARD_WIDTH + CARD_MARGIN));
-      const numCols = Math.max(3, calculatedCols); // Minimum 3 columns, unlimited maximum
-      
-      if (__DEV__) {
-        console.log('[InteractiveCarSelector Grid Debug] Desktop: cols:', numCols, 'cardWidth:', _CARD_WIDTH, 'availableWidth:', availableWidth);
-      }
-      
-      return { productNumColumns: numCols, productCardWidth: _CARD_WIDTH };
-    }
-    
-    // Mobile layout - Fixed 3 columns with 3.5px horizontal gap
-    // Card width: (windowWidth - (GRID_PADDING + (2 * 3.5))) / 3
-    // Accounts for two 3.5px gaps between three cards
-    const mobileCardWidth = Math.floor((windowWidth - (GRID_PADDING + (2 * CARD_MARGIN))) / 3);
-    
-    return { 
-      productNumColumns: 3, 
-      productCardWidth: mobileCardWidth
-    };
+
+    return { productNumColumns: finalNumColumns, productCardWidth: finalCardWidth };
   }, [windowWidth]);
   
   // Calculate chassis card width for horizontal layout
@@ -1464,6 +1459,7 @@ export const InteractiveCarSelector: React.FC = () => {
               estimatedItemSize={190}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.productsGrid}
+              columnWrapperStyle={{ gap: 3.5 }}
             />
           </View>
         )}
@@ -1801,14 +1797,14 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? { width: '100%' } : {}),
   },
   productsGrid: {
-    paddingHorizontal: 7, // Half of GRID_PADDING (14/2 = 7px each side)
+    // Horizontal padding is now implicitly handled by the useMemo logic.
+    // We only define vertical padding here.
     paddingVertical: 12,
   },
   productCardWrapper: {
-    // Width is calculated dynamically via productCardWidth in useMemo
-    // Uniform margin for both platforms:
-    // Mobile & Web: 3.5px × 2 = 7px total gap between adjacent cards
-    marginHorizontal: 3.5,
+    // The 'width' is now passed directly to the ProductCard component.
+    // The horizontal spacing is now handled by `columnWrapperStyle`.
+    // We remove marginHorizontal to prevent double spacing.
     marginBottom: 12,
     alignItems: 'center',
   },
