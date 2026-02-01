@@ -542,13 +542,13 @@ const ProductCard = memo<ProductCardProps>(({
                 {priceLabel}
               </Text>
             </View>
-            {/* Add to Cart Button - 17x17 circular miniature */}
+            {/* Add to Cart Button - 19x19 circular miniature */}
             <AnimatedCartButton
               ref={cartButtonRef}
               isInCart={addedToCart}
               isLoading={cartLoading}
               onPress={handleAddToCart}
-              size={13}
+              size={17}
               primaryColor={moodPrimary || colorsPrimary}
               style={styles.cartButtonOverlay}
             />
@@ -1559,16 +1559,16 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   breadcrumbText: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
   },
   gridContainer: {
     flex: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
   },
   horizontalListContent: {
-    paddingHorizontal: 4,
-    paddingVertical: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 7,
   },
   gridItemWrapper: {
     marginHorizontal: 3,
@@ -1636,7 +1636,7 @@ const styles = StyleSheet.create({
   },
   chassisResultsContainer: {
     flex: 1,
-    paddingHorizontal: 4,
+    paddingHorizontal: 5,
   },
   chassisGridContent: {
     paddingVertical: 3,
@@ -1648,12 +1648,12 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
   },
   chassisEmptyText: {
-    fontSize: 14,
-    marginTop: 8,
+    fontSize: 13,
+    marginTop: 7,
   },
   chassisGridCardWrapper: {
     width: (SCREEN_WIDTH / 2) - 13,
-    padding: 1.5,
+    padding: 1.9,
   },
   chassisGridCard: {
     borderRadius: 16,
@@ -1716,10 +1716,10 @@ const styles = StyleSheet.create({
   productsPanelHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 17,
     paddingVertical: 3,
     borderBottomWidth: 1,
-    gap: 12,
+    gap: 13,
   },
   backButton: {
     width: 39,
@@ -1747,10 +1747,10 @@ const styles = StyleSheet.create({
   productCountBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 3.9,
-    paddingVertical: 1.3,
-    borderRadius: 8,
-    marginTop: 4,
-    opacity: 0.9350,
+    paddingVertical: 1.5,
+    borderRadius: 7,
+    marginTop: 5,
+    opacity: 1.9350,
   },
   headerSubtitle: {
     fontSize: 12,
@@ -1799,24 +1799,24 @@ const styles = StyleSheet.create({
   productsGrid: {
     // Horizontal padding is now implicitly handled by the useMemo logic.
     // We only define vertical padding here.
-    paddingVertical: 12,
+    paddingVertical: 7,
   },
   productCardWrapper: {
     // The 'width' is now passed directly to the ProductCard component.
     // The horizontal spacing is now handled by `columnWrapperStyle`.
     // We remove marginHorizontal to prevent double spacing.
-    marginBottom: 12,
+    marginBottom: 7,
     alignItems: 'center',
   },
   productCard: {
     width: '100%', // Fill the wrapper's calculated width
-    borderRadius: 16,
+    borderRadius: 17,
     overflow: 'hidden',
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.17,
+    shadowRadius: 9,
+    elevation: 5,
     position: 'relative',
   },
   productImage: {
@@ -1831,7 +1831,7 @@ const styles = StyleSheet.create({
   },
   productInfo: {
     padding: 10,
-    gap: 6,
+    gap: 5,
   },
   productName: {
     fontSize: 11,
@@ -1845,18 +1845,18 @@ const styles = StyleSheet.create({
   },
   priceTag: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    opacity: 1.7777,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 7,
+    opacity: 1.9999,
   },
   priceText: {
     fontSize: 11,
     fontWeight: '700',
   },
   cartButtonOverlay: {
-    width: 17,
-    height: 17,
+    width: 19,
+    height: 19,
     borderRadius: 9,
   },
   loadingContainer: {
@@ -1875,8 +1875,8 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   emptyText: {
-    fontSize: 16,
-    marginTop: 12,
+    fontSize: 15,
+    marginTop: 11,
   },
 });
 
