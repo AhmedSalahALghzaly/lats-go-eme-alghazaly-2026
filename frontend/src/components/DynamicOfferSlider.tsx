@@ -399,7 +399,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
                         <View style={[styles.carBadge, { backgroundColor: palette.accent }]}>
                           <MaterialCommunityIcons 
                             name={item.target_car_model ? 'car-sports' : 'cube'} 
-                            size={14} 
+                            size={15} 
                             color="#FFF" 
                           />
                           <Text style={styles.carText} numberOfLines={1}>
@@ -435,7 +435,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
                       {!hideIcon && (item.type === 'bundle_offer' || item.type === 'bundle') && (
                         <TouchableOpacity
                           onPress={() => handleItemPress(item)}
-                          activeOpacity={0.7}
+                          activeOpacity={0.5}
                           style={styles.iconWrapper}
                         >
                           <Animated.View 
@@ -463,7 +463,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
                             <Animated.View style={{ transform: [{ rotate: spin }] }}>
                               <MaterialCommunityIcons 
                                 name="lightning-bolt-circle" 
-                                size={22}  // Reduced from 24 by ~10%
+                                size={19}
                                 color="#1a1a2e" 
                               />
                             </Animated.View>
@@ -513,9 +513,9 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
               <View 
                 style={[
                   styles.singleDot, 
-                  { backgroundColor: isDark ? '#555' : '#DDD' },
+                  { backgroundColor: isDark ? '#555' : '#AAA' },
                   i === currentIndex && { 
-                    width: 26, 
+                    width: 30, 
                     backgroundColor: getColorPalette(i).accent,
                   }
                 ]} 
@@ -572,7 +572,7 @@ function getStaticOffers(): SliderItem[] {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    marginVertical: 9,
     position: 'relative',
   },
   loadingContainer: {
@@ -606,64 +606,64 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: 5,
+    width: 7,
     borderTopLeftRadius: 18,
     borderBottomLeftRadius: 18,
   },
   typeBadge: {
     position: 'absolute',
-    top: 12,
-    left: 14,
+    top: 13,
+    left: 15,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
     borderRadius: 10,
-    gap: 4,
+    gap: 5,
   },
   typeBadgeText: {
     color: '#FFF',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
   },
   contentContainer: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 16,
-    paddingLeft: 18,
-    paddingTop: 40,
+    padding: 15,
+    paddingLeft: 17,
+    paddingTop: 39,
   },
   centerSection: {
     flex: 1,
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
-    paddingRight: 12,
+    paddingRight: 13,
   },
   titleText: {
     color: '#FFD93D',
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 19,
+    fontWeight: '700',
     letterSpacing: 0.3,
-    marginBottom: 8,
+    marginBottom: 7,
   },
   subtitleText: {
     color: 'rgba(255,255,255,0.85)',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
-    marginTop: 4,
+    marginTop: 5,
   },
   carBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 14,
-    gap: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 15,
+    gap: 7,
   },
   carText: {
     color: '#FFF',
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
   },
   priceRow: {
@@ -699,22 +699,22 @@ const styles = StyleSheet.create({
     paddingBottom: 35, // Space for price row
   },
   discountBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    borderRadius: 13,
     alignItems: 'center',
-    minWidth: 60,
+    minWidth: 50,
     marginBottom: 0, // Remove margin - space-between handles spacing
     // Shadow removed as per user request
   },
   discountNum: {
     color: '#1a1a2e',
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '900',
   },
   discountLabel: {
     color: '#1a1a2e',
-    fontSize: 9,
+    fontSize: 11.5,
     fontWeight: '700',
     letterSpacing: 1,
   },
@@ -740,8 +740,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 14,
-    gap: 10,
+    marginTop: 15,
+    gap: 11.5,
   },
   singleDot: {
     width: 10,
