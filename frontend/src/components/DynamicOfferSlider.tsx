@@ -7,23 +7,20 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   Animated,
-  ScrollView,
   ImageBackground,
   Platform,
   ActivityIndicator,
+  useWindowDimensions, // Use the hook for responsive width
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list'; // Import FlashList for performance
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../hooks/useTheme';
 import { marketingApi } from '../services/api';
-
-const { width } = Dimensions.get('window');
-const SLIDER_WIDTH = width - 40;
 
 // Fallback images
 const FALLBACK_IMAGES = [
@@ -81,11 +78,25 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
   const router = useRouter();
   const { language } = useTranslation();
   const { colors, isDark } = useTheme();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<FlashList<SliderItem>>(null); // Update ref type for FlashList
+  const { width: screenWidth } = useWindowDimensions(); // Use the hook for responsive width
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [sliderItems, setSliderItems] = useState<SliderItem[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
+  // --- NEW: Centralized and precise layout calculation ---
+  const layoutConfig = useMemo(() => {
+    const PADDING_HORIZONTAL = 16; // Space on the left of the first card
+    const PEEK_AREA = 24;          // How much of the next card is visible to hint at scrolling
+    const GAP = 12;                // Space between cards
+
+    const cardWidth = screenWidth - (PADDING_HORIZONTAL + PEEK_AREA);
+    // The correct snap interval is the card's width plus the gap that follows it.
+    const snapInterval = cardWidth + GAP;
+
+    return { cardWidth, snapInterval, gap: GAP, paddingHorizontal: PADDING_HORIZONTAL };
+  }, [screenWidth]);
+
   // Animation refs
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -122,13 +133,12 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
     if (compact || sliderItems.length === 0) return;
     const interval = setInterval(() => {
       const nextIndex = (currentIndex + 1) % sliderItems.length;
-      scrollRef.current?.scrollTo({ x: nextIndex * (SLIDER_WIDTH + 12), animated: true });
-      setCurrentIndex(nextIndex);
-      onOfferChange?.(nextIndex);
+      // Use the new goToSlide function which is more reliable
+      goToSlide(nextIndex);
     }, 5000);
     return () => clearInterval(interval);
   }, [currentIndex, compact, sliderItems.length]);
-
+  
   // Pulse animation for icon
   useEffect(() => {
     if (hideIcon) return;
@@ -170,7 +180,8 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
 
   const handleScroll = (event: any) => {
     const x = event.nativeEvent.contentOffset.x;
-    const index = Math.round(x / (SLIDER_WIDTH + 12));
+    // Use the precise snapInterval from our layout config for accurate index calculation
+    const index = Math.round(x / layoutConfig.snapInterval);
     if (index !== currentIndex && index >= 0 && index < sliderItems.length) {
       setCurrentIndex(index);
       onOfferChange?.(index);
@@ -178,9 +189,9 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
   };
 
   const goToSlide = (index: number) => {
-    scrollRef.current?.scrollTo({ x: index * (SLIDER_WIDTH + 12), animated: true });
-    setCurrentIndex(index);
-    onOfferChange?.(index);
+    // FlashList has a more direct and reliable method: scrollToIndex
+    scrollRef.current?.scrollToIndex({ index, animated: true });
+    // The onScroll handler will update the currentIndex, so we don't set it manually.
   };
 
   const handlePrevious = () => {
@@ -270,18 +281,29 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
         </TouchableOpacity>
       )}
 
-      <ScrollView
+      <FlashList
         ref={scrollRef}
+        data={sliderItems}
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        
+        // --- Apply the new, correct configuration ---
+        snapToInterval={layoutConfig.snapInterval}
+        decelerationRate="fast"
+        
+        // Use contentContainerStyle to manage padding and gaps centrally
+        contentContainerStyle={{
+          paddingHorizontal: layoutConfig.paddingHorizontal,
+          gap: layoutConfig.gap,
+        }}
+        
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.scrollContent}
-        decelerationRate="fast"
-        snapToInterval={SLIDER_WIDTH + 12}
-      >
-        {sliderItems.map((item, index) => {
+        
+        estimatedItemSize={layoutConfig.cardWidth}
+        // The render logic from the old .map() is now inside renderItem
+        renderItem={({ item, index }) => {
           const palette = getColorPalette(index);
           const isBundle = item.type === 'bundle_offer' || item.type === 'bundle';
           const discount = isBundle ? (item.discount_percentage || 0) : 
@@ -291,7 +313,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
           return (
             <TouchableOpacity 
               key={item.id} 
-              style={[styles.slideWrapper, { width: SLIDER_WIDTH }]}
+              style={{ width: layoutConfig.cardWidth }} // Use the new dynamic width
               activeOpacity={hideIcon ? 1 : 0.95}
               onPress={hideIcon ? undefined : () => handleItemPress(item)}
             >
@@ -521,10 +543,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    // This is no longer needed; layout is handled by contentContainerStyle inline.
+    // paddingHorizontal: 20,
   },
   slideWrapper: {
-    marginRight: 12,
+    // This is no longer needed; width is inline and marginRight is replaced by gap.
+    // marginRight: 12,
   },
   slide: {
     width: '100%',
