@@ -29,13 +29,38 @@ const FALLBACK_IMAGES = [
   'https://customer-assets.emergentagent.com/job_run-al-project/artifacts/yt3zfrnf_car-parts-2025-02-24-20-10-48-utc%20%282%29.jpg',
 ];
 
-// Color palettes for slides
+// Color palettes for slides - NEW PROFESSIONAL BLUE THEME
 const COLOR_PALETTES = [
-  { gradient: ['rgba(102, 126, 234, 0.85)', 'rgba(118, 75, 162, 0.9)'], accent: '#667EEA', icon: '#FF6B35' },
-  { gradient: ['rgba(17, 153, 142, 0.85)', 'rgba(56, 239, 125, 0.9)'], accent: '#11998E', icon: '#FFD93D' },
-  { gradient: ['rgba(255, 107, 107, 0.85)', 'rgba(255, 142, 83, 0.9)'], accent: '#FF6B6B', icon: '#4ECDC4' },
-  { gradient: ['rgba(59, 130, 246, 0.85)', 'rgba(147, 51, 234, 0.9)'], accent: '#3B82F6', icon: '#F59E0B' },
-  { gradient: ['rgba(236, 72, 153, 0.85)', 'rgba(139, 92, 246, 0.9)'], accent: '#EC4899', icon: '#10B981' },
+  // 1. Classic Navy & Gold: Deep, elegant, and high-contrast.
+  { 
+    gradient: ['#FFD700', '#FFA500'], // Gold to Orange gradient for the discount badge
+    accent: '#00529B', // A strong, classic navy blue for accents
+    icon: '#FFD700'    // Bright gold for the icon and new price to attract attention
+  },
+  // 2. Electric Blue & Yellow: Vibrant, modern, and energetic.
+  { 
+    gradient: ['#F0E68C', '#FFD700'], // Pale Yellow to Gold gradient
+    accent: '#007BFF', // A bright, electric blue
+    icon: '#F0E68C'    // Neon-like pale yellow for highlight
+  },
+  // 3. Pacific Teal & Coral: Calm, sophisticated, with a warm touch.
+  { 
+    gradient: ['#FF7F50', '#FF6347'], // Coral to Tomato Red gradient
+    accent: '#008080', // Deep Teal (blue-green) for a unique feel
+    icon: '#FF7F50'    // Warm Coral for the icon and price
+  },
+  // 4. Night Sky & Sunset Orange: Dramatic, bold, and striking.
+  { 
+    gradient: ['#FFA500', '#FF4500'], // Orange to Orange-Red gradient
+    accent: '#000080', // Very dark navy, almost like a night sky
+    icon: '#FFA500'    // Bright, pure orange for the highlight
+  },
+  // 5. Arctic Ice & Magenta: Cool, futuristic, and distinctive.
+  { 
+    gradient: ['#FF00FF', '#DA70D6'], // Magenta to Orchid gradient
+    accent: '#87CEEB', // A cool, light sky blue
+    icon: '#FF00FF'    // Bold Magenta for a surprising and modern pop of color
+  },
 ];
 
 interface SliderItem {
@@ -252,7 +277,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
     outputRange: [0.3, 0.9],
   });
 
-  const slideHeight = compact ? 195 : 195;
+  const slideHeight = 300;
 
   if (loading) {
     return (
@@ -325,22 +350,35 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
               >
                 {/* Gradient Overlay */}
                 <LinearGradient
-                  colors={['rgba(0,0,0,0.25)', 'rgba(0,0,0,0.7)']}
+                  colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.3)']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0.2, y: 1 }}
                   style={styles.gradientOverlay}
                 >
                   {/* Accent Strip */}
                   <View style={[styles.accentStrip, { backgroundColor: palette.accent }]} />
-                  
+
                   {/* Type Badge */}
-                  <View style={[styles.typeBadge, { backgroundColor: isBundle ? '#F59E0B' : palette.accent }]}>
+                  <View 
+                    style={[
+                      styles.typeBadge, 
+                      isBundle 
+                        ? { 
+                            backgroundColor: '#000000', // Black background for bundles
+                            borderColor: '#FFD700',     // Luminous gold border
+                            borderWidth: 1,             // Border width
+                          } 
+                        : { 
+                            backgroundColor: palette.accent // Keep original color for promos
+                          }
+                    ]}
+                  >
                     <Ionicons 
                       name={isBundle ? 'gift' : 'megaphone'} 
-                      size={12} 
-                      color="#FFF" 
+                      size={15} 
+                      color={isBundle ? '#FFD700' : '#FFF'} // Gold icon for bundles, white for promos 
                     />
-                    <Text style={styles.typeBadgeText}>
+                    <Text style={[styles.typeBadgeText, isBundle && { color: '#FFD700' }]}>
                       {isBundle 
                         ? (language === 'ar' ? 'عرض مجمع' : 'Bundle')
                         : (language === 'ar' ? 'عرض' : 'Promo')}
@@ -538,7 +576,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   loadingContainer: {
-    height: 195,
+    height: 300,
     justifyContent: 'center',
     alignItems: 'center',
   },
