@@ -172,21 +172,23 @@ export default function ProductDetailScreen() {
     }
   }, [product]);
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
+    if (!id) return;
     try {
-      const response = await productsApi.getById(id as string);
+      const response = await productsApi.getById(id);
       setProduct(response.data);
     } catch (error) {
       console.error('Error fetching product:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
+    if (!id) return;
     setCommentsLoading(true);
     try {
-      const response = await commentsApi.getProductComments(id as string);
+      const response = await commentsApi.getProductComments(id);
       setComments(response.data.comments || []);
       setAvgRating(response.data.avg_rating);
       setRatingCount(response.data.rating_count || 0);
@@ -195,26 +197,28 @@ export default function ProductDetailScreen() {
     } finally {
       setCommentsLoading(false);
     }
-  };
+  }, [id]);
 
-  const checkFavoriteStatus = async () => {
+  const checkFavoriteStatus = useCallback(async () => {
+    if (!id || !user) return;
     try {
-      const response = await favoritesApi.check(id as string);
+      const response = await favoritesApi.check(id);
       setIsFavorite(response.data.is_favorite);
     } catch (error) {
       console.error('Error checking favorite status:', error);
     }
-  };
+  }, [id, user]);
 
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = useCallback(async () => {
     if (!user) {
       router.push('/login');
       return;
     }
+    if (!id) return;
 
     setFavoriteLoading(true);
     try {
-      const response = await favoritesApi.toggle(id as string);
+      const response = await favoritesApi.toggle(id);
       setIsFavorite(response.data.is_favorite);
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -222,17 +226,16 @@ export default function ProductDetailScreen() {
     } finally {
       setFavoriteLoading(false);
     }
-  };
+  }, [id, user, router, t]);
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = useCallback(async () => {
     if (!user) {
       router.push('/login');
       return;
     }
+    if (!product) return;
 
-    // Check if product already exists in cart as bundle item
     if (checkBundleDuplicate(product.id)) {
-      // Haptic feedback for warning
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       }
@@ -248,24 +251,24 @@ export default function ProductDetailScreen() {
     setAddingToCart(true);
     try {
       await cartApi.addItem(product.id, quantity);
-      // Invalidate cart query for real-time sync
       queryClient.invalidateQueries({ queryKey: shoppingHubKeys.cart });
       addToLocalCart({ product_id: product.id, quantity: quantity, product });
       Alert.alert('', t('addToCart') + ' ✔', [{ text: 'OK' }]);
-      setQuantity(1); // Reset quantity after adding
+      setQuantity(1);
     } catch (error) {
       console.error('Error adding to cart:', error);
       Alert.alert(t('error'));
     } finally {
       setAddingToCart(false);
     }
-  };
+  }, [user, product, quantity, checkBundleDuplicate, router, language, t, queryClient, addToLocalCart]);
 
-  const handleSubmitComment = async () => {
+  const handleSubmitComment = useCallback(async () => {
     if (!user) {
       router.push('/login');
       return;
     }
+    if (!id) return;
 
     if (!commentText.trim()) {
       Alert.alert(language === 'ar' ? 'يرجى كتابة تعليق' : 'Please enter a comment');
@@ -274,12 +277,12 @@ export default function ProductDetailScreen() {
 
     setSubmittingComment(true);
     try {
-      await commentsApi.addComment(id as string, commentText.trim(), selectedRating > 0 ? selectedRating : undefined);
+      await commentsApi.addComment(id, commentText.trim(), selectedRating > 0 ? selectedRating : undefined);
       setCommentText('');
       setSelectedRating(0);
       setShowCommentForm(false);
       Keyboard.dismiss();
-      fetchComments();
+      fetchComments(); // Re-fetch comments to show the new one
       Alert.alert(language === 'ar' ? 'تم إضافة التعليق' : 'Comment added successfully');
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -287,9 +290,9 @@ export default function ProductDetailScreen() {
     } finally {
       setSubmittingComment(false);
     }
-  };
+  }, [id, user, commentText, selectedRating, router, language, t, fetchComments]);
 
-  const handleDeleteComment = async (commentId: string) => {
+  const handleDeleteComment = useCallback(async (commentId: string) => {
     Alert.alert(
       language === 'ar' ? 'حذف التعليق' : 'Delete Comment',
       language === 'ar' ? 'هل أنت متأكد من حذف هذا التعليق؟' : 'Are you sure you want to delete this comment?',
@@ -301,7 +304,7 @@ export default function ProductDetailScreen() {
           onPress: async () => {
             try {
               await commentsApi.deleteComment(commentId);
-              fetchComments();
+              fetchComments(); // Re-fetch comments to reflect deletion
             } catch (error) {
               console.error('Error deleting comment:', error);
               Alert.alert(t('error'));
@@ -310,7 +313,7 @@ export default function ProductDetailScreen() {
         },
       ]
     );
-  };
+  }, [language, t, fetchComments]);
 
   const getName = (item: any, field: string = 'name') => {
     const arField = `${field}_ar`;
