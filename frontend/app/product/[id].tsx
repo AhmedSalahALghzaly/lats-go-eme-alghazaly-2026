@@ -63,6 +63,48 @@ interface Comment {
   is_owner: boolean;
 }
 
+interface CarModelCardProps {
+  model: any;
+  cardWidth: number;
+  onPress: (id: string) => void;
+  getName: (item: any) => string;
+  colors: any;
+}
+
+const CarModelCard = React.memo<CarModelCardProps>(({ model, cardWidth, onPress, getName, colors }) => {
+  // Use an intermediate variable for clarity and consistency
+  const modelImage = model.image_url;
+
+  return (
+    <TouchableOpacity
+      style={[styles.carModelCard, { width: cardWidth, backgroundColor: colors.surface, borderColor: colors.border }]}
+      onPress={() => onPress(model.id)}
+      activeOpacity={0.8}
+    >
+      <View style={[styles.carModelImageContainer, { backgroundColor: colors.background }]}>
+        {modelImage ? (
+          <Image
+            source={{ uri: modelImage }}
+            style={styles.carModelImage}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <Ionicons name="car-sport" size={40} color={colors.textSecondary} />
+        )}
+      </View>
+      <Text style={[styles.carModelName, { color: colors.text }]} numberOfLines={1}>
+        {getName(model)}
+      </Text>
+      {model.year_start && model.year_end && (
+        <Text style={[styles.carModelYear, { color: colors.textSecondary }]}>
+          {`${model.year_start} - ${model.year_end}`}
+        </Text>
+      )}
+    </TouchableOpacity>
+  );
+});
+
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
@@ -142,6 +184,19 @@ export default function ProductDetailScreen() {
   const [selectedRating, setSelectedRating] = useState(0);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [showCommentForm, setShowCommentForm] = useState(false);
+
+  const { carGridNumColumns, carGridCardWidth } = useMemo(() => {
+    const GAP = 3.5;
+    const MIN_COLUMNS = 3;
+    const PADDING_HORIZONTAL = GAP * 2; // 7px total for left/right padding
+
+    const availableWidth = screenWidth - PADDING_HORIZONTAL;
+    
+    const totalInternalGaps = GAP * (MIN_COLUMNS - 1);
+    const cardWidth = (availableWidth - totalInternalGaps) / MIN_COLUMNS;
+
+    return { carGridNumColumns: MIN_COLUMNS, carGridCardWidth: cardWidth };
+  }, [screenWidth]);
 
   useEffect(() => {
     fetchProduct();
@@ -656,27 +711,35 @@ export default function ProductDetailScreen() {
             </View>
           )}
 
-          {/* Compatible Cars - Clickable */}
-          <FlashList
-            data={product.car_models}
-            keyExtractor={(item) => item.id.toString()}
-            numColumns={2} // Displaying in 2 columns for a grid-like feel
-            estimatedItemSize={150} // Approximate width of two items
-            renderItem={({ item: model }) => (
-              <TouchableOpacity 
-                style={[styles.carModelBadge, { backgroundColor: colors.surface, flex: 1, margin: 4 }]}
-                onPress={() => router.push(`/car/${model.id}`)}
-              >
-                <Ionicons name="car-sport" size={14} color={colors.primary} />
-                <Text style={[styles.carModelText, { color: colors.text }]} numberOfLines={1}>
-                  {getName(model)}
-                  {model.year_start && model.year_end && (
-                    ` (${model.year_start}-${model.year_end})`
-                )}
+                    {/* Compatible Cars - Clickable */}
+          {product.car_models && product.car_models.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t('compatibleWith')}
               </Text>
-            </TouchableOpacity>
+              {/* --- UPDATED: Using FlashList for optimal performance --- */}
+              <FlashList
+                data={product.car_models}
+                keyExtractor={(item) => item.id.toString()}
+                numColumns={carGridNumColumns}
+                estimatedItemSize={carGridCardWidth}
+                contentContainerStyle={{
+                  paddingHorizontal: 3.5, // Half of the horizontal padding
+                }}
+                renderItem={({ item: model }) => (
+                  <View style={styles.carModelCardWrapper}>
+                    <CarModelCard
+                      model={model}
+                      cardWidth={carGridCardWidth}
+                      onPress={(id) => router.push(`/car/${id}`)}
+                      getName={getName}
+                      colors={colors}
+                    />
+                  </View>
+                )}
+              />
+            </View>
           )}
-        />
 
           {/* Comments Section */}
           <View style={[styles.commentsSection, { borderTopColor: colors.border }]}>
@@ -1092,6 +1155,40 @@ const addToCartStyles = StyleSheet.create({
   quantitySectionRTL: {
     flexDirection: 'row-reverse',
   },
+  carModelCardWrapper: {
+    flex: 1 / 3, // Each item takes up 1/3 of the row
+    padding: 3.5, // This creates the 3.5px gap on all sides of the card
+  },
+  carModelCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    alignItems: 'center',
+  },
+  carModelImageContainer: {
+    width: '100%',
+    aspectRatio: 1.2, // A good ratio for car images
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  carModelImage: {
+    width: '100%',
+    height: '100%',
+  },
+  carModelName: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 8,
+    paddingHorizontal: 8,
+    textAlign: 'center',
+  },
+  carModelYear: {
+    fontSize: 11,
+    marginBottom: 8,
+    paddingHorizontal: 8,
+    textAlign: 'center',
+  },
+
   qtyButton: {
     width: 32,
     height: 32,
