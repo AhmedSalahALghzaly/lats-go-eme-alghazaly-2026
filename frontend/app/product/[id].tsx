@@ -885,10 +885,11 @@ export default function ProductDetailScreen() {
               )}
             />
 
-
         {/* Bottom padding for button */}
         <View style={{ height: 100 }} />
       </ScrollView>
+    );
+  }
 
       {/* Add to Cart Button - Professional Animated */}
       <AnimatedAddToCartBar
