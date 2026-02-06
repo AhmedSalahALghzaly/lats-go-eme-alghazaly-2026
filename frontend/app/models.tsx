@@ -310,7 +310,7 @@ export default function AllModelsScreen() {
         data={filteredModels}
         renderItem={renderModelItem}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={110}
+        estimatedItemSize={130}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
         contentContainerStyle={styles.scrollContent}
@@ -401,8 +401,8 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyText: {
-    fontSize: 14,
-    marginTop: 12,
+    fontSize: 15,
+    marginTop: 13,
   },
   modelCard: {
     flexDirection: 'row',
@@ -414,8 +414,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   modelImageContainer: {
-    width: 80,
-    height: 60,
+    width: 105,
+    height: 79,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -427,7 +427,8 @@ const styles = StyleSheet.create({
   },
   modelInfo: {
     flex: 1,
-    marginLeft: 14,
+    marginLeft: 17,
+    justifyContent: 'center',
   },
   brandTag: {
     alignSelf: 'flex-start',
@@ -437,17 +438,17 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   brandTagText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
   },
   modelName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 5,
   },
   modelYear: {
-    fontSize: 12,
-    marginBottom: 4,
+    fontSize: 13,
+    marginBottom: 3,
   },
   variantsInfo: {
     flexDirection: 'row',
@@ -469,9 +470,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   chassisText: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.7,
   },
   retryButton: {
     marginTop: 16,
@@ -481,7 +482,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: '#FFF',
-    fontWeight: '600',
-    fontSize: 14,
+    fontWeight: '700',
+    fontSize: 13,
   },
 });
