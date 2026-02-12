@@ -489,8 +489,8 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
               </ImageBackground>
             </TouchableOpacity>
           );
-        })}
-      </ScrollView>
+        }}
+      />
 
       {/* Navigation Arrows - Right */}
       {showArrows && sliderItems.length > 1 && (
