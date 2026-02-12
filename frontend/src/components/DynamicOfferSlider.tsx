@@ -277,7 +277,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
     outputRange: [0.3, 0.9],
   });
 
-  const slideHeight = 300;
+  const slideHeight = 370;
 
   if (loading) {
     return (
@@ -576,17 +576,17 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   loadingContainer: {
-    height: 300,
+    height: 370,
     justifyContent: 'center',
     alignItems: 'center',
   },
   scrollContent: {
     // This is no longer needed; layout is handled by contentContainerStyle inline.
-    // paddingHorizontal: 20,
+    // paddingHorizontal: 30,
   },
   slideWrapper: {
     // This is no longer needed; width is inline and marginRight is replaced by gap.
-    // marginRight: 12,
+    // marginRight: 17,
   },
   slide: {
     width: '100%',
