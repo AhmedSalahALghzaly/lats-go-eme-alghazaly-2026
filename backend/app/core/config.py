@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(ROOT_DIR / '.env')
 
-# Primary Owner Email
-PRIMARY_OWNER_EMAIL = "pc.2025.ai@gmail.com"
+# Primary Owner Email - loaded from environment with fallback
+PRIMARY_OWNER_EMAIL = os.environ.get('PRIMARY_OWNER_EMAIL', 'pc.2025.ai@gmail.com')
 
 # App version information
-APP_VERSION = "4.1.0"
+APP_VERSION = "4.2.0"
 MIN_FRONTEND_VERSION = "1.0.0"
 
 class Settings:
@@ -25,5 +25,8 @@ class Settings:
     
     # Shipping cost
     SHIPPING_COST: float = 150.0
+    
+    # CORS allowed origins (comma-separated in env, or * for development)
+    CORS_ORIGINS: str = os.environ.get('CORS_ORIGINS', '*')
 
 settings = Settings()
