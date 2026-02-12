@@ -885,6 +885,7 @@ export default function ProductDetailScreen() {
               )}
             />
           </View>
+        </View>
 
         {/* Bottom padding for button */}
         <View style={{ height: 100 }} />
