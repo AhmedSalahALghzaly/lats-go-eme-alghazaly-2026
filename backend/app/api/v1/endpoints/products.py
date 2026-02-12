@@ -1,5 +1,5 @@
 """
-Product Routes with Cursor-Based Pagination
+Product Routes with Cursor-Based Pagination - Security Hardened
 """
 from fastapi import APIRouter, HTTPException, Query, Request
 from typing import Optional
@@ -7,7 +7,10 @@ from datetime import datetime, timezone
 import uuid
 
 from ....core.database import db
-from ....core.security import get_current_user, serialize_doc, get_user_role
+from ....core.security import (
+    get_current_user, serialize_doc, get_user_role,
+    require_admin_role, sanitize_regex_input
+)
 from ....models.schemas import ProductCreate
 from ....services.websocket import manager
 from ....services.notification import notify_admins_product_change
@@ -23,16 +26,11 @@ async def get_products(
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     skip: int = 0,
-    limit: int = 50,
+    limit: int = Query(50, le=200),
     include_hidden: bool = False,
     cursor: Optional[str] = None,
     direction: str = "next"
 ):
-    """
-    Enhanced product listing with cursor-based pagination.
-    - cursor: Product ID to start from (exclusive)
-    - direction: "next" for newer items (default), "prev" for older items
-    """
     query = {"deleted_at": None}
     if not include_hidden:
         query["$or"] = [{"hidden_status": False}, {"hidden_status": None}]
@@ -56,7 +54,6 @@ async def get_products(
     
     total = await db.products.count_documents(query)
     
-    # Cursor-based pagination
     if cursor:
         cursor_doc = await db.products.find_one({"_id": cursor})
         if cursor_doc:
@@ -112,13 +109,11 @@ async def get_products(
                 product_data["compatible_car_model"] = car_model.get("name", "")
                 product_data["compatible_car_model_ar"] = car_model.get("name_ar", "")
                 product_data["compatible_car_models_count"] = len(p["car_model_ids"])
-                # Add car brand info
-                car_brand_id = car_model.get("brand_id")
-                if car_brand_id and car_brand_id in car_brand_map:
-                    car_brand = car_brand_map[car_brand_id]
+                car_brand_id_val = car_model.get("brand_id")
+                if car_brand_id_val and car_brand_id_val in car_brand_map:
+                    car_brand = car_brand_map[car_brand_id_val]
                     product_data["compatible_car_brand"] = car_brand.get("name", "")
                     product_data["compatible_car_brand_ar"] = car_brand.get("name_ar", "")
-                # Add year range
                 product_data["compatible_car_year_from"] = car_model.get("year_start")
                 product_data["compatible_car_year_to"] = car_model.get("year_end")
         
@@ -137,8 +132,10 @@ async def get_products(
     }
 
 @router.get("/search")
-async def search_products(q: str = Query(..., min_length=1), limit: int = 20):
-    regex = {"$regex": q, "$options": "i"}
+async def search_products(q: str = Query(..., min_length=1, max_length=200), limit: int = Query(20, le=100)):
+    # Sanitize regex input to prevent ReDoS
+    safe_q = sanitize_regex_input(q)
+    regex = {"$regex": safe_q, "$options": "i"}
     products = await db.products.find({"$and": [{"deleted_at": None}, {"$or": [{"name": regex}, {"name_ar": regex}, {"sku": regex}]}]}).limit(limit).to_list(limit)
     car_brands = await db.car_brands.find({"deleted_at": None, "$or": [{"name": regex}, {"name_ar": regex}]}).limit(5).to_list(5)
     car_models = await db.car_models.find({"deleted_at": None, "$or": [{"name": regex}, {"name_ar": regex}]}).limit(5).to_list(5)
@@ -186,13 +183,11 @@ async def get_all_products():
                 product_data["compatible_car_model"] = car_model.get("name", "")
                 product_data["compatible_car_model_ar"] = car_model.get("name_ar", "")
                 product_data["compatible_car_models_count"] = len(p["car_model_ids"])
-                # Add car brand info
-                car_brand_id = car_model.get("brand_id")
-                if car_brand_id and car_brand_id in car_brand_map:
-                    car_brand = car_brand_map[car_brand_id]
+                car_brand_id_val = car_model.get("brand_id")
+                if car_brand_id_val and car_brand_id_val in car_brand_map:
+                    car_brand = car_brand_map[car_brand_id_val]
                     product_data["compatible_car_brand"] = car_brand.get("name", "")
                     product_data["compatible_car_brand_ar"] = car_brand.get("name_ar", "")
-                # Add year range
                 product_data["compatible_car_year_from"] = car_model.get("year_start")
                 product_data["compatible_car_year_to"] = car_model.get("year_end")
         
@@ -210,7 +205,6 @@ async def get_product(product_id: str):
         brand = await db.product_brands.find_one({"_id": p["product_brand_id"]})
         p["product_brand"] = serialize_doc(brand)
         
-        # Fetch supplier linked to this product brand
         if brand and brand.get("supplier_id"):
             supplier = await db.suppliers.find_one({
                 "_id": brand["supplier_id"], 
@@ -229,14 +223,13 @@ async def get_product(product_id: str):
 
 @router.post("")
 async def create_product(product: ProductCreate, request: Request):
-    user = await get_current_user(request)
+    user, role = await require_admin_role(request, ["owner", "partner", "admin"])
     admin_id = None
     admin_name = None
-    if user:
-        admin = await db.admins.find_one({"email": user.get("email"), "deleted_at": None})
-        if admin:
-            admin_id = admin["_id"]
-            admin_name = admin.get("name", user.get("name", user.get("email")))
+    admin = await db.admins.find_one({"email": user.get("email"), "deleted_at": None})
+    if admin:
+        admin_id = admin["_id"]
+        admin_name = admin.get("name", user.get("name", user.get("email")))
     
     doc = {
         "_id": f"prod_{uuid.uuid4().hex[:8]}",
@@ -250,7 +243,6 @@ async def create_product(product: ProductCreate, request: Request):
     await db.products.insert_one(doc)
     await manager.broadcast({"type": "sync", "tables": ["products"]})
     
-    # Notify admins about new product
     await notify_admins_product_change(
         product_name=product.name or product.name_ar or "New Product",
         product_id=doc["_id"],
@@ -261,7 +253,8 @@ async def create_product(product: ProductCreate, request: Request):
     return serialize_doc(doc)
 
 @router.put("/{product_id}")
-async def update_product(product_id: str, product: ProductCreate):
+async def update_product(product_id: str, product: ProductCreate, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.products.update_one(
         {"_id": product_id},
         {"$set": {**product.dict(), "updated_at": datetime.now(timezone.utc)}}
@@ -270,16 +263,21 @@ async def update_product(product_id: str, product: ProductCreate):
     return {"message": "Updated"}
 
 @router.patch("/{product_id}/price")
-async def update_product_price(product_id: str, data: dict):
+async def update_product_price(product_id: str, data: dict, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
+    price = data.get("price")
+    if price is None or price < 0:
+        raise HTTPException(status_code=400, detail="Invalid price")
     await db.products.update_one(
         {"_id": product_id},
-        {"$set": {"price": data.get("price"), "updated_at": datetime.now(timezone.utc)}}
+        {"$set": {"price": price, "updated_at": datetime.now(timezone.utc)}}
     )
     await manager.broadcast({"type": "sync", "tables": ["products"]})
     return {"message": "Price updated"}
 
 @router.patch("/{product_id}/hidden")
-async def update_product_hidden(product_id: str, data: dict):
+async def update_product_hidden(product_id: str, data: dict, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.products.update_one(
         {"_id": product_id},
         {"$set": {"hidden_status": data.get("hidden_status"), "updated_at": datetime.now(timezone.utc)}}
@@ -288,7 +286,8 @@ async def update_product_hidden(product_id: str, data: dict):
     return {"message": "Updated"}
 
 @router.delete("/{product_id}")
-async def delete_product(product_id: str):
+async def delete_product(product_id: str, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.products.update_one(
         {"_id": product_id},
         {"$set": {"deleted_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}}

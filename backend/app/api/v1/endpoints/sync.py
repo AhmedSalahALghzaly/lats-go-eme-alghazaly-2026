@@ -1,5 +1,5 @@
 """
-Sync Routes
+Sync Routes - Security Hardened
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import Optional
@@ -16,12 +16,19 @@ router = APIRouter()
 def get_timestamp_ms():
     return int(datetime.now(timezone.utc).timestamp() * 1000)
 
+# Whitelist of tables allowed for sync pull
+SYNC_ALLOWED_TABLES = {"car_brands", "car_models", "product_brands", "categories", "products"}
+
 @router.post("/sync/pull")
 async def sync_pull(data: SyncPullRequest):
     result = {}
-    tables = data.tables or ["car_brands", "car_models", "product_brands", "categories", "products"]
+    tables = data.tables or list(SYNC_ALLOWED_TABLES)
     
     for table in tables:
+        # Only allow whitelisted tables
+        if table not in SYNC_ALLOWED_TABLES:
+            continue
+        
         collection = db[table]
         query = {"deleted_at": None}
         if data.last_pulled_at:
@@ -41,8 +48,11 @@ async def websocket_endpoint(websocket: WebSocket, user_id: Optional[str] = None
     try:
         while True:
             data = await websocket.receive_text()
-            message = json.loads(data)
-            if message.get("type") == "ping":
-                await websocket.send_json({"type": "pong"})
+            try:
+                message = json.loads(data)
+                if message.get("type") == "ping":
+                    await websocket.send_json({"type": "pong"})
+            except (json.JSONDecodeError, KeyError):
+                pass  # Silently ignore malformed messages
     except WebSocketDisconnect:
         manager.disconnect(websocket, user_id)

@@ -1,43 +1,37 @@
 """
-Delta Sync API - High-efficiency incremental data synchronization
-Supports last_sync_timestamp for fetching only changed records
-Includes deleted_ids tracking for informing frontend of removed records
+Delta Sync API - Security Hardened
+High-efficiency incremental data synchronization with auth on sensitive data
 """
-from fastapi import APIRouter, Query
-from typing import Optional, List
+from fastapi import APIRouter, Query, Request
+from typing import Optional
 from datetime import datetime, timezone
 from ....core.database import db
-from ....core.security import serialize_doc
+from ....core.security import serialize_doc, get_current_user, get_user_role
 
 router = APIRouter(prefix="/delta-sync")
 
-# Helper to parse ISO timestamp
 def parse_timestamp(ts: Optional[str]) -> Optional[datetime]:
     if not ts:
         return None
     try:
         return datetime.fromisoformat(ts.replace('Z', '+00:00'))
-    except:
+    except Exception:
         return None
 
 @router.get("/products")
 async def get_products_delta(
-    last_sync: Optional[str] = Query(None, description="ISO timestamp of last sync"),
+    last_sync: Optional[str] = Query(None),
     limit: int = Query(1000, le=5000)
 ):
-    """Get products changed since last_sync timestamp"""
     last_sync_dt = parse_timestamp(last_sync)
     
-    # Build aggregation pipeline with $lookup for enrichment
     pipeline = [
         {"$match": {"deleted_at": None}},
     ]
     
-    # Add delta filter if timestamp provided
     if last_sync_dt:
         pipeline[0]["$match"]["updated_at"] = {"$gt": last_sync_dt}
     
-    # Lookup product brand
     pipeline.extend([
         {
             "$lookup": {
@@ -48,7 +42,6 @@ async def get_products_delta(
             }
         },
         {"$unwind": {"path": "$_brand", "preserveNullAndEmptyArrays": True}},
-        # Lookup first car model
         {
             "$lookup": {
                 "from": "car_models",
@@ -60,7 +53,6 @@ async def get_products_delta(
             }
         },
         {"$unwind": {"path": "$_car_model", "preserveNullAndEmptyArrays": True}},
-        # Lookup car brand from model
         {
             "$lookup": {
                 "from": "car_brands",
@@ -70,7 +62,6 @@ async def get_products_delta(
             }
         },
         {"$unwind": {"path": "$_car_brand", "preserveNullAndEmptyArrays": True}},
-        # Project final structure
         {
             "$addFields": {
                 "product_brand_name": "$_brand.name",
@@ -93,7 +84,6 @@ async def get_products_delta(
     
     products = await db.products.aggregate(pipeline).to_list(limit)
     
-    # Get deleted IDs since last sync
     deleted_ids = []
     if last_sync_dt:
         deleted_docs = await db.products.find(
@@ -113,10 +103,7 @@ async def get_products_delta(
     }
 
 @router.get("/categories")
-async def get_categories_delta(
-    last_sync: Optional[str] = Query(None)
-):
-    """Get categories changed since last_sync"""
+async def get_categories_delta(last_sync: Optional[str] = Query(None)):
     last_sync_dt = parse_timestamp(last_sync)
     
     query = {"deleted_at": None}
@@ -144,15 +131,28 @@ async def get_categories_delta(
 
 @router.get("/orders")
 async def get_orders_delta(
+    request: Request,
     last_sync: Optional[str] = Query(None),
     user_id: Optional[str] = Query(None)
 ):
-    """Get orders changed since last_sync"""
+    """Get orders delta - REQUIRES authentication. Users can only see their own orders."""
+    user = await get_current_user(request)
+    if not user:
+        return {"orders": [], "deleted_ids": [], "server_time": datetime.now(timezone.utc).isoformat(), "is_delta": last_sync is not None}
+    
+    role = await get_user_role(user)
     last_sync_dt = parse_timestamp(last_sync)
     
     query = {"deleted_at": None}
-    if user_id:
-        query["user_id"] = user_id
+    
+    # Non-admin users can only see their own orders
+    if role in ["owner", "partner", "admin"]:
+        if user_id:
+            query["user_id"] = user_id
+    else:
+        # Force user_id to be the authenticated user's ID
+        query["user_id"] = user["id"]
+    
     if last_sync_dt:
         query["updated_at"] = {"$gt": last_sync_dt}
     
@@ -161,7 +161,9 @@ async def get_orders_delta(
     deleted_ids = []
     if last_sync_dt:
         del_query = {"deleted_at": {"$gt": last_sync_dt}}
-        if user_id:
+        if role not in ["owner", "partner", "admin"]:
+            del_query["user_id"] = user["id"]
+        elif user_id:
             del_query["user_id"] = user_id
         deleted_docs = await db.orders.find(del_query, {"_id": 1}).to_list(500)
         deleted_ids = [doc["_id"] for doc in deleted_docs]
@@ -236,10 +238,11 @@ async def get_product_brands_delta(last_sync: Optional[str] = Query(None)):
 @router.get("/full")
 async def get_full_delta(
     last_sync: Optional[str] = Query(None),
-    tables: Optional[str] = Query(None, description="Comma-separated list: products,categories,car_brands,car_models,product_brands")
+    tables: Optional[str] = Query(None)
 ):
-    """Get delta for multiple tables in single request"""
-    requested_tables = tables.split(",") if tables else ["products", "categories", "car_brands", "car_models", "product_brands"]
+    # Whitelist allowed tables
+    allowed_tables = {"products", "categories", "car_brands", "car_models", "product_brands"}
+    requested_tables = tables.split(",") if tables else list(allowed_tables)
     last_sync_dt = parse_timestamp(last_sync)
     
     result = {
@@ -250,6 +253,11 @@ async def get_full_delta(
     
     for table in requested_tables:
         table = table.strip()
+        
+        # Only allow whitelisted tables
+        if table not in allowed_tables:
+            continue
+        
         query = {"deleted_at": None}
         if last_sync_dt:
             query["updated_at"] = {"$gt": last_sync_dt}

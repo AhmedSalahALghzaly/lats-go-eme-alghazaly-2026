@@ -1,5 +1,5 @@
 """
-Health Check and Deployment Routes
+Health Check and Deployment Routes - Security Hardened
 """
 from fastapi import APIRouter, HTTPException, Request
 from typing import Optional, Dict, Any, List
@@ -15,7 +15,6 @@ router = APIRouter()
 
 @router.get("/version", response_model=VersionInfo)
 async def get_version():
-    """Get API version information for frontend version checking."""
     return {
         "api_version": APP_VERSION,
         "build_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
@@ -26,19 +25,19 @@ async def get_version():
             "websocket_realtime",
             "modern_ui_v4",
             "image_optimization",
-            "modular_backend"
+            "modular_backend",
+            "security_hardened"
         ]
     }
 
 @router.get("/health")
 async def health_check():
-    """Health check endpoint for deployment monitoring."""
-    # db is imported from core.database
+    """Health check endpoint - does NOT leak internal error details"""
     try:
         await db.command("ping")
         mongo_status = "healthy"
-    except Exception as e:
-        mongo_status = f"unhealthy: {str(e)}"
+    except Exception:
+        mongo_status = "unhealthy"
     
     return {
         "status": "healthy" if mongo_status == "healthy" else "degraded",
@@ -50,7 +49,6 @@ async def health_check():
 
 @router.post("/admin/export-database")
 async def export_database(request: Request, export_config: ExportRequest = None):
-    """Export MongoDB collections for database seeding."""
     user = await get_current_user(request)
     if not user or user.get("email") != PRIMARY_OWNER_EMAIL:
         raise HTTPException(status_code=403, detail="Admin access required")
@@ -95,17 +93,32 @@ async def export_database(request: Request, export_config: ExportRequest = None)
 
 @router.post("/admin/import-database")
 async def import_database(request: Request, import_config: ImportRequest):
-    """Import database seed data."""
     user = await get_current_user(request)
     if not user or user.get("email") != PRIMARY_OWNER_EMAIL:
         raise HTTPException(status_code=403, detail="Admin access required")
     
+    # Whitelist allowed collections for import
+    allowed_collections = {
+        "car_brands", "car_models", "categories", "product_brands",
+        "products", "suppliers", "promotions", "bundle_offers"
+    }
+    
     import_data = import_config.data
     merge_strategy = import_config.merge_strategy
+    
+    # Validate merge strategy
+    if merge_strategy not in ("skip_existing", "replace", "merge"):
+        raise HTTPException(status_code=400, detail="Invalid merge strategy")
+    
     results = {"imported": {}, "skipped": {}, "errors": []}
     
     collections_data = import_data.get("collections", {})
     for collection_name, collection_data in collections_data.items():
+        # Only allow whitelisted collections
+        if collection_name not in allowed_collections:
+            results["errors"].append(f"Collection '{collection_name}' is not allowed for import")
+            continue
+        
         documents = collection_data.get("documents", [])
         imported_count = 0
         skipped_count = 0
@@ -129,8 +142,8 @@ async def import_database(request: Request, import_config: ImportRequest):
                 else:
                     await collection.insert_one(doc)
                     imported_count += 1
-            except Exception as e:
-                results["errors"].append(f"{collection_name}/{doc.get('_id', 'unknown')}: {str(e)}")
+            except Exception:
+                results["errors"].append(f"{collection_name}/{doc.get('_id', 'unknown')}: import failed")
         
         results["imported"][collection_name] = imported_count
         results["skipped"][collection_name] = skipped_count
@@ -139,7 +152,6 @@ async def import_database(request: Request, import_config: ImportRequest):
 
 @router.get("/admin/database-stats")
 async def get_database_stats(request: Request):
-    """Get database statistics."""
     user = await get_current_user(request)
     if not user or user.get("email") != PRIMARY_OWNER_EMAIL:
         raise HTTPException(status_code=403, detail="Admin access required")
@@ -164,7 +176,6 @@ async def get_database_stats(request: Request):
 
 @router.post("/admin/clear-cache")
 async def clear_server_cache(request: Request):
-    """Clear server-side caches."""
     user = await get_current_user(request)
     if not user or user.get("email") != PRIMARY_OWNER_EMAIL:
         raise HTTPException(status_code=403, detail="Admin access required")
@@ -178,7 +189,6 @@ async def clear_server_cache(request: Request):
 
 @router.get("/admin/deployment-checklist")
 async def get_deployment_checklist(request: Request):
-    """Get deployment readiness checklist."""
     user = await get_current_user(request)
     if not user or user.get("email") != PRIMARY_OWNER_EMAIL:
         raise HTTPException(status_code=403, detail="Admin access required")
@@ -188,8 +198,8 @@ async def get_deployment_checklist(request: Request):
     try:
         await db.command("ping")
         checks.append({"name": "Database Connection", "status": "pass", "message": "MongoDB connected"})
-    except Exception as e:
-        checks.append({"name": "Database Connection", "status": "fail", "message": str(e)})
+    except Exception:
+        checks.append({"name": "Database Connection", "status": "fail", "message": "Connection failed"})
     
     essential_collections = ["car_brands", "car_models", "categories", "products"]
     for coll in essential_collections:
