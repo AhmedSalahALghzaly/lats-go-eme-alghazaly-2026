@@ -46,9 +46,6 @@ api.interceptors.request.use(
   (config) => {
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
-      console.log('API Request: Adding auth header for', config.url);
-    } else {
-      console.log('API Request: No auth token for', config.url);
     }
     return config;
   },
