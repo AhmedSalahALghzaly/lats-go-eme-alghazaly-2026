@@ -90,7 +90,7 @@ export default function AllModelsScreen() {
             resizeMode="cover"
           />
         ) : (
-          <Ionicons name="car-sport" size={40} color={colors.textSecondary} />
+          <Ionicons name="car-sport" size={59} color={colors.textSecondary} />
         )}
       </View>
       <View style={styles.modelInfo}>
@@ -110,7 +110,7 @@ export default function AllModelsScreen() {
         {/* Chassis Number Display */}
         {model.chassis_number && (
           <View style={[styles.chassisInfo, { backgroundColor: colors.secondary + '15' }]}>
-            <Ionicons name="key-outline" size={12} color={colors.secondary} />
+            <Ionicons name="key-outline" size={13} color={colors.secondary} />
             <Text style={[styles.chassisText, { color: colors.secondary }]}>
               {model.chassis_number}
             </Text>
@@ -118,7 +118,7 @@ export default function AllModelsScreen() {
         )}
         {model.variants && model.variants.length > 0 && (
           <View style={styles.variantsInfo}>
-            <Ionicons name="speedometer-outline" size={14} color={colors.secondary} />
+            <Ionicons name="speedometer-outline" size={15} color={colors.secondary} />
             <Text style={[styles.variantsText, { color: colors.secondary }]}>
               {model.variants.length} {language === 'ar' ? 'فئات' : 'variants'}
             </Text>
@@ -187,7 +187,7 @@ export default function AllModelsScreen() {
             >
               <Ionicons
                 name="car-sport"
-                size={14}
+                size={19}
                 color={selectedBrand === brand.id ? '#FFF' : colors.primary}
               />
               <Text style={[
@@ -310,7 +310,7 @@ export default function AllModelsScreen() {
         data={filteredModels}
         renderItem={renderModelItem}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={130}
+        estimatedItemSize={159}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
         contentContainerStyle={styles.scrollContent}
@@ -414,8 +414,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   modelImageContainer: {
-    width: 105,
-    height: 79,
+    width: 119,
+    height: 95,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   },
   modelInfo: {
     flex: 1,
-    marginLeft: 17,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   brandTag: {
