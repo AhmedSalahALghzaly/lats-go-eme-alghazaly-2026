@@ -44,7 +44,7 @@ export default function SearchScreen() {
     // --- Base Layout Constants ---
     const GAP = 5;
     const PADDING_HORIZONTAL = GAP * 2; // 10px total for left and right screen padding
-    const MAX_CARD_WIDTH = 279; // The absolute maximum width a card can have.
+    const MAX_CARD_WIDTH = 270; // The absolute maximum width a card can have.
 
     // The available width for cards and their internal gaps.
     const availableWidth = screenWidth - PADDING_HORIZONTAL;
