@@ -899,23 +899,23 @@ export const InteractiveCarSelector: React.FC = () => {
     }
   }, [selectorState]);
 
-  const handleGridItemPress = useCallback((item: CarBrand | CarModel, isBrand: boolean) => {
+  const handleGridItemPress = useCallback(async (item: CarBrand | CarModel, isBrand: boolean) => {
     if (isBrand) {
       setSelectedBrand(item as CarBrand);
       setSelectorState('models');
     } else {
       setSelectedModel(item as CarModel);
-      setSelectorState('products');
-      fetchProductsForModel((item as CarModel).id);
+      setSelectorState('products'); // Set state to 'products' to show loading skeleton
+      await fetchProductsForModel((item as CarModel).id); // Await the product fetching
     }
   }, [fetchProductsForModel]);
 
-  const handleChassisModelPress = useCallback((model: CarModel) => {
+  const handleChassisModelPress = useCallback(async (model: CarModel) => {
     setSelectedModel(model);
     const brand = carBrands.find(b => b.id === model.brand_id);
     if (brand) setSelectedBrand(brand);
-    setSelectorState('products');
-    fetchProductsForModel(model.id);
+    setSelectorState('products'); // Set state to 'products' to show loading skeleton
+    await fetchProductsForModel(model.id); // Await the product fetching
   }, [carBrands, fetchProductsForModel]);
 
   const handleProductPress = useCallback((productId: string) => {
