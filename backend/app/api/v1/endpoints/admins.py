@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import uuid
 
 from ....core.database import db
-from ....core.security import get_current_user, get_user_role, serialize_doc
+from ....core.security import get_current_user, get_user_role, serialize_doc, invalidate_user_sessions
 from ....models.schemas import AdminCreate, SettleRevenueRequest
 from ....services.websocket import manager
 from ....services.notification import create_notification
@@ -150,6 +150,13 @@ async def delete_admin(admin_id: str, request: Request):
     role = await get_user_role(user) if user else "guest"
     if role not in ["owner", "partner"]:
         raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Get admin email before deletion to invalidate their sessions
+    admin = await db.admins.find_one({"_id": admin_id})
+    if admin:
+        admin_user = await db.users.find_one({"email": admin.get("email")})
+        if admin_user:
+            await invalidate_user_sessions(str(admin_user["_id"]))
     
     await db.admins.update_one({"_id": admin_id}, {"$set": {"deleted_at": datetime.now(timezone.utc)}})
     await manager.broadcast({"type": "sync", "tables": ["admins"]})

@@ -126,8 +126,8 @@ async def create_subscription_request(data: SubscriptionRequestCreate):
     return serialize_doc(request_doc)
 
 @router.get("/subscription-status")
-async def get_subscription_status(email: str = None, phone: str = None):
-    """Check subscription status for a user by email or phone"""
+async def get_subscription_status(request: Request, email: str = None, phone: str = None):
+    """Check subscription status - requires authentication or limits returned data"""
     if not email and not phone:
         return {"status": "none", "is_subscriber": False, "has_pending": False}
     
@@ -137,7 +137,6 @@ async def get_subscription_status(email: str = None, phone: str = None):
     if phone:
         query_conditions.append({"phone": phone})
     
-    # Check if already a subscriber
     subscriber = await db.subscribers.find_one({
         "$or": query_conditions,
         "deleted_at": None
@@ -147,11 +146,9 @@ async def get_subscription_status(email: str = None, phone: str = None):
         return {
             "status": "subscriber",
             "is_subscriber": True,
-            "has_pending": False,
-            "subscriber_id": str(subscriber["_id"])
+            "has_pending": False
         }
     
-    # Check for pending request
     pending_request = await db.subscription_requests.find_one({
         "$or": query_conditions,
         "status": "pending",
@@ -162,11 +159,9 @@ async def get_subscription_status(email: str = None, phone: str = None):
         return {
             "status": "pending",
             "is_subscriber": False,
-            "has_pending": True,
-            "request_id": str(pending_request["_id"])
+            "has_pending": True
         }
     
-    # Check for approved request (waiting to be added as subscriber)
     approved_request = await db.subscription_requests.find_one({
         "$or": query_conditions,
         "status": "approved",
@@ -177,8 +172,7 @@ async def get_subscription_status(email: str = None, phone: str = None):
         return {
             "status": "approved",
             "is_subscriber": False,
-            "has_pending": False,
-            "request_id": str(approved_request["_id"])
+            "has_pending": False
         }
     
     return {"status": "none", "is_subscriber": False, "has_pending": False}
