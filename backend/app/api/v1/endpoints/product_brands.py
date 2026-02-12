@@ -1,12 +1,12 @@
 """
-Product Brand Routes
+Product Brand Routes - Security Hardened
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from datetime import datetime, timezone
 import uuid
 
 from ....core.database import db
-from ....core.security import serialize_doc
+from ....core.security import serialize_doc, require_admin_role
 from ....models.schemas import ProductBrandCreate
 from ....services.websocket import manager
 
@@ -25,7 +25,8 @@ async def get_product_brands():
     return result
 
 @router.post("")
-async def create_product_brand(brand: ProductBrandCreate):
+async def create_product_brand(brand: ProductBrandCreate, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     doc = {
         "_id": f"pb_{uuid.uuid4().hex[:8]}",
         **brand.dict(),
@@ -38,7 +39,8 @@ async def create_product_brand(brand: ProductBrandCreate):
     return serialize_doc(doc)
 
 @router.put("/{brand_id}")
-async def update_product_brand(brand_id: str, brand: ProductBrandCreate):
+async def update_product_brand(brand_id: str, brand: ProductBrandCreate, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.product_brands.update_one(
         {"_id": brand_id},
         {"$set": {**brand.dict(), "updated_at": datetime.now(timezone.utc)}}
@@ -48,7 +50,8 @@ async def update_product_brand(brand_id: str, brand: ProductBrandCreate):
     return serialize_doc(updated)
 
 @router.delete("/{brand_id}")
-async def delete_product_brand(brand_id: str):
+async def delete_product_brand(brand_id: str, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.product_brands.update_one(
         {"_id": brand_id},
         {"$set": {"deleted_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}}

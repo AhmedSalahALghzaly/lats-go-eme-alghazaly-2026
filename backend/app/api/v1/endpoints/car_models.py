@@ -1,13 +1,13 @@
 """
-Car Model Routes
+Car Model Routes - Security Hardened
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
 import uuid
 
 from ....core.database import db
-from ....core.security import serialize_doc
+from ....core.security import serialize_doc, require_admin_role, sanitize_regex_input
 from ....models.schemas import CarModelCreate
 from ....services.websocket import manager
 
@@ -15,14 +15,13 @@ router = APIRouter(prefix="/car-models")
 
 @router.get("")
 async def get_car_models(brand_id: Optional[str] = None, search: Optional[str] = None):
-    """Get all car models, optionally filtered by brand_id or search query (name/chassis_number)"""
     query = {"deleted_at": None}
     if brand_id:
         query["brand_id"] = brand_id
     
-    # If search is provided, search by name, name_ar, or chassis_number
     if search:
-        search_regex = {"$regex": search, "$options": "i"}
+        safe_search = sanitize_regex_input(search)
+        search_regex = {"$regex": safe_search, "$options": "i"}
         query["$or"] = [
             {"name": search_regex},
             {"name_ar": search_regex},
@@ -34,13 +33,13 @@ async def get_car_models(brand_id: Optional[str] = None, search: Optional[str] =
 
 @router.get("/search-by-chassis")
 async def search_by_chassis(chassis: str):
-    """Search car models by chassis number (VIN)"""
     if not chassis or len(chassis) < 3:
         raise HTTPException(status_code=400, detail="Chassis number must be at least 3 characters")
     
+    safe_chassis = sanitize_regex_input(chassis)
     query = {
         "deleted_at": None,
-        "chassis_number": {"$regex": chassis, "$options": "i"}
+        "chassis_number": {"$regex": safe_chassis, "$options": "i"}
     }
     models = await db.car_models.find(query).sort("name", 1).to_list(100)
     return [serialize_doc(m) for m in models]
@@ -56,7 +55,6 @@ async def get_car_model(model_id: str):
         brand = await db.car_brands.find_one({"_id": brand_id})
         model_data["brand"] = serialize_doc(brand) if brand else None
         
-        # Fetch distributor linked to this car brand
         if brand and brand.get("distributor_id"):
             distributor = await db.distributors.find_one({
                 "_id": brand["distributor_id"], 
@@ -77,7 +75,8 @@ async def get_car_model(model_id: str):
     return model_data
 
 @router.post("")
-async def create_car_model(model: CarModelCreate):
+async def create_car_model(model: CarModelCreate, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     doc = {
         "_id": f"cm_{uuid.uuid4().hex[:8]}",
         **model.dict(),
@@ -90,7 +89,8 @@ async def create_car_model(model: CarModelCreate):
     return serialize_doc(doc)
 
 @router.put("/{model_id}")
-async def update_car_model(model_id: str, model: CarModelCreate):
+async def update_car_model(model_id: str, model: CarModelCreate, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.car_models.update_one(
         {"_id": model_id},
         {"$set": {**model.dict(), "updated_at": datetime.now(timezone.utc)}}
@@ -99,7 +99,8 @@ async def update_car_model(model_id: str, model: CarModelCreate):
     return {"message": "Updated"}
 
 @router.delete("/{model_id}")
-async def delete_car_model(model_id: str):
+async def delete_car_model(model_id: str, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.car_models.update_one(
         {"_id": model_id},
         {"$set": {"deleted_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}}

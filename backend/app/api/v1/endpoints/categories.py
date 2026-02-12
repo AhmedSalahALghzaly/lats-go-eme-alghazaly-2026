@@ -1,14 +1,14 @@
 """
-Category Routes
+Category Routes - Security Hardened
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from typing import Optional
 from datetime import datetime, timezone
 import uuid
 import logging
 
 from ....core.database import db
-from ....core.security import serialize_doc
+from ....core.security import serialize_doc, require_admin_role
 from ....models.schemas import CategoryCreate
 from ....services.websocket import manager
 
@@ -44,8 +44,8 @@ async def get_categories_tree():
     return root
 
 @router.post("")
-async def create_category(category: CategoryCreate):
-    logger.info(f"Creating category: {category.name}, image_data present: {bool(category.image_data)}")
+async def create_category(category: CategoryCreate, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     doc = {
         "_id": f"cat_{uuid.uuid4().hex[:8]}",
         **category.dict(),
@@ -59,8 +59,8 @@ async def create_category(category: CategoryCreate):
     return serialize_doc(doc)
 
 @router.put("/{cat_id}")
-async def update_category(cat_id: str, category: CategoryCreate):
-    logger.info(f"Updating category: {cat_id}, image_data present: {bool(category.image_data)}")
+async def update_category(cat_id: str, category: CategoryCreate, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.categories.update_one(
         {"_id": cat_id},
         {"$set": {**category.dict(), "updated_at": datetime.now(timezone.utc)}}
@@ -70,7 +70,8 @@ async def update_category(cat_id: str, category: CategoryCreate):
     return serialize_doc(updated)
 
 @router.delete("/{cat_id}")
-async def delete_category(cat_id: str):
+async def delete_category(cat_id: str, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.categories.update_one(
         {"_id": cat_id},
         {"$set": {"deleted_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}}

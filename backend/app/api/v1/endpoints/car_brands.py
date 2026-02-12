@@ -1,12 +1,12 @@
 """
-Car Brand Routes
+Car Brand Routes - Security Hardened
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Request
 from datetime import datetime, timezone
 import uuid
 
 from ....core.database import db
-from ....core.security import serialize_doc
+from ....core.security import serialize_doc, require_admin_role
 from ....models.schemas import CarBrandCreate
 from ....services.websocket import manager
 
@@ -25,7 +25,8 @@ async def get_car_brands():
     return result
 
 @router.post("")
-async def create_car_brand(brand: CarBrandCreate):
+async def create_car_brand(brand: CarBrandCreate, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     doc = {
         "_id": f"cb_{uuid.uuid4().hex[:8]}",
         **brand.dict(),
@@ -38,11 +39,10 @@ async def create_car_brand(brand: CarBrandCreate):
     return serialize_doc(doc)
 
 @router.put("/{brand_id}")
-async def update_car_brand(brand_id: str, brand: CarBrandCreate):
-    """Update an existing car brand"""
+async def update_car_brand(brand_id: str, brand: CarBrandCreate, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     existing = await db.car_brands.find_one({"_id": brand_id, "deleted_at": None})
     if not existing:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Car brand not found")
     
     update_data = {
@@ -60,7 +60,8 @@ async def update_car_brand(brand_id: str, brand: CarBrandCreate):
     return serialize_doc(updated)
 
 @router.delete("/{brand_id}")
-async def delete_car_brand(brand_id: str):
+async def delete_car_brand(brand_id: str, request: Request):
+    await require_admin_role(request, ["owner", "partner", "admin"])
     await db.car_brands.update_one(
         {"_id": brand_id},
         {"$set": {"deleted_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}}
