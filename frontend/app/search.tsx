@@ -42,8 +42,8 @@ export default function SearchScreen() {
   // This logic is fully dynamic, ensures fixed gaps, and respects a maximum card width.
   const { cardWidth, numColumns } = useMemo(() => {
     // --- Base Layout Constants ---
-    const GAP = 5;
-    const PADDING_HORIZONTAL = GAP * 2; // 10px total for left and right screen padding
+    const GAP = 7.5;
+    const PADDING_HORIZONTAL = GAP * 2; // 15px total for left and right screen padding
     const MAX_CARD_WIDTH = 270; // The absolute maximum width a card can have.
 
     // The available width for cards and their internal gaps.
@@ -499,7 +499,7 @@ export default function SearchScreen() {
             key={`${numColumns}-${screenWidth}`} // Force re-render when columns or width change
             estimatedItemSize={250}
             contentContainerStyle={styles.listContent}
-            columnWrapperStyle={{ gap: 5 }}
+            columnWrapperStyle={{ gap: 7.5 }}
             onEndReached={handleEndReached}
             onEndReachedThreshold={0.5}
             refreshing={isRefreshing}
@@ -562,19 +562,19 @@ const styles = StyleSheet.create({
     maxHeight: 335,
   },
   filterSection: {
-    marginBottom: 15,
+    marginBottom: 13,
   },
   filterLabel: {
     fontSize: 15,
     fontWeight: '600',
-    marginBottom: 10,
+    marginBottom: 7.5,
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 7.5,
     borderRadius: 20,
     borderWidth: 1,
     marginRight: 8,
