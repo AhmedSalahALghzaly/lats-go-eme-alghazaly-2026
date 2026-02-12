@@ -15,12 +15,20 @@ router = APIRouter(prefix="/admins")
 
 @router.get("/check-access")
 async def check_admin_access(request: Request):
+    """Check if current user has admin access - only returns minimal info"""
     user = await get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    admins = await db.admins.find({"deleted_at": None}).to_list(1000)
-    return [{"id": a["_id"], "email": a.get("email", "")} for a in admins]
+    role = await get_user_role(user)
+    
+    # Only admins, owners, and partners can see admin list
+    if role in ["owner", "partner", "admin"]:
+        admins = await db.admins.find({"deleted_at": None}).to_list(1000)
+        return [{"id": a["_id"], "email": a.get("email", "")} for a in admins]
+    
+    # Regular users only get a boolean indicating if they have admin access
+    return []
 
 @router.get("")
 async def get_admins(request: Request):

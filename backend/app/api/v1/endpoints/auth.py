@@ -1,19 +1,25 @@
 """
-Authentication Routes
+Authentication Routes - Security Hardened
 """
 from fastapi import APIRouter, HTTPException, Response, Request
 from datetime import datetime, timezone, timedelta
 import httpx
 import uuid
+import logging
 
 from ....core.database import db
-from ....core.security import get_current_user, get_user_role, get_session_token, serialize_doc
+from ....core.security import get_current_user, get_user_role, get_session_token, serialize_doc, check_rate_limit
 from ....services.notification import notify_admins_new_user
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth")
 
 @router.post("/session")
 async def exchange_session(request: Request, response: Response):
+    # Rate limit session exchange to prevent brute force
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(client_ip, "auth_session", max_requests=20)
+    
     body = await request.json()
     session_id = body.get("session_id")
     if not session_id:

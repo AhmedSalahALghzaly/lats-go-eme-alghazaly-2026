@@ -79,9 +79,18 @@ async def update_promotion(promotion_id: str, data: PromotionCreate, request: Re
 
 @router.patch("/{promotion_id}/reorder")
 async def reorder_promotion(promotion_id: str, data: dict, request: Request):
+    user = await get_current_user(request)
+    role = await get_user_role(user) if user else "guest"
+    if role not in ["owner", "partner", "admin"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    sort_order = data.get("sort_order", 0)
+    if not isinstance(sort_order, (int, float)) or sort_order < 0:
+        raise HTTPException(status_code=400, detail="Invalid sort order")
+    
     await db.promotions.update_one(
         {"_id": promotion_id},
-        {"$set": {"sort_order": data.get("sort_order", 0), "updated_at": datetime.now(timezone.utc)}}
+        {"$set": {"sort_order": int(sort_order), "updated_at": datetime.now(timezone.utc)}}
     )
     return {"message": "Reordered"}
 

@@ -168,7 +168,7 @@ async def update_cart(item: CartItemAdd, request: Request):
 
 @router.post("/add-enhanced")
 async def add_to_cart_enhanced(item: CartItemAddEnhanced, request: Request):
-    """Add item to cart with all pricing pre-calculated"""
+    """Add item to cart with pricing - server validates prices against DB"""
     user = await get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -177,12 +177,38 @@ async def add_to_cart_enhanced(item: CartItemAddEnhanced, request: Request):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
+    # SECURITY: Always use server-side price, never trust client-provided prices
+    server_price = product["price"]
+    original_price = server_price
+    final_price = server_price
+    
+    # Only apply discount if there's a valid bundle discount
+    discount_details = item.discount_details or {}
+    if discount_details.get("discount_type") == "bundle" and discount_details.get("discount_value"):
+        discount_pct = float(discount_details["discount_value"])
+        if 0 < discount_pct <= 100:
+            # Verify the bundle offer exists and is active
+            bundle_id = discount_details.get("discount_source_id")
+            if bundle_id:
+                bundle_offer = await db.bundle_offers.find_one({
+                    "_id": bundle_id,
+                    "is_active": True,
+                    "deleted_at": None
+                })
+                if bundle_offer and item.product_id in bundle_offer.get("product_ids", []):
+                    final_price = server_price * (1 - bundle_offer["discount_percentage"] / 100)
+                    discount_details["discount_value"] = bundle_offer["discount_percentage"]
+                else:
+                    discount_details = {"discount_type": "none", "discount_value": 0}
+            else:
+                discount_details = {"discount_type": "none", "discount_value": 0}
+    
     cart_item = {
         "product_id": item.product_id,
         "quantity": item.quantity,
-        "original_unit_price": item.original_unit_price or product["price"],
-        "final_unit_price": item.final_unit_price or product["price"],
-        "discount_details": item.discount_details or {},
+        "original_unit_price": round(original_price, 2),
+        "final_unit_price": round(final_price, 2),
+        "discount_details": discount_details,
         "bundle_group_id": item.bundle_group_id,
         "added_by_admin_id": item.added_by_admin_id,
         "added_at": datetime.now(timezone.utc)
