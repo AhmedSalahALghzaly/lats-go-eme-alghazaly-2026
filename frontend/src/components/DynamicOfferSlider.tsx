@@ -111,9 +111,9 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
 
   // --- NEW: Centralized and precise layout calculation ---
   const layoutConfig = useMemo(() => {
-    const PADDING_HORIZONTAL = 16; // Space on the left of the first card
-    const PEEK_AREA = 24;          // How much of the next card is visible to hint at scrolling
-    const GAP = 12;                // Space between cards
+    const PADDING_HORIZONTAL = 15; // Space on the left of the first card
+    const PEEK_AREA = 19;          // How much of the next card is visible to hint at scrolling
+    const GAP = 17;                // Space between cards
 
     const cardWidth = screenWidth - (PADDING_HORIZONTAL + PEEK_AREA);
     // The correct snap interval is the card's width plus the gap that follows it.
@@ -478,7 +478,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
                     <View style={styles.priceRow}>
                       <Text style={styles.oldPrice}>{item.original_total.toFixed(2)} ج.م</Text>
                       <View style={styles.arrowIcon}>
-                        <Ionicons name="arrow-forward" size={14} color="rgba(255,255,255,0.6)" />
+                        <Ionicons name="arrow-forward" size={17} color="rgba(255,255,255,0.6)" />
                       </View>
                       <Text style={[styles.newPrice, { color: palette.icon }]}>
                         {item.discounted_total.toFixed(2)} <Text style={styles.currency}>ج.م</Text>
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   loadingContainer: {
-    height: 300,
+    height: 370,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -612,14 +612,14 @@ const styles = StyleSheet.create({
   },
   typeBadge: {
     position: 'absolute',
-    top: 13,
-    left: 15,
+    top: 15,
+    left: 17,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 10,
-    gap: 5,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: 13,
+    gap: 7,
   },
   typeBadgeText: {
     color: '#FFF',
@@ -630,42 +630,42 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 15,
-    paddingLeft: 17,
+    padding: 17,
+    paddingLeft: 19,
     paddingTop: 39,
   },
   centerSection: {
     flex: 1,
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
-    paddingRight: 13,
+    paddingRight: 17,
   },
   titleText: {
     color: '#FFD93D',
     fontSize: 19,
     fontWeight: '700',
     letterSpacing: 0.3,
-    marginBottom: 7,
+    marginBottom: 9,
     textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 5,
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 9,
   },
   subtitleText: {
     color: 'rgba(255,255,255,0.75)',
     fontSize: 13,
     fontWeight: '500',
-    marginTop: 5,
+    marginTop: 9,
     textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,  
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 9,  
   },
   carBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 11,
-    paddingVertical: 5,
-    borderRadius: 15,
-    gap: 7,
+    paddingHorizontal: 15,
+    paddingVertical: 7,
+    borderRadius: 17,
+    gap: 9,
   },
   carText: {
     color: '#FFF',
@@ -676,9 +676,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     position: 'absolute',
-    bottom: 16,
-    right: 17,
-    gap: 7,
+    bottom: 19,
+    right: 19,
+    gap: 9,
   },
   oldPrice: {
     color: 'rgba(255,255,255,0.5)',
@@ -686,14 +686,14 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   arrowIcon: {
-    opacity: 0.5,
+    opacity: 0.9,
   },
   newPrice: {
     fontSize: 19,
     fontWeight: '900',
     textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,  
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 9,  
   },
   currency: {
     fontSize: 13,
@@ -704,13 +704,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between', // Distribute: discount at top, icon in middle
     minWidth: 59,
     height: '100%',
-    paddingTop: 0,
-    paddingBottom: 35, // Space for price row
+    paddingTop: 3,
+    paddingBottom: 39, // Space for price row
   },
   discountBadge: {
-    paddingHorizontal: 13,
-    paddingVertical: 11,
-    borderRadius: 13,
+    paddingHorizontal: 17,
+    paddingVertical: 15,
+    borderRadius: 17,
     alignItems: 'center',
     minWidth: 50,
     marginBottom: 0, // Remove margin - space-between handles spacing
@@ -729,12 +729,12 @@ const styles = StyleSheet.create({
   },
   discountNum: {
     color: '#1a1a2e',
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: '900',
   },
   discountLabel: {
     color: '#1a1a2e',
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
   },
