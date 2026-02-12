@@ -321,7 +321,23 @@ export default function HomeScreen() {
         }
         keyboardShouldPersistTaps="handled"
       >
-        {/* 1. Car Brands Section */}
+        {/* 1. Dynamic Marketing Slider */}
+        <View style={styles.sliderSection}>
+          <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {language === 'ar' ? 'العروض الخاصة' : 'Special Offers'}
+            </Text>
+            <View style={[styles.liveBadge, { backgroundColor: colors.error + '20' }]}>
+              <View style={[styles.liveDot, { backgroundColor: colors.error }]} />
+              <Text style={[styles.liveText, { color: colors.error }]}>
+                {language === 'ar' ? 'حصري' : 'EXCLUSIVE'}
+              </Text>
+            </View>
+          </View>
+          <DynamicOfferSlider />
+        </View>
+
+        {/* 2. Car Brands Section */}
         <View style={styles.section}>
           <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -352,23 +368,7 @@ export default function HomeScreen() {
             contentContainerStyle={styles.horizontalScroll}
           />
         </View>
-
-        {/* 2. Dynamic Marketing Slider */}
-        <View style={styles.sliderSection}>
-          <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {language === 'ar' ? 'العروض الخاصة' : 'Special Offers'}
-            </Text>
-            <View style={[styles.liveBadge, { backgroundColor: colors.error + '20' }]}>
-              <View style={[styles.liveDot, { backgroundColor: colors.error }]} />
-              <Text style={[styles.liveText, { color: colors.error }]}>
-                {language === 'ar' ? 'حصري' : 'EXCLUSIVE'}
-              </Text>
-            </View>
-          </View>
-          <DynamicOfferSlider />
-        </View>
-
+        
         {/* 3. Car Models Section */}
         {carModels.length > 0 && (
           <View style={styles.section}>
