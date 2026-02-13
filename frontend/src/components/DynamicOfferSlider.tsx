@@ -277,7 +277,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
     outputRange: [0.3, 0.9],
   });
 
-  const slideHeight = 370;
+  const slideHeight = 350;
 
   if (loading) {
     return (
