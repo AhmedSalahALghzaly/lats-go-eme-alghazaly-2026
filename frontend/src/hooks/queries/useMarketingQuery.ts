@@ -24,7 +24,7 @@ export function useMarketingQuery() {
       const [promosRes, bundlesRes, productsRes, modelsRes] = await Promise.all([
         promotionApi.getAllForAdmin(),
         bundleOfferApi.getAllForAdmin(),
-        productApi.getAll({ limit: 1000 }),
+        productApi.getAll({ limit: 500 }),  // Optimized limit for marketing
         carModelApi.getAll(),
       ]);
 
