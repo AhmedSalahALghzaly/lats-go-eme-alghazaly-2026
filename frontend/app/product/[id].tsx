@@ -1867,3 +1867,20 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 });
+
+// Car Model Grid Styles - Separate for cleaner organization
+const carModelGridStyles = StyleSheet.create({
+  gridContainer: {
+    width: '100%',
+    minHeight: 200, // Minimum height to prevent collapse
+    paddingHorizontal: 3.5,
+  },
+  listContent: {
+    paddingVertical: 8,
+  },
+  cardWrapper: {
+    flex: 1 / 3, // Each item takes up 1/3 of the row
+    padding: 4, // Creates consistent gap between cards
+    minHeight: 160, // Minimum height for each card wrapper
+  },
+});
