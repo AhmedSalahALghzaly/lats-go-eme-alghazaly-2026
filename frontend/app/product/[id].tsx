@@ -172,16 +172,16 @@ const carModelCardStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   modelName: {
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 17.5,
   },
   brandName: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     textAlign: 'center',
-    marginTop: 2,
+    marginTop: 3,
   },
   yearBadge: {
     marginTop: 6,
@@ -190,8 +190,8 @@ const carModelCardStyles = StyleSheet.create({
     borderRadius: 6,
   },
   yearText: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
 
@@ -276,12 +276,10 @@ export default function ProductDetailScreen() {
   const [showCommentForm, setShowCommentForm] = useState(false);
 
   const { carGridNumColumns, carGridCardWidth } = useMemo(() => {
-    const GAP = 3.5;
     const MIN_COLUMNS = 3;
-    const PADDING_HORIZONTAL = GAP * 2; // 7px total for left/right padding
-
+    const PADDING_HORIZONTAL = 10; // Total horizontal padding of the container (5 each side)
+    const GAP = 5; // Gap between cards
     const availableWidth = screenWidth - PADDING_HORIZONTAL;
-    
     const totalInternalGaps = GAP * (MIN_COLUMNS - 1);
     const cardWidth = (availableWidth - totalInternalGaps) / MIN_COLUMNS;
 
@@ -750,7 +748,7 @@ export default function ProductDetailScreen() {
               style={[styles.brandBadge, { backgroundColor: colors.primary + '15' }]}
               onPress={() => router.push(`/search?product_brand_id=${product.product_brand.id}`)}
             >
-              <Ionicons name="pricetag" size={14} color={colors.primary} />
+              <Ionicons name="pricetag" size={17} color={colors.primary} />
               <Text style={[styles.brandText, { color: colors.primary }]}>
                 {product.product_brand.name}
               </Text>
@@ -792,7 +790,7 @@ export default function ProductDetailScreen() {
                 style={[styles.categoryBadge, { borderColor: colors.border }]}
                 onPress={() => router.push(`/category/${product.category.id}`)}
               >
-                <Ionicons name="grid-outline" size={16} color={colors.primary} />
+                <Ionicons name="grid-outline" size={19} color={colors.primary} />
                 <Text style={[styles.categoryText, { color: colors.text }]}>
                   {getName(product.category)}
                 </Text>
@@ -1470,7 +1468,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   infoContainer: {
-    padding: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 0, // Remove horizontal padding to allow children to fill width
     alignItems: 'center',
   },
   ratingContainer: {
@@ -1496,34 +1495,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 13,
-    paddingVertical: 9,
+    paddingVertical: 7,
     borderRadius: 17,
-    marginBottom: 13,
+    marginBottom: 10,
     gap: 7,
   },
   brandText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   productName: {
     fontSize: 19,
-    fontWeight: '700',
+    fontWeight: '900',
     marginBottom: 7,
     textAlign: 'center',
   },
   sku: {
     fontSize: 17,
-    marginBottom: 11,
+    marginBottom: 9,
     textAlign: 'center',
   },
   price: {
     fontSize: 30,
     fontWeight: '700',
-    marginBottom: 17,
+    marginBottom: 13,
     textAlign: 'center',
   },
   section: {
-    marginTop: 19,
+    marginTop: 15,
+    width: '100%', // Ensure section takes full width
   },
   sectionTitle: {
     fontSize: 17,
@@ -1532,7 +1532,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   description: {
-    fontSize: 15,
+    fontSize: 17,
     lineHeight: 19.5,
     textAlign: 'center',
   },
@@ -1540,13 +1540,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 13,
-    paddingVertical: 9,
+    paddingVertical: 7,
     borderRadius: 9,
-    borderWidth: 1.5,
+    borderWidth: 1.9,
     gap: 7,
   },
   categoryText: {
-    fontSize: 15,
+    fontSize: 17,
   },
   // Comments Section
   commentsSection: {
@@ -1698,18 +1698,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   supplierImageContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 70,
+    height: 70,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     overflow: 'hidden',
   },
   supplierProfileImage: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 70,
+    height: 70,
+    borderRadius: 30,
   },
   supplierTextContainer: {
     flex: 1,
@@ -1835,15 +1835,15 @@ const styles = StyleSheet.create({
 const carModelGridStyles = StyleSheet.create({
   gridContainer: {
     width: '100%',
-    minHeight: 200, // Minimum height to prevent collapse
-    paddingHorizontal: 3.5,
+    minHeight: 200,
+    marginTop: 10,
   },
   listContent: {
     paddingVertical: 8,
   },
   cardWrapper: {
-    flex: 1 / 3, // Each item takes up 1/3 of the row
-    padding: 4, // Creates consistent gap between cards
-    minHeight: 160, // Minimum height for each card wrapper
+    flex: 1, // Let FlashList handle the column width
+    padding: 4,
+    minHeight: 160,
   },
 });
