@@ -715,35 +715,37 @@ const styles = StyleSheet.create({
     paddingBottom: 39, // Space for price row
   },
   discountBadge: {
-    paddingHorizontal: 17,
-    paddingVertical: 15,
-    borderRadius: 17,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
     alignItems: 'center',
-    minWidth: 50,
+    minWidth: 52,
     marginBottom: 0, // Remove margin - space-between handles spacing
     ...Platform.select({
       web: {
-        boxShadow: '0 3px 11px rgba(0,0,0,0.19)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
       },
       default: {
-        elevation: 6,
+        elevation: 8,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.17,
-        shadowRadius: 7 
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
       }  
     }),
   },
   discountNum: {
     color: '#1a1a2e',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '900',
+    letterSpacing: -0.5,
   },
   discountLabel: {
     color: '#1a1a2e',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginTop: 2,
   },
   iconWrapper: {
     alignItems: 'center',
