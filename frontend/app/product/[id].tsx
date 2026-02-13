@@ -807,27 +807,28 @@ export default function ProductDetailScreen() {
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 {t('compatibleWith')}
               </Text>
-              {/* --- UPDATED: Using FlashList for optimal performance --- */}
-              <FlashList
-                data={product.car_models}
-                keyExtractor={(item) => item.id.toString()}
-                numColumns={carGridNumColumns}
-                estimatedItemSize={carGridCardWidth}
-                contentContainerStyle={{
-                  paddingHorizontal: 3.5, // Half of the horizontal padding
-                }}
-                renderItem={({ item: model }) => (
-                  <View style={styles.carModelCardWrapper}>
-                    <CarModelCard
-                      model={model}
-                      cardWidth={carGridCardWidth}
-                      onPress={(id) => router.push(`/car/${id}`)}
-                      getName={getName}
-                      colors={colors}
-                    />
-                  </View>
-                )}
-              />
+              {/* Professional Car Model Grid with Fixed Height Container */}
+              <View style={carModelGridStyles.gridContainer}>
+                <FlashList
+                  data={product.car_models}
+                  keyExtractor={(item) => item.id.toString()}
+                  numColumns={carGridNumColumns}
+                  estimatedItemSize={160}
+                  scrollEnabled={false}
+                  contentContainerStyle={carModelGridStyles.listContent}
+                  renderItem={({ item: model }) => (
+                    <View style={carModelGridStyles.cardWrapper}>
+                      <CarModelCard
+                        model={model}
+                        cardWidth={carGridCardWidth}
+                        onPress={(id) => router.push(`/car/${id}`)}
+                        getName={getName}
+                        colors={colors}
+                      />
+                    </View>
+                  )}
+                />
+              </View>
             </View>
           )}
 
