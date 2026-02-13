@@ -842,7 +842,8 @@ export const InteractiveCarSelector: React.FC = () => {
   const fetchProductsForModel = useCallback(async (modelId: string) => {
     setLoadingProducts(true);
     try {
-      const response = await productApi.getAll({ car_model_id: modelId, limit: 1000 });
+      // Use reasonable limit to avoid 422 errors
+      const response = await productApi.getAll({ car_model_id: modelId, limit: 100 });
       const productsData = response.data?.products || [];
       setProducts(productsData);
       
