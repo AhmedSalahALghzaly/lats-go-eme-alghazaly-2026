@@ -112,8 +112,8 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
   // --- NEW: Centralized and precise layout calculation ---
   const layoutConfig = useMemo(() => {
     const PADDING_HORIZONTAL = 15; // Space on the left of the first card
-    const PEEK_AREA = 19;          // How much of the next card is visible to hint at scrolling
-    const GAP = 17;                // Space between cards
+    const PEEK_AREA = 15;          // How much of the next card is visible to hint at scrolling
+    const GAP = 17.5;                // Space between cards
 
     const cardWidth = screenWidth - (PADDING_HORIZONTAL + PEEK_AREA);
     // The correct snap interval is the card's width plus the gap that follows it.
@@ -277,7 +277,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
     outputRange: [0.3, 0.9],
   });
 
-  const slideHeight = 350;
+  const slideHeight = 330;
 
   if (loading) {
     return (
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   loadingContainer: {
-    height: 350,
+    height: 330,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -606,20 +606,20 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: 7,
+    width: 3,
     borderTopLeftRadius: 18,
     borderBottomLeftRadius: 18,
   },
   typeBadge: {
     position: 'absolute',
-    top: 14,
-    left: 16,
+    top: 11,
+    left: 15,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
     borderRadius: 12,
-    gap: 6,
+    gap: 9,
     // Enhanced shadow for badge
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
   },
   typeBadgeText: {
     color: '#FFF',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 17,
     paddingLeft: 19,
-    paddingTop: 39,
+    paddingTop: 35,
   },
   centerSection: {
     flex: 1,
@@ -649,28 +649,28 @@ const styles = StyleSheet.create({
   },
   titleText: {
     color: '#FFD93D',
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '900',
     letterSpacing: 0.5,
-    marginBottom: 8,
+    marginBottom: 13,
     textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 8,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 19,
   },
   subtitleText: {
     color: 'rgba(255,255,255,0.85)',
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 8,
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 11,
     textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,  
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 15,  
   },
   carBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingVertical: 7,
+    paddingVertical: 11,
     borderRadius: 17,
     gap: 9,
   },
@@ -714,13 +714,13 @@ const styles = StyleSheet.create({
   actionSection: {
     alignItems: 'center',
     justifyContent: 'space-between', // Distribute: discount at top, icon in middle
-    minWidth: 59,
+    minWidth: 50,
     height: '100%',
-    paddingTop: 3,
-    paddingBottom: 39, // Space for price row
+    paddingTop: 7,
+    paddingBottom: 19, // Space for price row
   },
   discountBadge: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 19,
     paddingVertical: 14,
     borderRadius: 16,
     alignItems: 'center',
@@ -797,9 +797,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     marginTop: -22,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 33,
+    height: 33,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -817,10 +817,10 @@ const styles = StyleSheet.create({
     }),
   },
   arrowLeft: {
-    left: 7,
+    left: 9,
   },
   arrowRight: {
-    right: 7,
+    right: 9,
   },
 });
 
