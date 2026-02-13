@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   loadingContainer: {
-    height: 370,
+    height: 350,
     justifyContent: 'center',
     alignItems: 'center',
   },
