@@ -572,7 +572,7 @@ export default function HomeScreen() {
                   </LinearGradient>
                 )}
                 <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.7)']}
+                  colors={['transparent', 'rgba(0,0,0,0.5)']}
                   style={styles.bannerOverlay}
                 >
                   <View style={styles.bannerContent}>
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   horizontalScroll: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 13,
   },
   brandCard: {
     width: 100,
@@ -672,10 +672,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
   },
   carModelCard: {
-    width: 140,
+    width: 155,
     borderRadius: 12,
     borderWidth: 1,
-    marginHorizontal: 6,
+    marginHorizontal: 5,
     overflow: 'hidden',
   },
   carModelImageContainer: {
