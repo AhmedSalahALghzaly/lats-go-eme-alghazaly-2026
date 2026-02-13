@@ -75,35 +75,124 @@ interface CarModelCardProps {
 const CarModelCard = React.memo<CarModelCardProps>(({ model, cardWidth, onPress, getName, colors }) => {
   // Use an intermediate variable for clarity and consistency
   const modelImage = model.image_url;
+  // Get brand info for display
+  const brandInfo = model.brand || model.car_brand;
+  const brandName = brandInfo ? (brandInfo.name_ar || brandInfo.name || '') : '';
 
   return (
     <TouchableOpacity
-      style={[styles.carModelCard, { width: cardWidth, backgroundColor: colors.surface, borderColor: colors.border }]}
+      style={[
+        carModelCardStyles.card, 
+        { 
+          width: cardWidth, 
+          backgroundColor: colors.surface, 
+          borderColor: colors.border,
+          shadowColor: colors.text,
+        }
+      ]}
       onPress={() => onPress(model.id)}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
     >
-      <View style={[styles.carModelImageContainer, { backgroundColor: colors.background }]}>
+      {/* Image Container with proper aspect ratio */}
+      <View style={[carModelCardStyles.imageContainer, { backgroundColor: colors.background }]}>
         {modelImage ? (
           <Image
             source={{ uri: modelImage }}
-            style={styles.carModelImage}
+            style={carModelCardStyles.image}
             contentFit="cover"
             transition={200}
+            cachePolicy="disk"
           />
         ) : (
-          <Ionicons name="car-sport" size={40} color={colors.textSecondary} />
+          <View style={carModelCardStyles.placeholderContainer}>
+            <Ionicons name="car-sport" size={36} color={colors.textSecondary} />
+          </View>
         )}
       </View>
-      <Text style={[styles.carModelName, { color: colors.text }]} numberOfLines={1}>
-        {getName(model)}
-      </Text>
-      {model.year_start && model.year_end && (
-        <Text style={[styles.carModelYear, { color: colors.textSecondary }]}>
-          {`${model.year_start} - ${model.year_end}`}
+      
+      {/* Info Container */}
+      <View style={carModelCardStyles.infoContainer}>
+        {/* Model Name */}
+        <Text style={[carModelCardStyles.modelName, { color: colors.text }]} numberOfLines={1}>
+          {getName(model)}
         </Text>
-      )}
+        
+        {/* Brand Name (if available) */}
+        {brandName ? (
+          <Text style={[carModelCardStyles.brandName, { color: colors.primary }]} numberOfLines={1}>
+            {brandName}
+          </Text>
+        ) : null}
+        
+        {/* Year Range */}
+        {(model.year_start || model.year_end) && (
+          <View style={[carModelCardStyles.yearBadge, { backgroundColor: colors.primary + '15' }]}>
+            <Text style={[carModelCardStyles.yearText, { color: colors.primary }]}>
+              {model.year_start ? `${model.year_start}` : ''}{model.year_end ? ` - ${model.year_end}` : '+'}
+            </Text>
+          </View>
+        )}
+      </View>
     </TouchableOpacity>
   );
+});
+
+// Dedicated styles for CarModelCard - Professional and Clean
+const carModelCardStyles = StyleSheet.create({
+  card: {
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+    // Professional shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  imageContainer: {
+    width: '100%',
+    aspectRatio: 1.3, // Optimal ratio for car images
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  infoContainer: {
+    padding: 10,
+    alignItems: 'center',
+    minHeight: 60,
+    justifyContent: 'center',
+  },
+  modelName: {
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  brandName: {
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  yearBadge: {
+    marginTop: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  yearText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
 });
 
 export default function ProductDetailScreen() {
