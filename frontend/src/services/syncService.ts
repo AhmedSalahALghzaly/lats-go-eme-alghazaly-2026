@@ -304,7 +304,7 @@ class SyncService {
 
       // Products (with conflict detection)
       try {
-        const productsRes = await productApi.getAll({ limit: 1000 });
+        const productsRes = await productApi.getAll({ limit: 500 }); // Optimized limit for sync
         const products = productsRes.data?.products || [];
         
         // Extract server product IDs for purging
