@@ -740,7 +740,7 @@ export const InteractiveCarSelector: React.FC = () => {
   const { productNumColumns, productCardWidth } = useMemo(() => {
     // 1. Define the specific layout constants for this grid.
     const GAP = 3.5; // As requested, we keep 3.5px
-    const MAX_CARD_WIDTH = 119; // The absolute maximum width a card can have.
+    const MAX_CARD_WIDTH = 175; // The absolute maximum width a card can have.
     const MIN_COLUMNS = 3; // The required minimum number of columns.
 
     // 2. Calculate the available width for content.
@@ -1301,7 +1301,7 @@ export const InteractiveCarSelector: React.FC = () => {
               horizontal
               keyExtractor={keyExtractor}
               renderItem={renderGridItem}
-              estimatedItemSize={135}
+              estimatedItemSize={139}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalListContent}
               ListFooterComponent={ViewAllFooter}
@@ -1420,7 +1420,7 @@ export const InteractiveCarSelector: React.FC = () => {
             <FlashList
               data={filterData}
               horizontal
-              estimatedItemSize={60}
+              estimatedItemSize={55}
               showsHorizontalScrollIndicator={false}
               keyExtractor={filterKeyExtractor}
               renderItem={renderFilterItem}
@@ -1433,7 +1433,7 @@ export const InteractiveCarSelector: React.FC = () => {
         {loadingProducts ? (
           <View style={styles.loadingContainer}>
             <View style={styles.loadingGrid}>
-              {[1, 2, 3, 4].map((i) => (
+              {[1, 2, 3].map((i) => (
                 <ProductCardSkeleton key={i} moodAware />
               ))}
             </View>
@@ -1457,7 +1457,7 @@ export const InteractiveCarSelector: React.FC = () => {
               key={`${productNumColumns}-${windowWidth}`} // Force re-render when columns or width change
               keyExtractor={keyExtractor}
               renderItem={renderProductItem}
-              estimatedItemSize={190}
+              estimatedItemSize={179}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.productsGrid}
               columnWrapperStyle={{ gap: 3.5 }}
@@ -1527,9 +1527,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
   },
   hintText: {
-    fontSize: 13,
+    fontSize: 17,
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
   },
   hintDivider: {
     width: 1,
@@ -1560,7 +1560,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   breadcrumbText: {
-    fontSize: 15,
+    fontSize: 19,
     fontWeight: '700',
   },
   gridContainer: {
@@ -1835,9 +1835,9 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   productName: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '500',
-    lineHeight: 13,
+    lineHeight: 15,
   },
   priceCartRow: {
     flexDirection: 'row',
@@ -1852,7 +1852,7 @@ const styles = StyleSheet.create({
     opacity: 1.9999,
   },
   priceText: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
   },
   cartButtonOverlay: {
