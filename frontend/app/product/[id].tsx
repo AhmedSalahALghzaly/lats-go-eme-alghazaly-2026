@@ -1247,43 +1247,6 @@ const addToCartStyles = StyleSheet.create({
   quantitySectionRTL: {
     flexDirection: 'row-reverse',
   },
-  carModelCardWrapper: {
-    flex: 1 / 3, // Each item takes up 1/3 of the row
-    padding: 3.5, // This creates the 3.5px gap on all sides of the card
-  },
-  carModelCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: 'hidden',
-    alignItems: 'center',
-  },
-  carModelImageContainer: {
-    width: '100%',
-    aspectRatio: 1.2, // A good ratio for car images
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  carModelImage: {
-    width: '100%',
-    height: '100%',
-  },
-  carModelName: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: 8,
-    paddingHorizontal: 8,
-    textAlign: 'center',
-  },
-  carModelYear: {
-    fontSize: 11,
-    marginBottom: 8,
-    paddingHorizontal: 8,
-    textAlign: 'center',
-  },
-  carModelText: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
   qtyButton: {
     width: 32,
     height: 32,
