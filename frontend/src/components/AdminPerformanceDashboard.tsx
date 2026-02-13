@@ -58,7 +58,7 @@ export const AdminPerformanceDashboard: React.FC<AdminPerformanceDashboardProps>
       // Fetch analytics overview
       const [analyticsRes, productsRes, ordersRes] = await Promise.all([
         analyticsApi.getOverview().catch(() => ({ data: {} })),
-        productApi.getAll({ limit: 1000 }).catch(() => ({ data: { products: [] } })),
+        productApi.getAll({ limit: 500 }).catch(() => ({ data: { products: [] } })),  // Optimized limit
         orderApi.getAll({ limit: 10 }).catch(() => ({ data: { orders: [] } })),
       ]);
 
