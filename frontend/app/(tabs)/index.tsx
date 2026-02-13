@@ -40,13 +40,13 @@ import { createTextShadow } from '../../src/utils/shadowUtils';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Product card sizing
-const BASE_CARD_WIDTH = 150;
+const BASE_CARD_WIDTH = 170;
 const MAX_ENLARGEMENT_PERCENT = 0.19;
 const MAX_CARD_WIDTH = Math.floor(BASE_CARD_WIDTH * (1 + MAX_ENLARGEMENT_PERCENT));
 
 const calculateCardWidth = () => {
-  const horizontalPadding = 16 * 2;
-  const cardGap = 12;
+  const horizontalPadding = 13 * 2;
+  const cardGap = 11;
   const availableWidth = SCREEN_WIDTH - horizontalPadding;
   const minCardsPerRow = Math.floor(availableWidth / (BASE_CARD_WIDTH + cardGap));
   const optimalWidth = Math.floor((availableWidth - (cardGap * (minCardsPerRow - 1))) / minCardsPerRow);
@@ -616,31 +616,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 19,
   },
   section: {
-    marginTop: 16,
+    marginTop: 15,
   },
   sliderSection: {
-    marginTop: 16,
+    marginTop: 15,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    paddingHorizontal: 19,
+    marginBottom: 11,
   },
   sectionHeaderRTL: {
     flexDirection: 'row-reverse',
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '700',
   },
   viewAll: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   liveBadge: {
     flexDirection: 'row',
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    gap: 6,
+    gap: 5,
   },
   liveDot: {
     width: 6,
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
   },
   carModelName: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 2,
   },
   carModelYear: {
@@ -738,9 +738,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   bannerCard: {
-    height: 160,
-    marginHorizontal: 20,
-    marginBottom: 16,
+    height: 179,
+    marginHorizontal: 15,
+    marginBottom: 15,
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#1a1a2e',
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
     right: 0,
     height: '60%',
     justifyContent: 'flex-end',
-    padding: 16,
+    padding: 15,
   },
   bannerContent: {
     flexDirection: 'row',
@@ -772,10 +772,10 @@ const styles = StyleSheet.create({
   },
   bannerTitle: {
     color: '#FFF',
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     flex: 1,
-    ...createTextShadow('rgba(0,0,0,0.5)', 0, 1, 4),
+    ...createTextShadow('rgba(0,0,0,0.3)', 0, 1, 4),
   },
   bannerBadge: {
     flexDirection: 'row',
@@ -788,7 +788,7 @@ const styles = StyleSheet.create({
   },
   bannerBadgeText: {
     color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
   },
 });
