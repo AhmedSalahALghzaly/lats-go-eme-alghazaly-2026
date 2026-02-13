@@ -26,7 +26,7 @@ async def get_products(
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     skip: int = 0,
-    limit: int = Query(50, le=200),
+    limit: int = Query(50, le=500),  # Increased from 200 to 500 for better performance
     include_hidden: bool = False,
     cursor: Optional[str] = None,
     direction: str = "next"
