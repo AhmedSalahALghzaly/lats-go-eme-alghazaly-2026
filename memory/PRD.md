@@ -1,48 +1,66 @@
-# ALGHAZALY AUTO PARTS - Project Setup & Analysis Report
+# ALGHAZALY AUTO PARTS - Project Documentation
 
-## Project Overview
-- **Name:** Al-Ghazaly Auto Parts
-- **Type:** React Native/Expo Mobile App (SDK 54+)
-- **Repository:** https://github.com/AhmedSalahALghzaly/lats-go-eme-alghazaly-2026.git
+## Original Problem Statement
+Clone and run the ALGHAZALY AUTO PARTS project from GitHub:
+- Repository: https://github.com/AhmedSalahALghzaly/lats-go-eme-alghazaly-2026.git
+- Fix comments/ratings functionality in `frontend/app/product/[id].tsx`
+- Ensure icons display correctly
 
 ## Technical Stack
-- **Framework:** React Native with Expo Router
-- **State Management:** Zustand
-- **Data Fetching:** TanStack Query (React Query)
-- **UI Components:** @shopify/flash-list v2.0.2, expo-image, expo-linear-gradient
-- **Animations:** react-native-reanimated
+- **Frontend**: React Native with Expo (SDK 54+), Expo Router
+- **Backend**: FastAPI with MongoDB (Motor async driver)
+- **State Management**: Zustand
+- **Data Fetching**: TanStack Query (React Query)
+- **UI**: Custom design system with LinearGradient, BlurView
 
-## Code Analysis & Fixes Applied (product/[id].tsx)
+## Core Architecture
+- Modular backend in `/backend/app/`
+  - `/core/` - Configuration, database, security
+  - `/models/` - Pydantic schemas
+  - `/services/` - Business logic
+  - `/api/v1/` - REST endpoints
 
-### Issues Found & Fixed:
-1. **API Import Error** - Changed `commentsApi` to `commentApi` (correct export name)
-2. **API Method Names** - Updated to correct method names:
-   - `getProductComments()` → `getForProduct()`
-   - `addComment()` → `create()`
-   - `deleteComment()` → `delete()`
-3. **Missing API Method** - Added `delete` method to `commentApi` in api.ts
-4. **FlashList v2.0 Compatibility** - Removed deprecated `estimatedItemSize` prop (not needed in v2.x)
-5. **Type Safety** - Added proper type annotations for FlashList components
+## What's Been Implemented (Jan 2026)
 
-## Files Modified:
-- `/app/alghazaly-auto-parts/frontend/app/product/[id].tsx`
-- `/app/alghazaly-auto-parts/frontend/src/services/api.ts`
+### Bug Fixes Applied:
+1. **API Service Fix** (`frontend/src/services/api.ts`)
+   - Added `commentsApi` export with proper methods:
+     - `getProductComments(productId)`
+     - `addComment(productId, text, rating)`
+     - `deleteComment(commentId)`
 
-## Running the Project
+2. **Backend Comments Endpoint** (`backend/app/api/v1/endpoints/comments.py`)
+   - Added DELETE `/comments/{comment_id}` endpoint
+   - Implemented soft delete with user ownership validation
 
-### Prerequisites:
-- Node.js 20+
-- Expo CLI (`npm install -g expo-cli`)
-- Expo Go app on your mobile device
+### Root Cause Analysis:
+- Frontend was importing `commentsApi` but API only exported `commentApi`
+- Method names didn't match: `getProductComments` vs `getForProduct`
+- Backend missing delete comment endpoint
 
-### Steps to Run:
-```bash
-cd /app/alghazaly-auto-parts/frontend
-yarn install
-npx expo start
-```
+## P0/P1/P2 Features
 
-Then scan the QR code with Expo Go app (Android) or Camera app (iOS).
+### P0 - Critical (Completed)
+- [x] Comments API fix - submit button now works
+- [x] Delete comment endpoint added
+- [x] API method names aligned
 
-## Date
-- Analysis Date: Feb 13, 2026
+### P1 - Important
+- [ ] Test comments flow end-to-end with backend
+- [ ] Verify icons render on iOS/Android
+
+### P2 - Nice to Have
+- [ ] Add comment editing functionality
+- [ ] Add reply to comments feature
+
+## Next Tasks
+1. Start the Expo development server for testing
+2. Test comments/ratings flow with real backend
+3. Verify icon rendering in Expo Go
+
+## User Personas
+- **Shop Owner**: Manages products, views analytics
+- **Admin**: Assists customers, manages orders
+- **Customer**: Browses products, adds reviews, places orders
+- **Subscriber**: Premium access to supplier contacts
+
