@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 
 class SecurityTester:
-    def __init__(self, base_url="https://auto-expo-dev.preview.emergentagent.com"):
+    def __init__(self, base_url="https://parts-premium-shop.preview.emergentagent.com"):
         self.base_url = base_url.rstrip('/')
         self.api_base = f"{self.base_url}/api"
         self.session = requests.Session()
