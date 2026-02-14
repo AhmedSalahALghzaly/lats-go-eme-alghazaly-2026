@@ -740,7 +740,7 @@ export const InteractiveCarSelector: React.FC = () => {
   const { productNumColumns, productCardWidth } = useMemo(() => {
     // 1. Define the specific layout constants for this grid.
     const GAP = 3.5; // As requested, we keep 3.5px
-    const MAX_CARD_WIDTH = 175; // The absolute maximum width a card can have.
+    const MAX_CARD_WIDTH = 170; // The absolute maximum width a card can have.
     const MIN_COLUMNS = 3; // The required minimum number of columns.
 
     // 2. Calculate the available width for content.
@@ -1457,7 +1457,7 @@ export const InteractiveCarSelector: React.FC = () => {
               key={`${productNumColumns}-${windowWidth}`} // Force re-render when columns or width change
               keyExtractor={keyExtractor}
               renderItem={renderProductItem}
-              estimatedItemSize={179}
+              estimatedItemSize={175}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.productsGrid}
               columnWrapperStyle={{ gap: 3.5 }}
@@ -1527,14 +1527,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
   },
   hintText: {
-    fontSize: 17,
+    fontSize: 19,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.7,
   },
   hintDivider: {
-    width: 1,
+    width: 1.9,
     height: 20,
-    opacity: 0.5,
+    opacity: 0.9,
   },
   breadcrumb: {
     flex: 1,
@@ -1831,13 +1831,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   productInfo: {
-    padding: 10,
+    padding: 13,
     gap: 5,
   },
   productName: {
     fontSize: 13,
     fontWeight: '500',
-    lineHeight: 15,
+    lineHeight: 17,
   },
   priceCartRow: {
     flexDirection: 'row',
