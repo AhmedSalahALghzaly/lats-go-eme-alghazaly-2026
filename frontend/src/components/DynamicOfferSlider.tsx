@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   },
   slideWrapper: {
     // This is no longer needed; width is inline and marginRight is replaced by gap.
-    // marginRight: 17,
+    // marginRight: 19,
   },
   slide: {
     width: '100%',
@@ -637,9 +637,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 13,
+    padding: 17,
     paddingLeft: 15,
-    paddingTop: 30,
+    paddingTop: 39,
   },
   centerSection: {
     flex: 1,
@@ -652,13 +652,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
     letterSpacing: 0.5,
-    marginBottom: 10,
+    marginBottom: 19,
   },
   subtitleText: {
     color: 'rgba(255,255,255,0.95)',
     fontSize: 13,
     fontWeight: '700',
-    marginTop: 5,
+    marginTop: 19,
     textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 9,  
@@ -666,8 +666,8 @@ const styles = StyleSheet.create({
   carBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 7,
+    paddingHorizontal: 17,
+    paddingVertical: 19,
     borderRadius: 17,
     gap: 7,
   },
@@ -682,10 +682,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 18,
     right: 18,
-    gap: 8,
+    gap: 7,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 17,
+    paddingVertical: 7,
     borderRadius: 12,
   },
   oldPrice: {
@@ -713,12 +713,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between', // Distribute: discount at top, icon in middle
     minWidth: 50,
     height: '100%',
-    paddingTop: 7,
-    paddingBottom: 11, // Space for price row
+    paddingTop: 15,
+    paddingBottom: 30, // Space for price row
   },
   discountBadge: {
-    paddingHorizontal: 30,
-    paddingVertical: 15,
+    paddingHorizontal: 35,
+    paddingVertical: 19,
     borderRadius: 16,
     alignItems: 'center',
     minWidth: 52,
