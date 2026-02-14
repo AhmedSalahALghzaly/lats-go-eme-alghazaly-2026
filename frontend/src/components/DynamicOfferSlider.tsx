@@ -113,7 +113,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
   const layoutConfig = useMemo(() => {
     const PADDING_HORIZONTAL = 15; // Space on the left of the first card
     const PEEK_AREA = 15;          // How much of the next card is visible to hint at scrolling
-    const GAP = 17.5;                // Space between cards
+    const GAP = 19;              // Space between cards
 
     const cardWidth = screenWidth - (PADDING_HORIZONTAL + PEEK_AREA);
     // The correct snap interval is the card's width plus the gap that follows it.
@@ -366,7 +366,7 @@ export const DynamicOfferSlider: React.FC<DynamicOfferSliderProps> = ({
                         ? { 
                             backgroundColor: '#000000', // Black background for bundles
                             borderColor: '#FFD700',     // Luminous gold border
-                            borderWidth: 1,             // Border width
+                            borderWidth: 1.5,           // Border width
                           } 
                         : { 
                             backgroundColor: palette.accent // Keep original color for promos
@@ -572,7 +572,7 @@ function getStaticOffers(): SliderItem[] {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 9,
+    marginVertical: 7,
     position: 'relative',
   },
   loadingContainer: {
@@ -612,14 +612,14 @@ const styles = StyleSheet.create({
   },
   typeBadge: {
     position: 'absolute',
-    top: 11,
+    top: 9,
     left: 15,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 11,
-    paddingVertical: 9,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
     borderRadius: 12,
-    gap: 9,
+    gap: 5,
     // Enhanced shadow for badge
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -630,16 +630,16 @@ const styles = StyleSheet.create({
   typeBadgeText: {
     color: '#FFF',
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   contentContainer: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 17,
-    paddingLeft: 19,
-    paddingTop: 35,
+    padding: 13,
+    paddingLeft: 15,
+    paddingTop: 30,
   },
   centerSection: {
     flex: 1,
@@ -649,30 +649,27 @@ const styles = StyleSheet.create({
   },
   titleText: {
     color: '#FFD93D',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '900',
     letterSpacing: 0.5,
-    marginBottom: 13,
-    textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 19,
+    marginBottom: 10,
   },
   subtitleText: {
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.95)',
     fontSize: 13,
     fontWeight: '700',
-    marginTop: 11,
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 15,  
+    marginTop: 5,
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 9,  
   },
   carBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingVertical: 11,
+    paddingVertical: 7,
     borderRadius: 17,
-    gap: 9,
+    gap: 7,
   },
   carText: {
     color: '#FFF',
@@ -688,27 +685,27 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: 'rgba(0,0,0,0.4)',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   oldPrice: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 12,
-    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
+    fontWeight: '700',
     textDecorationLine: 'line-through',
   },
   arrowIcon: {
-    opacity: 0.8,
+    opacity: 0.9,
   },
   newPrice: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '900',
-    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 4,  
   },
   currency: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
   },
   actionSection: {
@@ -717,11 +714,11 @@ const styles = StyleSheet.create({
     minWidth: 50,
     height: '100%',
     paddingTop: 7,
-    paddingBottom: 19, // Space for price row
+    paddingBottom: 11, // Space for price row
   },
   discountBadge: {
-    paddingHorizontal: 19,
-    paddingVertical: 14,
+    paddingHorizontal: 30,
+    paddingVertical: 15,
     borderRadius: 16,
     alignItems: 'center',
     minWidth: 52,
@@ -796,7 +793,7 @@ const styles = StyleSheet.create({
   arrowButton: {
     position: 'absolute',
     top: '50%',
-    marginTop: -22,
+    marginTop: 22,
     width: 33,
     height: 33,
     borderRadius: 19,
